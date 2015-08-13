@@ -1,0 +1,22 @@
+{
+  "name": "jinaga",
+  "version": "0.1.0",
+  "description": "Historical modeling library for the browser and Node",
+  "main": "index.html",
+  "scripts": {
+    "test": "mocha"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/michaellperry/jinaga.git"
+  },
+  "keywords": [
+    "messaging"
+  ],
+  "author": "Michael L Perry",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/michaellperry/jinaga/issues"
+  },
+  "homepage": "https://github.com/michaellperry/jinaga"
+}
