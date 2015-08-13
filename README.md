@@ -142,7 +142,7 @@ This is possible because the front end can be connected to a distributor.
 ```JavaScript
 var distributor = require('jinaga.distributor');
 
-q.sync(distributor.create('https://my.distributor.com');
+j.sync(distributor.create('https://my.distributor.com');
 ```
 
 The distributor stores messages while you are off-line. Start the app again, and you will receive all messages that you query.
@@ -154,7 +154,7 @@ Messages can be stored locally. When you start the app, it will load all message
 ```JavaScript
 var storage = require('jinaga.webstorage');
 
-q.save(storage);
+j.save(storage);
 ```
 
 Messages are persisted to Web Storage when they are created. When you start up again, you will receive all persisted messages that match your queries.
@@ -177,7 +177,7 @@ Node is a powerful option for controlling devices. Connect these devices togethe
 var io = require('jinaga.io');
 
 io.join('other.iot.device');
-q.sync(io);
+j.sync(io);
 ```
 
 Use the predecessor/successor relationships among messages to construct collaborative device-to-device workflows.
