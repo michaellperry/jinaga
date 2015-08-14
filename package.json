@@ -18,5 +18,9 @@
   "bugs": {
     "url": "https://github.com/michaellperry/jinaga/issues"
   },
-  "homepage": "https://github.com/michaellperry/jinaga"
+  "homepage": "https://github.com/michaellperry/jinaga",
+  "devDependencies": {
+    "chai": "^3.2.0",
+    "mocha": "^2.2.5"
+  }
 }
