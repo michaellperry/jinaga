@@ -1,9 +1,14 @@
 var chai = require("chai");
-var j = require ('../src/jinaga')
+var Jinaga = new require('../src/jinaga')
 
 chai.should();
 
 describe("Query", function () {
+  var j;
+  beforeEach(function() {
+    j = new Jinaga();
+  });
+
   it("should return a matching message", function () {
     var chores = {
       name: "Chores"
