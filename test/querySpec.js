@@ -29,5 +29,6 @@ describe("Query", function () {
     j.fact(trash);
 
     tasks.length.should.equal(1);
+    tasks[0].should.equal(trash);
   });
 });
