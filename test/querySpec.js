@@ -1,5 +1,5 @@
 var chai = require("chai");
-var Jinaga = new require('../src/jinaga')
+var Jinaga = require('../src/jinaga')
 
 chai.should();
 

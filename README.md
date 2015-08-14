@@ -7,7 +7,8 @@ To reliably synchronize different browsers, you want to use a message-based prot
 A message knows its predecessors: those messages that came immediately before it. For example, if I need to add a task to a to-do list, then I would let the task know about the list. The list is the predecessor, because it must exist before we can add tasks to it.
 
 ```JavaScript
-var j = require ('jinaga')
+var Jinaga = require ('jinaga');
+var j = new Jinaga();
 
 j.fact({
   list: {
