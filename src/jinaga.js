@@ -1,17 +1,30 @@
-function Jinaga(){
-  this.queries = [];
+if (typeof define !== 'function') {
+  var define = require('amdefine')(module);
 }
 
-Jinaga.prototype.fact = function(message) {
-  for (var i = 0; i < this.queries.length; i++) {
-    this.queries[i].resultAdded(message);
+define(function (require) {
+  function Jinaga(){
+    this.queries = [];
+    this.messages = [];
   }
-}
 
-Jinaga.prototype.query = function query(start, clauses, resultAdded, resultRemoved) {
-  this.queries.push({
-    resultAdded: resultAdded
-  });
-}
+  Jinaga.prototype.fact = function(message) {
+    this.messages.push(message);
 
-module.exports = Jinaga;
+    for (var i = 0; i < this.queries.length; i++) {
+      this.queries[i].resultAdded(message);
+    }
+  }
+
+  Jinaga.prototype.query = function query(start, clauses, resultAdded, resultRemoved) {
+    this.queries.push({
+      resultAdded: resultAdded
+    });
+
+    for (var i = 0; i < this.messages.length; i++) {
+      resultAdded(this.messages[i]);
+    }
+  }
+
+  return Jinaga;
+});
