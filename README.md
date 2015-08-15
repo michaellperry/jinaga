@@ -102,7 +102,7 @@ Now we can write a query so that only the uncompleted tasks match the template.
 function uncompletedTasksInList(l) {
   return {
     list: l,
-    not: taskIsCompleted
+    __not: taskIsCompleted
   };
 }
 
@@ -185,11 +185,11 @@ Use the predecessor/successor relationships among messages to construct collabor
 
 # Security
 
-A message can be used to identify an individual user of the application. Such a message will have a public key, represented as a base-64 encoded string, as a property called **publicKey**.
+A message can be used to identify an individual user of the application. Such a message will have a public key, represented as a base-64 encoded string, as a property called **__publicKey**.
 
 ```JavaScript
 var user = {
-  publicKey: "...nbZ15mk0zNC/WJWjM3vDRB3"
+  __publicKey: "...nbZ15mk0zNC/WJWjM3vDRB3"
 }
 ```
 
@@ -205,11 +205,11 @@ The distributor retains the user's private key, so that any messages posted with
 
 ## Privacy
 
-To send a private message to an individual, set the individual as the **to** property of the message. The distributor will encrypt the message using that user's public key.
+To send a private message to an individual, set the individual as the **__to** property of the message. The distributor will encrypt the message using that user's public key.
 
 ```JavaScript
 var secret {
-  to: flynn,
+  __to: flynn,
   password: "Reindeer Flotilla"
 };
 
@@ -220,34 +220,34 @@ The distributor will store the encrypted message. It will only decrypt the messa
 
 ## Authenticity
 
-To sign a message, set your own user object as the **from** property of the message. The distributor will sign the message using your private key when you post it using your OAuth2 token.
+To sign a message, set your own user object as the **__from** property of the message. The distributor will sign the message using your private key when you post it using your OAuth2 token.
 
 ```JavaScript
 var email {
-  to: alan1,
-  from: flynn,
+  __to: alan1,
+  __from: flynn,
   content: "It's all in the wrists."
 };
 
 q.fact(email);
 ```
 
-The distributor will verify signatures before delivering any messages. The client application never sees the signature, but the message would not be delivered if the signature was invalid. Upon receiving a message with a **from** property, you can be certain that it was from that sender and was not tampered with.
+The distributor will verify signatures before delivering any messages. The client application never sees the signature, but the message would not be delivered if the signature was invalid. Upon receiving a message with a **__from** property, you can be certain that it was from that sender and was not tampered with.
 
 ## Secrecy
 
-A shared key can be used to encrypt messages that multiple people can all see. Set the **locked** property to true to tell the distributor that a message should have a shared key. Set the **admin** property of a successor message to indicate that a user has admin privileges for that object.
+A shared key can be used to encrypt messages that multiple people can all see. Set the **__locked** property to true to tell the distributor that a message should have a shared key. Set the **__admin** property of a successor message to indicate that a user has admin privileges for that object.
 
 ```JavaScript
 var project {
   name: "Space Paranoids",
-  locked: true
+  __locked: true
 };
 
 var flynnPrivilege {
-  admin: project,
-  to: flynn,
-  from: flynn
+  __admin: project,
+  __to: flynn,
+  __from: flynn
 };
 
 q.fact(project);
@@ -256,13 +256,13 @@ q.fact(flynnPrivilege);
 
 Your client app does not need to generate the shared key. The distributor will generate it and store it in the successor message.
 
-The successor must be encrypted. So it must have a **to** predecessor. The admin can generate additional messages to assign privileges to other users. Set the **read** or **write** properties for these additional privileges.
+The successor must be encrypted. So it must have a **__to** predecessor. The admin can generate additional messages to assign privileges to other users. Set the **__read** or **__write** properties for these additional privileges.
 
 ```JavaScript
 q.fact({
-  write: project,
-  to: alan1,
-  from: flynn
+  __write: project,
+  __to: alan1,
+  __from: flynn
 });
 ```
 
@@ -272,8 +272,8 @@ Now that Flynn has write privileges to the project, he can create successors.
 
 ```JavaScript
 q.fact({
-  in: project,
-  from alan1,
+  __in: project,
+  __from alan1,
   program: "TRON"
 });
 ```
