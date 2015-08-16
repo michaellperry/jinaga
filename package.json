@@ -21,7 +21,12 @@
   "homepage": "https://github.com/michaellperry/jinaga",
   "devDependencies": {
     "chai": "^3.2.0",
-    "mocha": "^2.2.5"
+    "grunt": "^0.4.5",
+    "grunt-contrib-watch": "^0.6.1",
+    "grunt-mocha-test": "^0.12.7",
+    "grunt-typescript": "^0.7.0",
+    "mocha": "^2.2.5",
+    "typescript": "^1.5.3"
   },
   "dependencies": {
     "amdefine": "^1.0.0",

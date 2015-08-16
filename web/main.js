@@ -1,4 +1,4 @@
-requirejs(["../src/jinaga"], function(Jinaga) {
+requirejs(["jinaga"], function(Jinaga) {
   var j = new Jinaga();
 
   var chores = {
