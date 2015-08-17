@@ -61,6 +61,9 @@ class Query {
 }
 
 interface StorageProvider {
+    save(
+        message: Object,
+        result: (error: string) => void);
     executeQuery(
         start: Object,
         joins: Array<Join>,
