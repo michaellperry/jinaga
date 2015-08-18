@@ -1,4 +1,4 @@
 node_modules/
 .idea/
-node/jinaga.js
-web/jinaga.js
+node/*.js
+web/*.js

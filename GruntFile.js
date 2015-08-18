@@ -32,8 +32,14 @@ module.exports = function (grunt) {
       }
     },
     watch: {
-      files: '**/*.ts',
-      tasks: ['typescript', 'mochaTest']
+      compile: {
+        files: 'src/**/*.ts',
+        tasks: ['typescript', 'mochaTest']
+      },
+      test: {
+        files: 'test/**/*.js',
+        tasks: ['mochaTest']
+      }
     }
   });
 

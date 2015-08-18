@@ -1,46 +1,6 @@
-/*
- * TODO: This file should be broken down once these ideas get more fleshed out.
- * But for now, I wanted to see them all at once.
- */
-
-enum Direction {
-    Predecessor,
-    Successor
-}
-
-enum Quantifier {
-    Exists,
-    NotExists
-}
-
-class Condition {
-    constructor() {
-    }
-}
-
-class ExistentialCondition extends Condition {
-    constructor(
-        public quantifier: Quantifier,
-        public joins: Array<Join>) {
-        super();
-    }
-}
-
-class PropertyCondition extends Condition {
-    constructor(
-        public name: string,
-        public value: any) {
-        super();
-    }
-}
-
-class Join {
-    constructor(
-        public direction: Direction,
-        public role: string,
-        public conditions: Array<Condition>) {
-    }
-}
+import Interface = require("interface");
+import Join = Interface.Join;
+import StorageProvider = Interface.StorageProvider;
 
 class Inverse {
     constructor(
@@ -58,16 +18,6 @@ class Query {
         public resultRemoved: (message: Object) => void,
         public inverses: Array<Inverse>) {
     }
-}
-
-interface StorageProvider {
-    save(
-        message: Object,
-        result: (error: string) => void);
-    executeQuery(
-        start: Object,
-        joins: Array<Join>,
-        result: (error: string, messages: Array<Object>) => void);
 }
 
 class Jinaga {
