@@ -84,11 +84,11 @@ A callback is only executed once per message. If you happen to add the same mess
 The watch is in effect for the current session. It is destroyed implicitly with the Jinaga instance when no longer in use. If you wish to explicitly stop watching, capture the return value.
 
 ```JavaScript
-var watchChores = j.watch(chores, [tasksInList], taskAdded);
+var deregisterWatchChores = j.watch(chores, [tasksInList], taskAdded);
 
 // Some time later...
 
-watchChores.stop();
+deregisterWatchChores();
 ``` 
 
 ## Conditions

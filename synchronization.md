@@ -9,9 +9,9 @@ Messages come from other people using the same app. A message created in someone
 This is possible because the front end can be connected to a distributor.
 
 ```JavaScript
-var distributor = require('jinaga.distributor');
+var Distributor = require('jinaga.distributor');
 
-j.sync(distributor.create('https://my.distributor.com');
+j.sync(new Distributor('https://my.distributor.com'));
 ```
 
 The distributor stores messages while you are off-line. Start the app again, and you will receive all messages that you query.
@@ -21,9 +21,9 @@ The distributor stores messages while you are off-line. Start the app again, and
 Messages can be stored locally. When you start the app, it will load all messages that were created or received in the past. This is great not only for off-line scenarios, but also to ensure quick load times for previously visited pages.
 
 ```JavaScript
-var storage = require('jinaga.webstorage');
+var Storage = require('jinaga.webstorage');
 
-j.save(storage);
+j.save(new Storage());
 ```
 
 Messages are persisted to Web Storage when they are created. When you start up again, you will receive all persisted messages that match your queries.
