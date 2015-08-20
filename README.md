@@ -8,6 +8,8 @@ Reliably sync SPAs over unreliable connections.
 - Migrations (coming soon)
 - Checkpoints (coming soon)
 
+[Please help](https://github.com/michaellperry/jinaga/blob/master/contributing.md)
+
 ## Historical Modeling
 To reliably synchronize different browsers, you want to use a message-based protocol. But if a user makes changes while the browser is off-line, or if two users make changes at the same time, then each browser will see the messages in a different order. Most messaging patterns rely upon knowing the order of events. This is called "total ordering". Historical Modeling is a set of messaging patterns that only rely upon "partial ordering". Messages are known to have come after their predecessors, but the order between unrelated messages is not strictly known.
 
