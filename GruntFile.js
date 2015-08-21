@@ -7,7 +7,7 @@ module.exports = function (grunt) {
     pkg: grunt.file.readJSON('package.json'),
     typescript: {
       web: {
-        src: ['src/**/*.ts'],
+        src: ['src/**/*.ts', 'typings/**/*.ts'],
         dest: 'web',
         options: {
           module: 'amd',
@@ -15,7 +15,7 @@ module.exports = function (grunt) {
         }
       },
       node: {
-        src: ['src/**/*.ts'],
+        src: ['src/**/*.ts', 'typings/**/*.ts'],
         dest: 'node',
         options: {
           module: 'commonjs',

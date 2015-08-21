@@ -6,11 +6,23 @@ I have a vision for historical modeling, but I need your help to realize this vi
 
 Clone the repository and build the code. You will need to:
 
+Once:
+
 - Install [node](https://nodejs.org/)
-- Run "npm install"
+- Run "npm install tsd@next -g"
 - Run "npm install -g grunt-cli" to install the [grunt](http://gruntjs.com/getting-started) command-line interface
+
+Each time you pull:
+
+- Run "tsd reinstall"
+- Run "tsd rebundle"
+- Run "npm install"
+
+As you work:
+
 - Run "grunt typescript" to compile
 - Run "grunt mochaTest" to run the tests
+- Run "grunt" to start the watcher that will compile and run tests
 
 If you see test failures, that's exactly where I need some help!
 
