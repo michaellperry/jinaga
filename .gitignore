@@ -3,3 +3,5 @@ node_modules/
 node/*.js
 web/*.js
 typings/
+src/*.js
+src/*.js.map
