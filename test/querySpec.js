@@ -30,7 +30,7 @@ describe("Query", function () {
       tasks.push(task);
     }
 
-    j.query(chores, [tasksInList], taskAdded);
+    j.watch(chores, [tasksInList], taskAdded);
     j.fact(trash);
 
     tasks.length.should.equal(1);
@@ -44,7 +44,7 @@ describe("Query", function () {
     }
 
     j.fact(trash);
-    j.query(chores, [tasksInList], taskAdded);
+    j.watch(chores, [tasksInList], taskAdded);
 
     tasks.length.should.equal(1);
     tasks[0].should.equal(trash);

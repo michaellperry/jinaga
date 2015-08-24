@@ -31,6 +31,6 @@ requirejs(["jinaga"], function(Jinaga) {
 
   window.j = j;
 
-  j.query(chores, [tasksInList], taskAdded);
+  j.watch(chores, [tasksInList], taskAdded);
   j.fact(trash);
 });

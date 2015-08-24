@@ -25,10 +25,11 @@ class Query {
 }
 
 class Jinaga {
-    private queries: Array<Query> = new Array<Query>();
+    private queries: Array<Query> = [];
     private messages: StorageProvider = new MemoryProvider();
 
     public save(storage: StorageProvider) {
+        this.messages = storage;
     }
 
     public fact(message: Object) {
@@ -40,7 +41,7 @@ class Jinaga {
         });
     }
 
-    public query(
+    public watch(
         start: Object,
         templates: Array<(target: Proxy) => Object>,
         resultAdded: (result: Object) => void,
