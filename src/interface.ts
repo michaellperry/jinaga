@@ -46,3 +46,7 @@ export interface StorageProvider {
         joins: Array<Join>,
         result: (error: string, messages: Array<Object>) => void);
 }
+
+export interface Proxy {
+    has(name: string): Proxy;
+}

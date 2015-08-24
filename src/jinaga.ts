@@ -1,6 +1,10 @@
 import Interface = require("interface");
 import Join = Interface.Join;
 import StorageProvider = Interface.StorageProvider;
+import Proxy = Interface.Proxy;
+import parse = require("./queryParser");
+import MemoryProvider = require("./memory");
+import _ = require("lodash");
 
 class Inverse {
     constructor(
@@ -22,35 +26,37 @@ class Query {
 
 class Jinaga {
     private queries: Array<Query> = new Array<Query>();
-    private messages: Object[] = [];
+    private messages: StorageProvider = new MemoryProvider();
 
     public save(storage: StorageProvider) {
     }
 
     public fact(message: Object) {
-        this.messages.push(message);
-
-        for (var i = 0; i < this.queries.length; i++) {
-            this.queries[i].resultAdded(message);
-        }
+        var queries = this.queries;
+        this.messages.save(message, function () {
+            for (var i = 0; i < queries.length; i++) {
+                queries[i].resultAdded(message);
+            }
+        });
     }
 
     public query(
         start: Object,
-        templates: Array<(target: Object) => Object>,
+        templates: Array<(target: Proxy) => Object>,
         resultAdded: (result: Object) => void,
         resultRemoved: (result: Object) => void) {
 
+        var joins = parse(templates);
         this.queries.push(new Query(
             start,
-            [],
+            joins,
             resultAdded,
             resultRemoved,
             []));
 
-        for (var i = 0; i < this.messages.length; i++) {
-            resultAdded(this.messages[i]);
-        }
+        this.messages.executeQuery(start, joins, function(error, results) {
+            _.each(results, resultAdded);
+        });
     }
 }
 
