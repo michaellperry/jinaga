@@ -9,7 +9,8 @@ Clone the repository and build the code. You will need to:
 Once:
 
 - Install [node](https://nodejs.org/)
-- Run "npm install tsd@next -g"
+- Run "npm install bower -g" to install [Bower](http://bower.io/)
+- Run "npm install tsd@next -g" to install the [Typescript definition manager](http://definitelytyped.org/tsd/)
 - Run "npm install -g grunt-cli" to install the [grunt](http://gruntjs.com/getting-started) command-line interface
 
 Each time you pull:
@@ -17,6 +18,7 @@ Each time you pull:
 - Run "tsd reinstall"
 - Run "tsd rebundle"
 - Run "npm install"
+- Run "bower install"
 
 As you work:
 
