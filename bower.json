@@ -1,0 +1,27 @@
+{
+  "name": "Jinaga",
+  "version": "0.1.0",
+  "homepage": "http://jinaga.com/",
+  "authors": [
+    "Michael L Perry <michael@qedcode.com>"
+  ],
+  "description": "Historical Modeling framework for JavaScript",
+  "main": "web/index.html",
+  "moduleType": [
+    "amd"
+  ],
+  "keywords": [
+    "Messaging"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "lodash": "~3.10.1"
+  }
+}

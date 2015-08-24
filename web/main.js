@@ -1,3 +1,9 @@
+require.config({
+  paths: {
+    lodash: "../bower_components/lodash/lodash"
+  }
+});
+
 requirejs(["jinaga"], function(Jinaga) {
   var j = new Jinaga();
 
