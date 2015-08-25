@@ -1,5 +1,5 @@
 import Interface = require("interface");
-import Join = Interface.Join;
+import Query = Interface.Query;
 import StorageProvider = Interface.StorageProvider;
 import Proxy = Interface.Proxy;
 import parse = require("./queryParser");
@@ -8,16 +8,16 @@ import _ = require("lodash");
 
 class Inverse {
     constructor(
-        public targets: Array<Join>,
-        public added: Array<Join>,
-        public removed: Array<Join>) {
+        public targets: Query,
+        public added: Query,
+        public removed: Query) {
     }
 }
 
-class Query {
+class Watch {
     constructor(
         public start: Object,
-        public joins: Array<Join>,
+        public joins: Query,
         public resultAdded: (message: Object) => void,
         public resultRemoved: (message: Object) => void,
         public inverses: Array<Inverse>) {
@@ -25,7 +25,7 @@ class Query {
 }
 
 class Jinaga {
-    private queries: Array<Query> = [];
+    private watches: Array<Watch> = [];
     private messages: StorageProvider = new MemoryProvider();
 
     public save(storage: StorageProvider) {
@@ -33,10 +33,10 @@ class Jinaga {
     }
 
     public fact(message: Object) {
-        var queries = this.queries;
+        var watches = this.watches;
         this.messages.save(message, function () {
-            for (var i = 0; i < queries.length; i++) {
-                queries[i].resultAdded(message);
+            for (var i = 0; i < watches.length; i++) {
+                watches[i].resultAdded(message);
             }
         });
     }
@@ -48,7 +48,7 @@ class Jinaga {
         resultRemoved: (result: Object) => void) {
 
         var joins = parse(templates);
-        this.queries.push(new Query(
+        this.watches.push(new Watch(
             start,
             joins,
             resultAdded,

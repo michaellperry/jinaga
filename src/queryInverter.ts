@@ -1,16 +1,15 @@
 import Interface = require("./interface");
-import Join = Interface.Join;
+import Query = Interface.Query;
 
 export class Inverse {
     constructor(
-        public affected: Array<Join>,
-        public added: Array<Join>,
-        public removed: Array<Join>
+        public affected: Query,
+        public added: Query,
+        public removed: Query
     ) {
     }
 }
 
-export function invertQuery(joins: Array<Join>): Array<Inverse> {
-    // This is never correct. All tests are failing.
-    return [new Inverse([], [], [])];
+export function invertQuery(query: Query): Array<Inverse> {
+    throw Error("Not implemented");
 }

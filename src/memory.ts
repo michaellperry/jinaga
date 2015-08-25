@@ -2,7 +2,9 @@
 
 import Interface = require("./interface");
 import StorageProvider = Interface.StorageProvider;
-import Join = Interface.Join;
+import Query = Interface.Query;
+import SelfQuery = Interface.SelfQuery;
+import JoinQuery = Interface.JoinQuery;
 import Direction = Interface.Direction;
 import _ = require("lodash");
 
@@ -43,7 +45,7 @@ class MemoryProvider implements StorageProvider {
 
     executeQuery(
         start: Object,
-        joins: Array<Join>,
+        query: Query,
         result: (error: string, messages: Array<Object>) => void) {
 
         var startingNode = this.findNode(start);
@@ -53,12 +55,23 @@ class MemoryProvider implements StorageProvider {
         }
 
         var nodes: Array<Node> = [startingNode];
-        for (var joinIndex in joins) {
-            if (nodes.length == 0)
-                break;
+        nodes = this.recursiveExecuteQuery(query, nodes);
 
+        result(null, _.pluck(nodes, "message"));
+    }
+
+    private recursiveExecuteQuery(
+        query: Query,
+        nodes: Array<Node>
+    ): Array<Node> {
+        if (nodes.length == 0)
+            return nodes;
+
+        if (query instanceof JoinQuery) {
+            var joinQuery = <JoinQuery>query;
+            nodes = this.recursiveExecuteQuery(joinQuery.head, nodes);
             var nextNodes: Array<Node> = [];
-            var join = joins[joinIndex];
+            var join = joinQuery.join;
             for (var nodeIndex in nodes) {
                 var node = nodes[nodeIndex];
 
@@ -66,10 +79,10 @@ class MemoryProvider implements StorageProvider {
                     nextNodes = nextNodes.concat(node.successorsIn(join.role));
                 }
             }
-            nodes = nextNodes;
+            return nextNodes;
+        } else {
+            return nodes;
         }
-
-        result(null, _.pluck(nodes, "message"));
     }
 
     private insertNode(message: Object): Node {

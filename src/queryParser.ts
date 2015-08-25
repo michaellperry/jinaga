@@ -1,45 +1,58 @@
 import Interface = require("./interface");
 import Join = Interface.Join;
+import Query = Interface.Query;
+import JoinQuery = Interface.JoinQuery;
+import SelfQuery = Interface.SelfQuery;
 import Direction = Interface.Direction;
 import Proxy = Interface.Proxy;
 
 class ParserProxy implements Proxy {
-    __isParserProxy: boolean = true;
-
     constructor(
-        public joins: Array<Join>) {
+        public parent: ParserProxy,
+        public role: string) {
     }
 
     has(name:string):Proxy {
-        var proxy = new ParserProxy(this.joins.concat(new Join(Direction.Predecessor, name, [])));
+        var proxy = new ParserProxy(this, name);
         this[name] = proxy;
         return proxy;
     }
+
+    public createQuery() {
+        if (this.parent) {
+            return new JoinQuery(
+                this.parent.createQuery(),
+                new Join(Direction.Predecessor, this.role),
+                []
+            );
+        }
+        else {
+            return new SelfQuery([]);
+        }
+    }
 }
 
-function findTarget(spec:Object): Array<Join> {
-    if (spec["__isParserProxy"]) {
-        return (<ParserProxy>spec).joins;
+function findTarget(spec:Object): Query {
+    if (spec instanceof ParserProxy) {
+        return (<ParserProxy>spec).createQuery();
     }
     for (var field in spec) {
-        var targetJoins = findTarget(spec[field]);
-        if (targetJoins)
-            return targetJoins.concat(new Join(Direction.Successor, field, []));
+        var targetQuery = findTarget(spec[field]);
+        if (targetQuery)
+            return new JoinQuery(targetQuery, new Join(Direction.Successor, field), []);
     }
     return null;
 }
 
-function parse(templates: Array<(target: Proxy) => Object>): Array<Join> {
-    var joins: Array<Join> = [];
-
+function parse(templates: Array<(target: Proxy) => Object>): Query {
     for (var templateIndex in templates) {
         var template = templates[templateIndex];
-        var target = new ParserProxy([]);
+        var target = new ParserProxy(null, null);
         var spec = template(target);
         var targetJoins = findTarget(spec);
-        joins = joins.concat(targetJoins);
+        return targetJoins; // TODO: Append each query
     }
-    return joins;
+    return null;
 }
 
 export = parse;

@@ -1,6 +1,9 @@
+var chai = require("chai");
 var Interface = require("../node/interface");
 var Direction = Interface.Direction;
 var parse = require("../node/queryParser");
+
+var should = chai.should();
 
 describe("QueryParser", function() {
 
@@ -29,34 +32,34 @@ describe("QueryParser", function() {
   }
 
   it("should parse to a successor query", function () {
-    var joins = parse([tasksInList]);
-    joins.length.should.equal(1);
-    joins[0].direction.should.equal(Direction.Successor);
-    joins[0].role.should.equal("list");
+    var query = parse([tasksInList]);
+    should.not.exist(query.head.join);
+    query.join.direction.should.equal(Direction.Successor);
+    query.join.role.should.equal("list");
   });
 
   it("should find two successors", function () {
-    var joins = parse([completionsInList]);
-    joins.length.should.equal(2);
-    joins[0].direction.should.equal(Direction.Successor);
-    joins[0].role.should.equal("list");
-    joins[1].direction.should.equal(Direction.Successor);
-    joins[1].role.should.equal("task");
+    var query = parse([completionsInList]);
+    should.not.exist(query.head.head.join);
+    query.head.join.direction.should.equal(Direction.Successor);
+    query.head.join.role.should.equal("list");
+    query.join.direction.should.equal(Direction.Successor);
+    query.join.role.should.equal("task");
   });
 
   it("should find predecessor", function () {
-    var joins = parse([listOfTask]);
-    joins.length.should.equal(1);
-    joins[0].direction.should.equal(Direction.Predecessor);
-    joins[0].role.should.equal("list");
+    var query = parse([listOfTask]);
+    should.not.exist(query.head.join);
+    query.join.direction.should.equal(Direction.Predecessor);
+    query.join.role.should.equal("list");
   });
 
   it("should find two predecessors", function () {
-    var joins = parse([listOfCompletion]);
-    joins.length.should.equal(2);
-    joins[0].direction.should.equal(Direction.Predecessor);
-    joins[0].role.should.equal("task");
-    joins[1].direction.should.equal(Direction.Predecessor);
-    joins[1].role.should.equal("list");
+    var query = parse([listOfCompletion]);
+    should.not.exist(query.head.head.join);
+    query.head.join.direction.should.equal(Direction.Predecessor);
+    query.head.join.role.should.equal("task");
+    query.join.direction.should.equal(Direction.Predecessor);
+    query.join.role.should.equal("list");
   });
 });

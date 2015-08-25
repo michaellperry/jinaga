@@ -16,10 +16,14 @@ describe("Memory", function() {
     name: "Chores"
   };
 
-  var joinTasks = new Interface.Join(Interface.Direction.Successor, "list", []);
+  var query = new Interface.JoinQuery(
+    new Interface.SelfQuery([]),
+    new Interface.Join(Interface.Direction.Successor, "list"),
+    []
+  );
 
   it("should return no results when has no facts", function(done) {
-    memory.executeQuery(chores, [joinTasks], function (error, messages) {
+    memory.executeQuery(chores, query, function (error, messages) {
       should.equal(null, error);
       messages.length.should.equal(0);
       done();
@@ -32,7 +36,7 @@ describe("Memory", function() {
         list: chores,
         description: "Take out the trash"
       }, function () {
-        memory.executeQuery(chores, [joinTasks], function (error, messages) {
+        memory.executeQuery(chores, query, function (error, messages) {
           should.equal(null, error);
           messages.length.should.equal(1);
           messages[0].description.should.equal("Take out the trash");
@@ -47,7 +51,7 @@ describe("Memory", function() {
       list: chores,
       description: "Take out the trash"
     }, function () {
-      memory.executeQuery(chores, [joinTasks], function (error, messages) {
+      memory.executeQuery(chores, query, function (error, messages) {
         should.equal(null, error);
         messages.length.should.equal(1);
         messages[0].description.should.equal("Take out the trash");
@@ -61,7 +65,7 @@ describe("Memory", function() {
       list: { name: "Chores" },
       description: "Take out the trash"
     }, function () {
-      memory.executeQuery(chores, [joinTasks], function (error, messages) {
+      memory.executeQuery(chores, query, function (error, messages) {
         should.equal(null, error);
         messages.length.should.equal(1);
         messages[0].description.should.equal("Take out the trash");
@@ -75,7 +79,7 @@ describe("Memory", function() {
       list: { name: "Fun" },
       description: "Play XBox"
     }, function () {
-      memory.executeQuery(chores, [joinTasks], function (error, messages) {
+      memory.executeQuery(chores, query, function (error, messages) {
         should.equal(null, error);
         messages.length.should.equal(0);
         done();

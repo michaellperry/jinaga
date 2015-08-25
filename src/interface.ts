@@ -9,32 +9,48 @@ enum Quantifier {
 }
 
 export class Condition {
-    constructor() {
-    }
+    constructor() {}
 }
 
 class ExistentialCondition extends Condition {
     constructor(
         public quantifier: Quantifier,
-        public joins: Array<Join>) {
-        super();
-    }
+        public joins: Array<Join>
+    ) { super(); }
 }
 
 class PropertyCondition extends Condition {
     constructor(
         public name: string,
-        public value: any) {
-        super();
-    }
+        public value: any
+    ) { super(); }
 }
 
 export class Join {
     constructor(
         public direction: Direction,
-        public role: string,
-        public conditions: Array<Condition>) {
-    }
+        public role: string
+    ) {}
+}
+
+export class Query {
+    constructor(
+        public conditions: Array<Condition>
+    ) {}
+}
+
+export class SelfQuery extends Query {
+    constructor(
+        conditions: Array<Condition>
+    ) { super(conditions); }
+}
+
+export class JoinQuery extends Query {
+    constructor(
+        public head: Query,
+        public join: Join,
+        conditions: Array<Condition>
+    ) { super(conditions); }
 }
 
 export interface StorageProvider {
@@ -43,7 +59,7 @@ export interface StorageProvider {
         result: (error: string) => void);
     executeQuery(
         start: Object,
-        joins: Array<Join>,
+        query: Query,
         result: (error: string, messages: Array<Object>) => void);
 }
 

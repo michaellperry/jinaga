@@ -3,7 +3,7 @@ var Jinaga = require("../node/jinaga");
 
 chai.should();
 
-describe("Query", function () {
+describe("Watch", function () {
   var j;
   beforeEach(function() {
     j = new Jinaga();
