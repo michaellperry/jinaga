@@ -33,33 +33,21 @@ describe("QueryParser", function() {
 
   it("should parse to a successor query", function () {
     var query = parse([tasksInList]);
-    should.not.exist(query.head.join);
-    query.join.direction.should.equal(Direction.Successor);
-    query.join.role.should.equal("list");
+    query.toDescriptiveString().should.equal("()S.list()");
   });
 
   it("should find two successors", function () {
     var query = parse([completionsInList]);
-    should.not.exist(query.head.head.join);
-    query.head.join.direction.should.equal(Direction.Successor);
-    query.head.join.role.should.equal("list");
-    query.join.direction.should.equal(Direction.Successor);
-    query.join.role.should.equal("task");
+    query.toDescriptiveString().should.equal("()S.list()S.task()");
   });
 
   it("should find predecessor", function () {
     var query = parse([listOfTask]);
-    should.not.exist(query.head.join);
-    query.join.direction.should.equal(Direction.Predecessor);
-    query.join.role.should.equal("list");
+    query.toDescriptiveString().should.equal("()P.list()");
   });
 
   it("should find two predecessors", function () {
     var query = parse([listOfCompletion]);
-    should.not.exist(query.head.head.join);
-    query.head.join.direction.should.equal(Direction.Predecessor);
-    query.head.join.role.should.equal("task");
-    query.join.direction.should.equal(Direction.Predecessor);
-    query.join.role.should.equal("list");
+    query.toDescriptiveString().should.equal("()P.task()P.list()");
   });
 });

@@ -41,6 +41,10 @@ export class Query {
     public prepend(join: Join): Query {
         throw Error("Abstract");
     }
+
+    public toDescriptiveString(): string {
+        throw Error("Abstract");
+    }
 }
 
 export class SelfQuery extends Query {
@@ -57,6 +61,10 @@ export class SelfQuery extends Query {
             this.conditions
         );
     }
+
+    public toDescriptiveString(): string {
+        return "()";
+    }
 }
 
 export class JoinQuery extends Query {
@@ -72,6 +80,13 @@ export class JoinQuery extends Query {
             this.join,
             this.conditions
         );
+    }
+
+    public toDescriptiveString(): string {
+        return this.head.toDescriptiveString() +
+            (this.join.direction === Direction.Predecessor ? "P." : "S.") +
+            this.join.role +
+            "()";
     }
 }
 

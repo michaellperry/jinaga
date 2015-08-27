@@ -32,10 +32,8 @@ describe("QueryInverter", function() {
         new Join(Direction.Successor, "project"),
         []));
     inverses.length.should.equal(1);
-    should.not.exist(inverses[0].affected.head.join);
-    inverses[0].affected.join.direction.should.equal(Direction.Predecessor);
-    inverses[0].affected.join.role.should.equal("project");
-    should.not.exist(inverses[0].added.join);
+    inverses[0].affected.toDescriptiveString().should.equal("()P.project()");
+    inverses[0].added.toDescriptiveString().should.equal("()");
     should.equal(null, inverses[0].removed);
   });
 
@@ -51,12 +49,8 @@ describe("QueryInverter", function() {
         []));
     inverses.length.should.equal(1);
 
-    should.not.exist(inverses[0].affected.head.join);
-    inverses[0].affected.join.direction.should.equal(Direction.Predecessor);
-    inverses[0].affected.join.role.should.equal("user");
-    should.not.exist(inverses[0].added.head.join);
-    inverses[0].added.join.direction.should.equal(Direction.Predecessor);
-    inverses[0].added.join.role.should.equal("project");
+    inverses[0].affected.toDescriptiveString().should.equal("()P.user()");
+    inverses[0].added.toDescriptiveString().should.equal("()P.project()");
     should.equal(null, inverses[0].removed);
   });
 });
