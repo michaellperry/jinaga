@@ -20,18 +20,18 @@ export function invertQuery(query: Query): Array<Inverse> {
 
 function recursiveInvertQuery(head: Query, tail: Query, inverses: Array<Inverse>): Array<Inverse> {
     var joinQuery = <JoinQuery>head;
-    if (joinQuery.head) {
+    if (joinQuery.tail) {
         if (joinQuery.join.direction === Direction.Successor) {
             inverses = inverses.concat(new Inverse(
                 joinQuery, tail, null
             ));
         }
-        tail = tail.prepend(new Join(
+        tail = tail.append(new Join(
             joinQuery.join.direction === Direction.Predecessor ?
                 Direction.Successor : Direction.Predecessor,
             joinQuery.join.role
         ));
-        head = joinQuery.head;
+        head = joinQuery.tail;
         inverses = recursiveInvertQuery(head, tail, inverses);
     }
     return inverses;

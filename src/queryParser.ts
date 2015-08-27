@@ -21,9 +21,9 @@ class ParserProxy implements Proxy {
     public createQuery() {
         if (this.parent) {
             return new JoinQuery(
-                this.parent.createQuery(),
+                [],
                 new Join(Direction.Predecessor, this.role),
-                []
+                this.parent.createQuery()
             );
         }
         else {
@@ -39,7 +39,7 @@ function findTarget(spec:Object): Query {
     for (var field in spec) {
         var targetQuery = findTarget(spec[field]);
         if (targetQuery)
-            return new JoinQuery(targetQuery, new Join(Direction.Successor, field), []);
+            return new JoinQuery([], new Join(Direction.Successor, field), targetQuery);
     }
     return null;
 }

@@ -5,8 +5,6 @@ var invertQuery = QueryInverter.invertQuery;
 var Interface = require("../node/interface");
 var Join = Interface.Join;
 var Direction = Interface.Direction;
-var SelfQuery = Interface.SelfQuery;
-var JoinQuery = Interface.JoinQuery;
 
 var should = chai.should();
 

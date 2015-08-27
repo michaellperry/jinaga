@@ -82,4 +82,21 @@ describe("Memory", function() {
       });
     });
   });
+
+  it("should find grandchildren", function(done) {
+    memory.save({
+      completed: true,
+      task: {
+        list: { name: "Chores" },
+        description: "Empty the dishwasher"
+      }
+    }, function(error1) {
+      should.equal(null, error1);
+      memory.executeQuery(chores, Interface.fromDescriptiveString("()S.list()S.task()"), function (error2, messages) {
+        should.equal(null, error2);
+        messages.length.should.equal(1);
+        messages[0].completed.should.equal(true);
+      });
+    });
+  });
 });

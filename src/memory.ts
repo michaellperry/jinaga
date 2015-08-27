@@ -69,7 +69,7 @@ class MemoryProvider implements StorageProvider {
 
         if (query instanceof JoinQuery) {
             var joinQuery = <JoinQuery>query;
-            nodes = this.recursiveExecuteQuery(joinQuery.head, nodes);
+            nodes = this.recursiveExecuteQuery(joinQuery.tail, nodes);
             var nextNodes: Array<Node> = [];
             var join = joinQuery.join;
             for (var nodeIndex in nodes) {
@@ -141,6 +141,9 @@ class MemoryProvider implements StorageProvider {
                 break;
             case "object":
                 valueHash = this.computeHash(value);
+                break;
+            case "boolean":
+                valueHash = value ? 1 : 0;
                 break;
             default:
                 throw new TypeError("Property " + name + " is a " + typeof(value));
