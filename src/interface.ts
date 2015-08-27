@@ -37,12 +37,26 @@ export class Query {
     constructor(
         public conditions: Array<Condition>
     ) {}
+
+    public prepend(join: Join): Query {
+        throw Error("Abstract");
+    }
 }
 
 export class SelfQuery extends Query {
     constructor(
         conditions: Array<Condition>
     ) { super(conditions); }
+
+    static Identity: Query = new SelfQuery([]);
+
+    public prepend(join: Join): Query {
+        return new JoinQuery(
+            new SelfQuery([]),
+            join,
+            this.conditions
+        );
+    }
 }
 
 export class JoinQuery extends Query {
@@ -51,6 +65,14 @@ export class JoinQuery extends Query {
         public join: Join,
         conditions: Array<Condition>
     ) { super(conditions); }
+
+    public prepend(join: Join): Query {
+        return new JoinQuery(
+            this.head.prepend(join),
+            this.join,
+            this.conditions
+        );
+    }
 }
 
 export interface StorageProvider {
