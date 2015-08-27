@@ -16,11 +16,7 @@ describe("Memory", function() {
     name: "Chores"
   };
 
-  var query = new Interface.JoinQuery(
-    new Interface.SelfQuery([]),
-    new Interface.Join(Interface.Direction.Successor, "list"),
-    []
-  );
+  var query = Interface.fromDescriptiveString("()S.list()");
 
   it("should return no results when has no facts", function(done) {
     memory.executeQuery(chores, query, function (error, messages) {

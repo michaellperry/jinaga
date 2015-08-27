@@ -90,6 +90,58 @@ export class JoinQuery extends Query {
     }
 }
 
+function done(descriptive: string, index: number): boolean {
+    return index === descriptive.length;
+}
+
+function lookahead(descriptive: string, index: number): string {
+    if (descriptive.length <= index) {
+        throw Error("Malformed descriptive string " + descriptive + " at " + index);
+    }
+    return descriptive.charAt(index);
+}
+
+function consume(descriptive: string, index: number, expected: string): number {
+    if (lookahead(descriptive, index) !== expected) {
+        throw Error("Malformed descriptive string " + descriptive + " at " + index);
+    }
+    return index + 1;
+}
+
+function identifier(descriptive: string, index: number): {id: string, index: number} {
+    var id = "";
+    var next = lookahead(descriptive, index);
+    while ((next >= "a" && next <= "z") || (next >= "A" && next <= "Z")) {
+        index = consume(descriptive, index, next);
+        id = id + next;
+        next = lookahead(descriptive, index);
+    }
+    return {id, index};
+}
+
+export function fromDescriptiveString(descriptive: string, index: number = 0): Query {
+    var result: Query = new SelfQuery([]);
+    while (true) {
+        index = consume(descriptive, index, "(");
+        index = consume(descriptive, index, ")");
+        if (done(descriptive, index)) {
+            return result;
+        }
+        if (lookahead(descriptive, index) === "P") {
+            index = consume(descriptive, index, "P");
+            index = consume(descriptive, index, ".");
+            var {id, index} = identifier(descriptive, index);
+            result = new JoinQuery(result, new Join(Direction.Predecessor, id), []);
+        }
+        else if (lookahead(descriptive, index) === "S") {
+            index = consume(descriptive, index, "S");
+            index = consume(descriptive, index, ".");
+            var {id, index} = identifier(descriptive, index);
+            result = new JoinQuery(result, new Join(Direction.Successor, id), []);
+        }
+    }
+}
+
 export interface StorageProvider {
     save(
         message: Object,
