@@ -55,21 +55,8 @@ class MemoryProvider implements StorageProvider {
         }
 
         var nodes: Array<Node> = [startingNode];
-        nodes = this.recursiveExecuteQuery(query, nodes);
-
-        result(null, _.pluck(nodes, "message"));
-    }
-
-    private recursiveExecuteQuery(
-        query: Query,
-        nodes: Array<Node>
-    ): Array<Node> {
-        if (nodes.length == 0)
-            return nodes;
-
-        if (query instanceof JoinQuery) {
+        while (query instanceof JoinQuery && nodes.length > 0) {
             var joinQuery = <JoinQuery>query;
-            nodes = this.recursiveExecuteQuery(joinQuery.tail, nodes);
             var nextNodes: Array<Node> = [];
             var join = joinQuery.join;
             for (var nodeIndex in nodes) {
@@ -79,10 +66,11 @@ class MemoryProvider implements StorageProvider {
                     nextNodes = nextNodes.concat(node.successorsIn(join.role));
                 }
             }
-            return nextNodes;
-        } else {
-            return nodes;
+            query = joinQuery.tail;
+            nodes = nextNodes;
         }
+
+        result(null, _.pluck(nodes, "message"));
     }
 
     private insertNode(message: Object): Node {
