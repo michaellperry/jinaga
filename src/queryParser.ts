@@ -18,28 +18,29 @@ class ParserProxy implements Proxy {
         return proxy;
     }
 
-    public createQuery() {
+    public createQuery(tail: Query): Query {
         if (this.parent) {
-            return new JoinQuery(
+            return this.parent.createQuery(new JoinQuery(
                 [],
                 new Join(Direction.Predecessor, this.role),
-                this.parent.createQuery()
-            );
+                tail
+            ));
         }
         else {
-            return new SelfQuery([]);
+            return tail;
         }
     }
 }
 
-function findTarget(spec:Object): Query {
+function findTarget(spec:Object, tail: Query): Query {
     if (spec instanceof ParserProxy) {
-        return (<ParserProxy>spec).createQuery();
+        return (<ParserProxy>spec).createQuery(tail);
     }
     for (var field in spec) {
-        var targetQuery = findTarget(spec[field]);
+        var query: Query = new JoinQuery([], new Join(Direction.Successor, field), tail);
+        var targetQuery = findTarget(spec[field], query);
         if (targetQuery)
-            return new JoinQuery([], new Join(Direction.Successor, field), targetQuery);
+            return targetQuery;
     }
     return null;
 }
@@ -49,7 +50,7 @@ function parse(templates: Array<(target: Proxy) => Object>): Query {
         var template = templates[templateIndex];
         var target = new ParserProxy(null, null);
         var spec = template(target);
-        var targetJoins = findTarget(spec);
+        var targetJoins = findTarget(spec, new SelfQuery([]));
         return targetJoins; // TODO: Append each query
     }
     return null;
