@@ -106,7 +106,7 @@ describe("Memory", function() {
   it("should find grandparents", function(done) {
     memory.save(completion, function(error1) {
       should.equal(null, error1);
-      memory.executeQuery(chores, Interface.fromDescriptiveString("()P.task()P.list()"), function (error2, messages) {
+      memory.executeQuery(completion, Interface.fromDescriptiveString("()P.task()P.list()"), function (error2, messages) {
         should.equal(null, error2);
         messages.length.should.equal(1);
         messages[0].name.should.equal("Chores");

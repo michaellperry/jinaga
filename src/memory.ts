@@ -12,7 +12,8 @@ class Node {
     successors: { [role: string]: Array<Node> } = {};
 
     constructor(
-        public message: Object) {
+        public message: Object,
+        public predecessors: Object) {
     }
 
     addSuccessor(role: string, node: Node) {
@@ -25,10 +26,11 @@ class Node {
     }
 
     successorsIn(role: string): Array<Node> {
-        var array = this.successors[role];
-        if (!array)
-            array = [];
-        return array;
+        return this.successors[role] || [];
+    }
+
+    predecessorsInRole(role: string): Array<Node> {
+        return this.predecessors[role] || [];
     }
 }
 
@@ -62,9 +64,10 @@ class MemoryProvider implements StorageProvider {
             for (var nodeIndex in nodes) {
                 var node = nodes[nodeIndex];
 
-                if (join.direction === Direction.Successor) {
-                    nextNodes = nextNodes.concat(node.successorsIn(join.role));
-                }
+                nextNodes = nextNodes.concat(
+                    join.direction === Direction.Successor
+                        ? node.successorsIn(join.role)
+                        : node.predecessorsInRole(join.role));
             }
             query = joinQuery.tail;
             nodes = nextNodes;
@@ -82,17 +85,21 @@ class MemoryProvider implements StorageProvider {
         }
         var node = _.find(array, "message", message);
         if (!node) {
-            node = new Node(message);
-            array.push(node);
-
+            var predecessors = {};
             for (var field in message) {
                 var value = message[field];
                 if (typeof(value) === "object") {
                     var predecessor = this.insertNode(value);
-                    if (predecessor)
-                        predecessor.addSuccessor(field, node);
+                    predecessors[field] = [ predecessor ];
                 }
             }
+
+            node = new Node(message, predecessors);
+            for (var role in predecessors) {
+                var predecessorArray = <Array<Node>>predecessors[role];
+                predecessorArray[0].addSuccessor(role, node);
+            }
+            array.push(node);
         }
         return node;
     }
