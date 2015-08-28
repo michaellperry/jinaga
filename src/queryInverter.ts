@@ -1,9 +1,8 @@
 import Interface = require("./interface");
 import Query = Interface.Query;
-import SelfQuery = Interface.SelfQuery;
-import JoinQuery = Interface.JoinQuery;
 import Direction = Interface.Direction;
 import Join = Interface.Join;
+import Step = Interface.Step;
 
 export class Inverse {
     constructor(
@@ -15,24 +14,27 @@ export class Inverse {
 }
 
 export function invertQuery(query: Query): Array<Inverse> {
-    return recursiveInvertQuery(query, SelfQuery.Identity, []);
-}
+    var inverses: Array<Inverse> = [];
 
-function recursiveInvertQuery(head: Query, tail: Query, inverses: Array<Inverse>): Array<Inverse> {
-    var joinQuery = <JoinQuery>head;
-    if (joinQuery.tail) {
-        if (joinQuery.join.direction === Direction.Successor) {
-            inverses = inverses.concat(new Inverse(
-                joinQuery, tail, null
+    var oppositeSteps: Array<Step> = [];
+    for (var stepIndex = 0; stepIndex < query.steps.length; ++stepIndex) {
+        var step = query.steps[stepIndex];
+
+        if (step instanceof Join) {
+            var join = <Join>step;
+            oppositeSteps.unshift(new Join(
+                join.direction === Direction.Predecessor ? Direction.Successor : Direction.Predecessor,
+                join.role
             ));
+
+            if (join.direction === Direction.Successor) {
+                inverses.push(new Inverse(
+                    new Query(oppositeSteps),
+                    new Query(query.steps.splice(stepIndex+1)),
+                    null
+                ));
+            }
         }
-        tail = tail.append(new Join(
-            joinQuery.join.direction === Direction.Predecessor ?
-                Direction.Successor : Direction.Predecessor,
-            joinQuery.join.role
-        ));
-        head = joinQuery.tail;
-        inverses = recursiveInvertQuery(head, tail, inverses);
     }
     return inverses;
 }

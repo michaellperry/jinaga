@@ -1,3 +1,5 @@
+import _ = require("lodash");
+
 export enum Direction {
     Predecessor,
     Successor
@@ -8,85 +10,46 @@ enum Quantifier {
     NotExists
 }
 
-export class Condition {
-    constructor() {}
+export class Step {
+    construtor() {}
+
+    public toDeclarativeString(): string {
+        throw Error("Abstract");
+    }
 }
 
-class ExistentialCondition extends Condition {
+class ExistentialCondition extends Step {
     constructor(
         public quantifier: Quantifier,
-        public joins: Array<Join>
+        public steps: Array<Step>
     ) { super(); }
 }
 
-class PropertyCondition extends Condition {
+class PropertyCondition extends Step {
     constructor(
         public name: string,
         public value: any
     ) { super(); }
 }
 
-export class Join {
+export class Join extends Step {
     constructor(
         public direction: Direction,
         public role: string
-    ) {}
+    ) { super(); }
+
+    public toDeclarativeString(): string {
+        return (this.direction === Direction.Predecessor ? "P." : "S.") + this.role;
+    }
 }
 
 export class Query {
     constructor(
-        public conditions: Array<Condition>
+        public steps: Array<Step>
     ) {}
 
-    public append(join: Join): Query {
-        throw Error("Abstract");
-    }
-
     public toDescriptiveString(): string {
-        throw Error("Abstract");
-    }
-}
-
-export class SelfQuery extends Query {
-    constructor(
-        conditions: Array<Condition>
-    ) { super(conditions); }
-
-    static Identity: Query = new SelfQuery([]);
-
-    public append(join: Join): Query {
-        return new JoinQuery(
-            [],
-            join,
-            new SelfQuery(this.conditions)
-        );
-    }
-
-    public toDescriptiveString(): string {
-        return "()";
-    }
-}
-
-export class JoinQuery extends Query {
-    constructor(
-        conditions: Array<Condition>,
-        public join: Join,
-        public tail: Query
-    ) { super(conditions); }
-
-    public append(join: Join): Query {
-        return new JoinQuery(
-            this.conditions,
-            this.join,
-            this.tail.append(join)
-        );
-    }
-
-    public toDescriptiveString(): string {
-        return "()" +
-            (this.join.direction === Direction.Predecessor ? "P." : "S.") +
-            this.join.role +
-            this.tail.toDescriptiveString();
+        return _.map(this.steps, s => s.toDeclarativeString()).join(" ");
     }
 }
 
@@ -110,39 +73,45 @@ function consume(descriptive: string, index: number, expected: string): number {
 
 function identifier(descriptive: string, index: number): {id: string, index: number} {
     var id = "";
-    var next = lookahead(descriptive, index);
-    while ((next >= "a" && next <= "z") || (next >= "A" && next <= "Z")) {
+    while (!done(descriptive, index) && lookahead(descriptive, index) !== " ") {
+        var next = lookahead(descriptive, index);
         index = consume(descriptive, index, next);
         id = id + next;
-        next = lookahead(descriptive, index);
     }
     return {id, index};
 }
 
 export function fromDescriptiveString(descriptive: string, index: number = 0): Query {
-    index = consume(descriptive, index, "(");
-    index = consume(descriptive, index, ")");
     if (done(descriptive, index)) {
-        return new SelfQuery([]);
+        return new Query([]);
     }
 
-    var direction: Direction;
-    if (lookahead(descriptive, index) === "P") {
-        index = consume(descriptive, index, "P");
-        direction = Direction.Predecessor;
+    var steps: Array<Step> = [];
+    while (true) {
+        var next = lookahead(descriptive, index);
+        if (next === "P") {
+            index = consume(descriptive, index, "P");
+            index = consume(descriptive, index, ".");
+            var {id, index} = identifier(descriptive, index);
+            var join = new Join(Direction.Predecessor, id);
+            steps.push(join);
+        }
+        else if (next === "S") {
+            index = consume(descriptive, index, "S");
+            index = consume(descriptive, index, ".");
+            var {id, index} = identifier(descriptive, index);
+            var join = new Join(Direction.Successor, id);
+            steps.push(join);
+        }
+        else {
+            throw Error("Malformed descriptive string " + descriptive + " at " + index);
+        }
+
+        if (done(descriptive, index)) {
+            return new Query(steps);
+        }
+        index = consume(descriptive, index, " ");
     }
-    else if (lookahead(descriptive, index) === "S") {
-        index = consume(descriptive, index, "S");
-        direction = Direction.Successor;
-    }
-    else {
-        throw Error("Malformed descriptive string " + descriptive + " at " + index);
-    }
-    index = consume(descriptive, index, ".");
-    var {id, index} = identifier(descriptive, index);
-    var join = new Join(direction, id);
-    var tail = fromDescriptiveString(descriptive, index);
-    return new JoinQuery([], join, tail);
 }
 
 export interface StorageProvider {

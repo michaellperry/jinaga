@@ -24,7 +24,7 @@ describe("Memory", function() {
     }
   };
 
-  var query = Interface.fromDescriptiveString("()S.list()");
+  var query = Interface.fromDescriptiveString("S.list");
 
   it("should return no results when has no facts", function(done) {
     memory.executeQuery(chores, query, function (error, messages) {
@@ -94,7 +94,7 @@ describe("Memory", function() {
   it("should find grandchildren", function(done) {
     memory.save(completion, function(error1) {
       should.equal(null, error1);
-      memory.executeQuery(chores, Interface.fromDescriptiveString("()S.list()S.task()"), function (error2, messages) {
+      memory.executeQuery(chores, Interface.fromDescriptiveString("S.list S.task"), function (error2, messages) {
         should.equal(null, error2);
         messages.length.should.equal(1);
         messages[0].completed.should.equal(true);
@@ -106,7 +106,7 @@ describe("Memory", function() {
   it("should find grandparents", function(done) {
     memory.save(completion, function(error1) {
       should.equal(null, error1);
-      memory.executeQuery(completion, Interface.fromDescriptiveString("()P.task()P.list()"), function (error2, messages) {
+      memory.executeQuery(completion, Interface.fromDescriptiveString("P.task P.list"), function (error2, messages) {
         should.equal(null, error2);
         messages.length.should.equal(1);
         messages[0].name.should.equal("Chores");

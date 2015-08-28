@@ -3,9 +3,8 @@
 import Interface = require("./interface");
 import StorageProvider = Interface.StorageProvider;
 import Query = Interface.Query;
-import SelfQuery = Interface.SelfQuery;
-import JoinQuery = Interface.JoinQuery;
 import Direction = Interface.Direction;
+import Join = Interface.Join;
 import _ = require("lodash");
 
 class Node {
@@ -57,20 +56,26 @@ class MemoryProvider implements StorageProvider {
         }
 
         var nodes: Array<Node> = [startingNode];
-        while (query instanceof JoinQuery && nodes.length > 0) {
-            var joinQuery = <JoinQuery>query;
-            var nextNodes: Array<Node> = [];
-            var join = joinQuery.join;
-            for (var nodeIndex in nodes) {
-                var node = nodes[nodeIndex];
+        for (var index = 0; index < query.steps.length; index++) {
+            var step = query.steps[index];
 
-                nextNodes = nextNodes.concat(
-                    join.direction === Direction.Successor
-                        ? node.successorsIn(join.role)
-                        : node.predecessorsInRole(join.role));
+            if (nodes.length === 0) {
+                break;
             }
-            query = joinQuery.tail;
-            nodes = nextNodes;
+
+            if (step instanceof Join) {
+                var join = <Join>step;
+                var nextNodes: Array<Node> = [];
+                for (var nodeIndex in nodes) {
+                    var node = nodes[nodeIndex];
+
+                    nextNodes = nextNodes.concat(
+                        join.direction === Direction.Successor
+                            ? node.successorsIn(join.role)
+                            : node.predecessorsInRole(join.role));
+                }
+                nodes = nextNodes;
+            }
         }
 
         result(null, _.pluck(nodes, "message"));

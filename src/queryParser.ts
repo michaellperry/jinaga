@@ -1,10 +1,9 @@
 import Interface = require("./interface");
 import Join = Interface.Join;
 import Query = Interface.Query;
-import JoinQuery = Interface.JoinQuery;
-import SelfQuery = Interface.SelfQuery;
-import Direction = Interface.Direction;
 import Proxy = Interface.Proxy;
+import Direction = Interface.Direction;
+import Step = Interface.Step;
 
 class ParserProxy implements Proxy {
     constructor(
@@ -18,29 +17,30 @@ class ParserProxy implements Proxy {
         return proxy;
     }
 
-    public createQuery(tail: Query): Query {
+    public createQuery(): Array<Step> {
         if (this.parent) {
-            return this.parent.createQuery(new JoinQuery(
-                [],
-                new Join(Direction.Predecessor, this.role),
-                tail
-            ));
+            var steps = this.parent.createQuery();
+            var step: Step = new Join(Direction.Predecessor, this.role);
+            steps.push(step);
+            return steps;
         }
         else {
-            return tail;
+            return [];
         }
     }
 }
 
-function findTarget(spec:Object, tail: Query): Query {
+function findTarget(spec:Object): Array<Step> {
     if (spec instanceof ParserProxy) {
-        return (<ParserProxy>spec).createQuery(tail);
+        return (<ParserProxy>spec).createQuery();
     }
     for (var field in spec) {
-        var query: Query = new JoinQuery([], new Join(Direction.Successor, field), tail);
-        var targetQuery = findTarget(spec[field], query);
-        if (targetQuery)
+        var targetQuery = findTarget(spec[field]);
+        if (targetQuery) {
+            var step = new Join(Direction.Successor, field);
+            targetQuery.push(step);
             return targetQuery;
+        }
     }
     return null;
 }
@@ -50,8 +50,8 @@ function parse(templates: Array<(target: Proxy) => Object>): Query {
         var template = templates[templateIndex];
         var target = new ParserProxy(null, null);
         var spec = template(target);
-        var targetJoins = findTarget(spec, new SelfQuery([]));
-        return targetJoins; // TODO: Append each query
+        var targetJoins = findTarget(spec);
+        return new Query(targetJoins); // TODO: Append each query
     }
     return null;
 }
