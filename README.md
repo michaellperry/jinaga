@@ -1,5 +1,5 @@
 # Jinaga
-Reliably sync SPAs over unreliable connections.
+JSON Messaging Platform
 
 - [Mutablity](https://github.com/michaellperry/jinaga/blob/master/mutability.md)
 - [Security](https://github.com/michaellperry/jinaga/blob/master/security.md)

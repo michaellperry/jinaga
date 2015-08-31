@@ -117,11 +117,15 @@ export function fromDescriptiveString(descriptive: string, index: number = 0): Q
 export interface StorageProvider {
     save(
         message: Object,
-        result: (error: string) => void);
+        result: (error: string) => void,
+        thisArg: Object
+    );
     executeQuery(
         start: Object,
         query: Query,
-        result: (error: string, messages: Array<Object>) => void);
+        result: (error: string, messages: Array<Object>) => void,
+        thisArg: Object
+    );
 }
 
 export interface Proxy {

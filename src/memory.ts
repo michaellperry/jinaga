@@ -38,20 +38,24 @@ class MemoryProvider implements StorageProvider {
 
     save(
         message: Object,
-        result: (error: string) => void) {
+        result: (error: string) => void,
+        thisArg: Object
+    ) {
 
         this.insertNode(message);
-        result(null);
+        result.bind(thisArg)(null);
     }
 
     executeQuery(
         start: Object,
         query: Query,
-        result: (error: string, messages: Array<Object>) => void) {
+        result: (error: string, messages: Array<Object>) => void,
+        thisArg: Object
+    ) {
 
         var startingNode = this.findNode(start);
         if (!startingNode) {
-            result(null, []);
+            result.bind(thisArg)(null, []);
             return;
         }
 
@@ -78,7 +82,7 @@ class MemoryProvider implements StorageProvider {
             }
         }
 
-        result(null, _.pluck(nodes, "message"));
+        result.bind(thisArg)(null, _.pluck(nodes, "message"));
     }
 
     private insertNode(message: Object): Node {
