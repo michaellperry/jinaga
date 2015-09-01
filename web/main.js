@@ -7,30 +7,25 @@ require.config({
 requirejs(["jinaga"], function(Jinaga) {
   var j = new Jinaga();
 
-  var chores = {
-    name: "Chores"
-  };
-
-  var trash = {
-    list: chores,
-    description: "Take out the trash"
-  };
-
-  function tasksInList(l) {
-    return {
-      list: l
-    };
-  }
-
-  function taskAdded(task) {
-    var list = document.getElementById('taskList');
-    var item = document.createElement('li');
-    item.innerText = task.description;
-    list.appendChild(item);
+  function meetingAdded(meeting) {
+    var container = document.getElementById('container');
+    var item = document.createElement('div');
+    var name = document.createElement('p');
+    var time = document.createElement('p');
+    var location = document.createElement('p');
+    item.className = "meeting";
+    name.className = "name";
+    time.className = "time";
+    location.className = "location";
+    name.innerText = meeting.name;
+    time.innerText = meeting.time;
+    location.innerText = meeting.location;
+    item.appendChild(name);
+    item.appendChild(time);
+    item.appendChild(location);
+    container.appendChild(item);
   }
 
   window.j = j;
-
-  j.watch(chores, [tasksInList], taskAdded);
-  j.fact(trash);
+  window.meetingAdded = meetingAdded;
 });
