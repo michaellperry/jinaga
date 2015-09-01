@@ -9,6 +9,7 @@ describe("QueryParser", function() {
 
   function tasksInList(l) {
     return {
+      type: "Task",
       list: l
     };
   }
@@ -16,6 +17,7 @@ describe("QueryParser", function() {
   function completionsInList(l) {
     return {
       task: {
+        type: "Completion",
         list: l
       }
     };

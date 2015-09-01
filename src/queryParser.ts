@@ -34,12 +34,14 @@ function findTarget(spec:Object): Array<Step> {
     if (spec instanceof ParserProxy) {
         return (<ParserProxy>spec).createQuery();
     }
-    for (var field in spec) {
-        var targetQuery = findTarget(spec[field]);
-        if (targetQuery) {
-            var step = new Join(Direction.Successor, field);
-            targetQuery.push(step);
-            return targetQuery;
+    if (spec instanceof Object) {
+        for (var field in spec) {
+            var targetQuery = findTarget(spec[field]);
+            if (targetQuery) {
+                var step = new Join(Direction.Successor, field);
+                targetQuery.push(step);
+                return targetQuery;
+            }
         }
     }
     return null;
