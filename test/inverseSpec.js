@@ -35,4 +35,13 @@ describe("QueryInverter", function() {
     inverses[0].added.toDescriptiveString().should.equal("P.project");
     should.equal(null, inverses[0].removed);
   });
+
+  it("a field value is applied to the affected query", function () {
+    var inverses = invertQuery(Interface.fromDescriptiveString("S.user F.type=\"Assignment\" P.project"));
+    inverses.length.should.equal(1);
+
+    inverses[0].affected.toDescriptiveString().should.equal("F.type=\"Assignment\" P.user");
+    inverses[0].added.toDescriptiveString().should.equal("P.project");
+    should.equal(null, inverses[0].removed);
+  });
 });

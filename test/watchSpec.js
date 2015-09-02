@@ -7,6 +7,7 @@ describe("Watch", function () {
   var j;
   beforeEach(function() {
     j = new Jinaga();
+    tasks = [];
   });
 
   var chores = {
@@ -24,12 +25,12 @@ describe("Watch", function () {
     };
   }
 
-  it("should return a matching message", function () {
-    var tasks = [];
-    function taskAdded(task) {
-      tasks.push(task);
-    }
+  var tasks;
+  function taskAdded(task) {
+    tasks.push(task);
+  }
 
+  it("should return a matching message", function () {
     j.watch(chores, [tasksInList], taskAdded);
     j.fact(trash);
 
@@ -37,12 +38,19 @@ describe("Watch", function () {
     tasks[0].should.equal(trash);
   });
 
-  it("should return existing message", function () {
-    var tasks = [];
-    function taskAdded(task) {
-      tasks.push(task);
-    }
+  it("should not return if not a match", function () {
+    j.watch(chores, [tasksInList], taskAdded);
+    j.fact({
+      list: {
+        name: "Fun"
+      },
+      description: "Play XBox"
+    });
 
+    tasks.length.should.equal(0);
+  });
+
+  it("should return existing message", function () {
     j.fact(trash);
     j.watch(chores, [tasksInList], taskAdded);
 

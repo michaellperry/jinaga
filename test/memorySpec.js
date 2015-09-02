@@ -13,12 +13,15 @@ describe("Memory", function() {
   });
 
   var chores = {
+    type: "List",
     name: "Chores"
   };
 
   var completion = {
+    type: "TaskComplete",
     completed: true,
     task: {
+      type: "Task",
       list: chores,
       description: "Empty the dishwasher"
     }
@@ -66,7 +69,7 @@ describe("Memory", function() {
 
   it("should compare based on value", function(done) {
     memory.save({
-      list: { name: "Chores" },
+      list: { type: "List", name: "Chores" },
       description: "Take out the trash"
     }, function () {
       memory.executeQuery(chores, query, function (error, messages) {
@@ -80,7 +83,7 @@ describe("Memory", function() {
 
   it("should not match if predecessor is different", function(done) {
     memory.save({
-      list: { name: "Fun" },
+      list: { type: "List", name: "Fun" },
       description: "Play XBox"
     }, function () {
       memory.executeQuery(chores, query, function (error, messages) {
@@ -110,6 +113,18 @@ describe("Memory", function() {
         should.equal(null, error2);
         messages.length.should.equal(1);
         messages[0].name.should.equal("Chores");
+        done();
+      });
+    });
+  });
+
+  it("should match based on field values", function(done) {
+    memory.save(completion, function(error1) {
+      should.equal(null, error1);
+      memory.executeQuery(completion, Interface.fromDescriptiveString("P.task F.type=\"Task\" P.list F.type=\"List"), function (error2, messages) {
+        should.equal(null, error2);
+        messages.lengtu.should.equal(1);
+        messages[0].type.should.equal("List");
         done();
       });
     });
