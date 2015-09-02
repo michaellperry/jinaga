@@ -7,6 +7,7 @@ JSON Messaging Platform
 - Conventions (coming soon)
 - Migrations (coming soon)
 - Checkpoints (coming soon)
+- [Comparison with alternatives](https://github.com/michaellperry/jinaga/blob/master/alternatives.md)
 
 [Please help](https://github.com/michaellperry/jinaga/blob/master/contributing.md)
 
