@@ -121,10 +121,32 @@ describe("Memory", function() {
   it("should match based on field values", function(done) {
     memory.save(completion, function(error1) {
       should.equal(null, error1);
-      memory.executeQuery(completion, Interface.fromDescriptiveString("P.task F.type=\"Task\" P.list F.type=\"List"), function (error2, messages) {
+      memory.executeQuery(completion, Interface.fromDescriptiveString("P.task F.type=\"Task\" P.list F.type=\"List\""), function (error2, messages) {
         should.equal(null, error2);
-        messages.lengtu.should.equal(1);
+        messages.length.should.equal(1);
         messages[0].type.should.equal("List");
+        done();
+      });
+    });
+  });
+
+  it("should not match if final field values are different", function(done) {
+    memory.save(completion, function(error1) {
+      should.equal(null, error1);
+      memory.executeQuery(completion, Interface.fromDescriptiveString("P.task F.type=\"Task\" P.list F.type=\"No Match\""), function (error2, messages) {
+        should.equal(null, error2);
+        messages.length.should.equal(0);
+        done();
+      });
+    });
+  });
+
+  it("should not match if interior field values are different", function(done) {
+    memory.save(completion, function(error1) {
+      should.equal(null, error1);
+      memory.executeQuery(completion, Interface.fromDescriptiveString("P.task F.type=\"No Match\" P.list F.type=\"List\""), function (error2, messages) {
+        should.equal(null, error2);
+        messages.length.should.equal(0);
         done();
       });
     });

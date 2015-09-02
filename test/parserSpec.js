@@ -25,14 +25,14 @@ describe("QueryParser", function() {
 
   function listOfTask(t) {
     t.has("list");
-    t.has("type", "Task");
+    t.type = "Task";
     return t.list;
   }
 
   function listOfCompletion(c) {
     c.has("task").has("list");
-    c.has("type", "Completion");
-    c.task.has("type", "Task");
+    c.type = "Completion";
+    c.task.type = "Task";
     return c.task.list;
   }
 
