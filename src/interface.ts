@@ -30,6 +30,10 @@ export class PropertyCondition extends Step {
         public name: string,
         public value: any
     ) { super(); }
+
+    public toDeclarativeString(): string {
+        return "F." + this.name + "=\"" + this.value + "\"";
+    }
 }
 
 export class Join extends Step {

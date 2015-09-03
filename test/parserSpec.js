@@ -16,8 +16,9 @@ describe("QueryParser", function() {
 
   function completionsInList(l) {
     return {
+      type: "Completion",
       task: {
-        type: "Completion",
+        type: "Task",
         list: l
       }
     };
@@ -43,7 +44,7 @@ describe("QueryParser", function() {
 
   it("should find two successors", function () {
     var query = parse([completionsInList]);
-    query.toDescriptiveString().should.equal("S.list S.task F.type=\"Completion\"");
+    query.toDescriptiveString().should.equal("S.list F.type=\"Task\" S.task F.type=\"Completion\"");
   });
 
   it("should find predecessor", function () {

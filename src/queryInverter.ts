@@ -2,6 +2,7 @@ import Interface = require("./interface");
 import Query = Interface.Query;
 import Direction = Interface.Direction;
 import Join = Interface.Join;
+import PropertyCondition = Interface.PropertyCondition;
 import Step = Interface.Step;
 
 export class Inverse {
@@ -26,6 +27,18 @@ export function invertQuery(query: Query): Array<Inverse> {
                 join.direction === Direction.Predecessor ? Direction.Successor : Direction.Predecessor,
                 join.role
             ));
+
+            for (var conditionIndex = stepIndex + 1; conditionIndex < query.steps.length; ++conditionIndex) {
+                var condition = query.steps[conditionIndex];
+
+                if (condition instanceof PropertyCondition) {
+                    oppositeSteps.unshift(condition);
+                    stepIndex = conditionIndex;
+                }
+                else {
+                    break;
+                }
+            }
 
             if (join.direction === Direction.Successor) {
                 inverses.push(new Inverse(

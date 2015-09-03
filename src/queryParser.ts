@@ -1,14 +1,16 @@
 import Interface = require("./interface");
 import Join = Interface.Join;
+import PropertyCondition = Interface.PropertyCondition;
 import Query = Interface.Query;
 import Proxy = Interface.Proxy;
 import Direction = Interface.Direction;
 import Step = Interface.Step;
+import _ = require("lodash");
 
 class ParserProxy implements Proxy {
     constructor(
-        public parent: ParserProxy,
-        public role: string) {
+        private __parent: ParserProxy,
+        private __role: string) {
     }
 
     has(name:string):Proxy {
@@ -18,14 +20,21 @@ class ParserProxy implements Proxy {
     }
 
     public createQuery(): Array<Step> {
-        if (this.parent) {
-            var steps = this.parent.createQuery();
-            var step: Step = new Join(Direction.Predecessor, this.role);
+        var currentSteps: Array<Step> = [];
+        for (var name in this) {
+            if (name[0] != "_" && typeof this[name] !== "function" && !(this[name] instanceof ParserProxy)) {
+                var value = this[name];
+                currentSteps.push(new PropertyCondition(name, value));
+            }
+        }
+        if (this.__parent) {
+            var steps = this.__parent.createQuery();
+            var step: Step = new Join(Direction.Predecessor, this.__role);
             steps.push(step);
-            return steps;
+            return steps.concat(currentSteps);
         }
         else {
-            return [];
+            return currentSteps;
         }
     }
 }
@@ -35,14 +44,28 @@ function findTarget(spec:Object): Array<Step> {
         return (<ParserProxy>spec).createQuery();
     }
     if (spec instanceof Object) {
+        var steps: Array<Step> = [];
+        var targetQuery: Array<Step> = null;
         for (var field in spec) {
-            var targetQuery = findTarget(spec[field]);
-            if (targetQuery) {
-                var step = new Join(Direction.Successor, field);
-                targetQuery.push(step);
-                return targetQuery;
+            if (!targetQuery) {
+                var targetQuery = findTarget(spec[field]);
+                if (targetQuery) {
+                    var join = new Join(Direction.Successor, field);
+                    targetQuery.push(join);
+                }
+            }
+            if (typeof spec[field] === "string"||
+                typeof spec[field] === "number"||
+                typeof spec[field] === "boolean") {
+                var step = new PropertyCondition(field, spec[field]);
+                steps.push(step);
             }
         }
+
+        if (targetQuery) {
+            targetQuery = targetQuery.concat(steps);
+        }
+        return targetQuery;
     }
     return null;
 }
