@@ -25,7 +25,7 @@ class ExistentialCondition extends Step {
     ) { super(); }
 }
 
-class PropertyCondition extends Step {
+export class PropertyCondition extends Step {
     constructor(
         public name: string,
         public value: any
@@ -73,12 +73,28 @@ function consume(descriptive: string, index: number, expected: string): number {
 
 function identifier(descriptive: string, index: number): {id: string, index: number} {
     var id = "";
-    while (!done(descriptive, index) && lookahead(descriptive, index) !== " ") {
+    while (
+        !done(descriptive, index) &&
+        lookahead(descriptive, index) !== " " &&
+        lookahead(descriptive, index) !== "=") {
+
         var next = lookahead(descriptive, index);
         index = consume(descriptive, index, next);
         id = id + next;
     }
     return {id, index};
+}
+
+function quotedValue(descriptive: string, index: number): {value: string, index: number} {
+    var value = "";
+    index = consume(descriptive, index, "\"");
+    while (lookahead(descriptive, index) !== "\"") {
+        var next = lookahead(descriptive, index);
+        index = consume(descriptive, index, next);
+        value = value + next;
+    }
+    index = consume(descriptive, index, "\"");
+    return {value, index};
 }
 
 export function fromDescriptiveString(descriptive: string, index: number = 0): Query {
@@ -102,6 +118,15 @@ export function fromDescriptiveString(descriptive: string, index: number = 0): Q
             var {id, index} = identifier(descriptive, index);
             var join = new Join(Direction.Successor, id);
             steps.push(join);
+        }
+        else if (next === "F") {
+            index = consume(descriptive, index, "F");
+            index = consume(descriptive, index, ".");
+            var {id, index} = identifier(descriptive, index);
+            index = consume(descriptive, index, "=");
+            var {value, index} = quotedValue(descriptive, index);
+            var property = new PropertyCondition(id, value);
+            steps.push(property);
         }
         else {
             throw Error("Malformed descriptive string " + descriptive + " at " + index);

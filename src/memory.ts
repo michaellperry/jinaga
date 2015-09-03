@@ -5,6 +5,7 @@ import StorageProvider = Interface.StorageProvider;
 import Query = Interface.Query;
 import Direction = Interface.Direction;
 import Join = Interface.Join;
+import PropertyCondition = Interface.PropertyCondition;
 import _ = require("lodash");
 
 class Node {
@@ -78,6 +79,13 @@ class MemoryProvider implements StorageProvider {
                             ? node.successorsIn(join.role)
                             : node.predecessorsInRole(join.role));
                 }
+                nodes = nextNodes;
+            }
+            else if (step instanceof PropertyCondition) {
+                var propertyCondition = <PropertyCondition>step;
+                var template = { message: {} };
+                template.message[propertyCondition.name] = propertyCondition.value;
+                var nextNodes = _.filter(nodes, template);
                 nodes = nextNodes;
             }
         }
