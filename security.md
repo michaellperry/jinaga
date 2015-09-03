@@ -4,6 +4,7 @@ A message can be used to identify an individual user of the application. Such a 
 
 ```JavaScript
 var user = {
+  type: "User",
   __publicKey: "...nbZ15mk0zNC/WJWjM3vDRB3"
 }
 ```
@@ -24,6 +25,7 @@ To send a private message to an individual, set the individual as the **__to** p
 
 ```JavaScript
 var secret {
+  type: "Secret",
   __to: flynn,
   password: "Reindeer Flotilla"
 };
@@ -39,6 +41,7 @@ To sign a message, set your own user object as the **__from** property of the me
 
 ```JavaScript
 var email {
+  type: "Email",
   __to: alan1,
   __from: flynn,
   content: "It's all in the wrists."
@@ -55,11 +58,13 @@ A shared key can be used to encrypt messages that multiple people can all see. S
 
 ```JavaScript
 var project {
+  type: "Project",
   name: "Space Paranoids",
   __locked: true
 };
 
 var flynnPrivilege {
+  type: "Privilege",
   __admin: project,
   __to: flynn,
   __from: flynn
@@ -75,6 +80,7 @@ The successor must be encrypted. So it must have a **__to** predecessor. The adm
 
 ```JavaScript
 q.fact({
+  type: "Privilege",
   __write: project,
   __to: alan1,
   __from: flynn
@@ -87,6 +93,7 @@ Now that Flynn has write privileges to the project, he can create successors.
 
 ```JavaScript
 q.fact({
+  type: "Instruction",
   __in: project,
   __from alan1,
   program: "TRON"

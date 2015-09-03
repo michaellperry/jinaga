@@ -8,6 +8,7 @@ Capture each change to a mutable property as individual messages. For example, t
 
 ```JavaScript
 var myBook = {
+  type: "Book",
   id: j.unique()
 };
 
@@ -18,6 +19,7 @@ The next message is the initial title of the book.
 
 ```JavaScript
 var initialTitle = {
+  type: "BookTitle",
   book: myBook,
   title: "All's Well that Ends Well"
 };
@@ -29,6 +31,7 @@ To change the book's title, issue another message. The message should refer to t
 
 ```JavaScript
 var revisedTitle = {
+  type: "BookTitle",
   book: myBook,
   title: "War and Peace",
   prior: [initialTitle]
@@ -42,15 +45,16 @@ To watch for changes to mutable properties, create a query matching change messa
 ```JavaScript
 funciton titleIsCurrent(t) {
   return j.not({
+    type: "BookTitle",
     prior: t
   });
 }
 
 function bookTitle(b) {
-  return {
-    book: b,
-    __where: [titleIsCurrent]
-  };
+  return j.where({
+    type: "BookTitle",
+    book: b
+  }, [titleIsCurrent]);
 }
 
 function titleAdded(bookTitle) {
@@ -71,9 +75,10 @@ Because every change to a mutable property records the previous messages, we can
 
 ```JavaScript
 var anotherRevisedTitle = {
+  type: "BookTitle",
   book: myBook,
   title: "All's Fair in Love and War",
-  prior: [initialTitle]
+  prior: [initialTitle]                 // Notice the same prior as before
 };
 
 j.fact(anotherRevisedTitle);
@@ -108,6 +113,7 @@ Notice that the **prior** predecessor is an array. This allows a message to refe
 
 ```JavaScript
 j.fact({
+  type: "BookTitle",
   book: myBook,
   title: "War and Peace",
   prior: titleCandidates

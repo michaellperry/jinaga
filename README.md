@@ -1,6 +1,10 @@
 # Jinaga
 JSON Messaging Platform
 
+<iframe src="https://player.vimeo.com/video/137919088" width="500" height="281" frameborder="0" webkitallowfullscreen mozallowfullscreen allowfullscreen></iframe>
+
+Get a quick [video introduction](https://vimeo.com/137919088) to Jinaga.
+
 - [Mutablity](https://github.com/michaellperry/jinaga/blob/master/mutability.md)
 - [Security](https://github.com/michaellperry/jinaga/blob/master/security.md)
 - [Synchronization](https://github.com/michaellperry/jinaga/blob/master/synchronization.md)
@@ -21,7 +25,9 @@ var Jinaga = require ('jinaga');
 var j = new Jinaga();
 
 j.fact({
+  type: "Task",
   list: {
+    type: "TodoList",
     name: "Chores"
   },
   description: "Take out the trash"
@@ -32,6 +38,7 @@ This code represents two messages. The first is:
 
 ```JavaScript
 var chores = {
+  type: "TodoList",
   name: "Chores"
 };
 ```
@@ -40,6 +47,7 @@ The second is:
 
 ```JavaScript
 var trash = {
+  type: "Task",
   list: chores,
   description: "Take out the trash"
 };
@@ -54,6 +62,7 @@ Now that you can express that **chores** is a predecessor of **trash**, you migh
 ```JavaScript
 function tasksInList(l) {
   return {
+    type: "Task",
     list: l
   };
 }
@@ -73,6 +82,7 @@ Now if I add a new task to the list, the **taskAdded** function will be called.
 
 ```JavaScript
 var dishes = {
+  type: "Task",
   list: chores,
   description: "Empty the dishwasher"
 };
@@ -100,6 +110,7 @@ Now I want to mark a task completed. Let's capture that as another message.
 
 ```JavaScript
 j.fact({
+  type: "TaskCompleted",
   task: trash,
   completed: true
 });
@@ -110,6 +121,7 @@ Let's write a template that matches this message for a given task.
 ```JavaScript
 function taskIsNotCompleted(t) {
   return j.not({
+    type: "TaskCompleted",
     task: t,
     completed: true
   });
@@ -120,10 +132,10 @@ Now we can write a query so that only the uncompleted tasks match the template.
 
 ```JavaScript
 function uncompletedTasksInList(l) {
-  return {
-    list: l,
-    __where: [taskIsNotCompleted]
-  };
+  return j.where({
+    type: "Task",
+    list: l
+  }, [taskIsNotCompleted]);
 }
 
 j.watch(chores, [uncompletedTasksInList], taskAdded);
@@ -143,6 +155,7 @@ Now when you complete a task, the taskRemoved function will be called to remove 
 
 ```JavaScript
 j.fact({
+  type: "TaskCompleted",
   task: dishes,
   completed: true
 });
