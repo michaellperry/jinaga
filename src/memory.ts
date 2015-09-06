@@ -2,6 +2,7 @@
 
 import Interface = require("./interface");
 import StorageProvider = Interface.StorageProvider;
+import NetworkProvider = Interface.NetworkProvider;
 import Query = Interface.Query;
 import Direction = Interface.Direction;
 import Join = Interface.Join;
@@ -36,15 +37,23 @@ class Node {
 
 class MemoryProvider implements StorageProvider {
     nodes: { [hash: number]: Array<Node>; } = {};
+    queue: Array<{hash: number, fact: Object}> = [];
+    network: NetworkProvider;
 
     save(
         message: Object,
-        result: (error: string) => void,
+        enqueue: Boolean,
+        result: (error: string, saved: Boolean) => void,
         thisArg: Object
     ) {
 
-        this.insertNode(message);
-        result.bind(thisArg)(null);
+        var saved = this.insertNode(message).saved;
+        if (saved && enqueue) {
+            this.queue.push({ hash: this.computeHash(message), fact: message });
+            if (this.network)
+                this.network.fact(message);
+        }
+        result.bind(thisArg)(null, saved);
     }
 
     executeQuery(
@@ -93,7 +102,14 @@ class MemoryProvider implements StorageProvider {
         result.bind(thisArg)(null, _.pluck(nodes, "message"));
     }
 
-    private insertNode(message: Object): Node {
+    sync(network: NetworkProvider) {
+        this.network = network;
+        _.each(this.queue, function (item: {hash: number, fact: Object}) {
+            this.network.fact(item.fact);
+        }, this);
+    }
+
+    private insertNode(message: Object): {node: Node, saved: Boolean} {
         var hash = this.computeHash(message);
         var array = this.nodes[hash];
         if (!array) {
@@ -101,12 +117,13 @@ class MemoryProvider implements StorageProvider {
             this.nodes[hash] = array;
         }
         var node = _.find(array, "message", message);
+        var saved = false;
         if (!node) {
             var predecessors = {};
             for (var field in message) {
                 var value = message[field];
                 if (typeof(value) === "object") {
-                    var predecessor = this.insertNode(value);
+                    var predecessor = this.insertNode(value).node;
                     predecessors[field] = [ predecessor ];
                 }
             }
@@ -117,8 +134,9 @@ class MemoryProvider implements StorageProvider {
                 predecessorArray[0].addSuccessor(role, node);
             }
             array.push(node);
+            saved = true;
         }
-        return node;
+        return {node, saved};
     }
 
     private findNode(message: Object): Node {

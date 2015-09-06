@@ -1,6 +1,7 @@
 import Interface = require("./interface");
 import Query = Interface.Query;
 import StorageProvider = Interface.StorageProvider;
+import NetworkProvider = Interface.NetworkProvider;
 import Proxy = Interface.Proxy;
 import parse = require("./queryParser");
 import MemoryProvider = require("./memory");
@@ -21,27 +22,35 @@ class Watch {
 class Jinaga {
     private watches: Array<Watch> = [];
     private messages: StorageProvider = new MemoryProvider();
+    private network: NetworkProvider = null;
 
     public save(storage: StorageProvider) {
         this.messages = storage;
+        if (this.network)
+            this.messages.sync(this.network);
     }
 
-    equals(that: Object) {
-        return function (obj: Object) {
-            var is: Boolean = _.isEqual(obj, that);
-            return is;
-        }
+    public sync(network: NetworkProvider) {
+        this.network = network;
+        this.messages.sync(this.network);
+        this.network.connect((message: Object) => {
+            this.factReceived(message, false);
+        });
     }
 
     public fact(message: Object) {
-        this.messages.save(message, function (error1) {
-            if (!error1) {
+        this.factReceived(message, true);
+    }
+
+    private factReceived(message: Object, enqueue: Boolean) {
+        this.messages.save(message, enqueue, function (error1: string, saved: Boolean) {
+            if (!error1 && saved) {
                 _.each(this.watches, function (watch: Watch) {
                     _.each(watch.inverses, function (inverse: Inverse) {
                         this.messages.executeQuery(message, inverse.affected, function (error2: string, affected: Array<Object>) {
                             if (!error2) {
                                 var some: any = _.some;
-                                if (some(affected, this.equals(watch.start))) {
+                                if (some(affected, (obj: Object) => _.isEqual(obj, watch.start))) {
                                     if (inverse.added && watch.resultAdded) {
                                         this.messages.executeQuery(message, inverse.added, function (error3: string, added: Array<Object>) {
                                             if (!error3) {
@@ -85,6 +94,10 @@ class Jinaga {
         this.messages.executeQuery(start, query, function(error, results) {
             _.each(results, resultAdded);
         }, this);
+
+        if (this.network) {
+            this.network.watch(start, query);
+        }
     }
 }
 

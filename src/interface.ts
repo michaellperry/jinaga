@@ -146,7 +146,8 @@ export function fromDescriptiveString(descriptive: string, index: number = 0): Q
 export interface StorageProvider {
     save(
         message: Object,
-        result: (error: string) => void,
+        enqueue: Boolean,
+        result: (error: string, saved: Boolean) => void,
         thisArg: Object
     );
     executeQuery(
@@ -155,7 +156,15 @@ export interface StorageProvider {
         result: (error: string, messages: Array<Object>) => void,
         thisArg: Object
     );
+    sync(network: NetworkProvider);
 }
+
+export interface NetworkProvider {
+    connect(factReceived: (message: Object) => void);
+    watch(start: Object, query: Query);
+    fact(fact: Object);
+}
+
 
 export interface Proxy {
     has(name: string): Proxy;

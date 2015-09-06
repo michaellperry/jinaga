@@ -38,11 +38,11 @@ describe("Memory", function() {
   });
 
   it("should return one result when has a matching fact", function(done) {
-    memory.save(chores, function () {
+    memory.save(chores, false, function () {
       memory.save({
         list: chores,
         description: "Take out the trash"
-      }, function () {
+      }, false, function () {
         memory.executeQuery(chores, query, function (error, messages) {
           should.equal(null, error);
           messages.length.should.equal(1);
@@ -57,7 +57,7 @@ describe("Memory", function() {
     memory.save({
       list: chores,
       description: "Take out the trash"
-    }, function () {
+    }, false, function () {
       memory.executeQuery(chores, query, function (error, messages) {
         should.equal(null, error);
         messages.length.should.equal(1);
@@ -71,7 +71,7 @@ describe("Memory", function() {
     memory.save({
       list: { type: "List", name: "Chores" },
       description: "Take out the trash"
-    }, function () {
+    }, false, function () {
       memory.executeQuery(chores, query, function (error, messages) {
         should.equal(null, error);
         messages.length.should.equal(1);
@@ -85,7 +85,7 @@ describe("Memory", function() {
     memory.save({
       list: { type: "List", name: "Fun" },
       description: "Play XBox"
-    }, function () {
+    }, false, function () {
       memory.executeQuery(chores, query, function (error, messages) {
         should.equal(null, error);
         messages.length.should.equal(0);
@@ -95,7 +95,7 @@ describe("Memory", function() {
   });
 
   it("should find grandchildren", function(done) {
-    memory.save(completion, function(error1) {
+    memory.save(completion, false, function(error1) {
       should.equal(null, error1);
       memory.executeQuery(chores, Interface.fromDescriptiveString("S.list S.task"), function (error2, messages) {
         should.equal(null, error2);
@@ -107,7 +107,7 @@ describe("Memory", function() {
   });
 
   it("should find grandparents", function(done) {
-    memory.save(completion, function(error1) {
+    memory.save(completion, false, function(error1) {
       should.equal(null, error1);
       memory.executeQuery(completion, Interface.fromDescriptiveString("P.task P.list"), function (error2, messages) {
         should.equal(null, error2);
@@ -119,7 +119,7 @@ describe("Memory", function() {
   });
 
   it("should match based on field values", function(done) {
-    memory.save(completion, function(error1) {
+    memory.save(completion, false, function(error1) {
       should.equal(null, error1);
       memory.executeQuery(completion, Interface.fromDescriptiveString("P.task F.type=\"Task\" P.list F.type=\"List\""), function (error2, messages) {
         should.equal(null, error2);
@@ -131,7 +131,7 @@ describe("Memory", function() {
   });
 
   it("should not match if final field values are different", function(done) {
-    memory.save(completion, function(error1) {
+    memory.save(completion, false, function(error1) {
       should.equal(null, error1);
       memory.executeQuery(completion, Interface.fromDescriptiveString("P.task F.type=\"Task\" P.list F.type=\"No Match\""), function (error2, messages) {
         should.equal(null, error2);
@@ -142,7 +142,7 @@ describe("Memory", function() {
   });
 
   it("should not match if interior field values are different", function(done) {
-    memory.save(completion, function(error1) {
+    memory.save(completion, false, function(error1) {
       should.equal(null, error1);
       memory.executeQuery(completion, Interface.fromDescriptiveString("P.task F.type=\"No Match\" P.list F.type=\"List\""), function (error2, messages) {
         should.equal(null, error2);

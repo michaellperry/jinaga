@@ -38,6 +38,14 @@ describe("Watch", function () {
     tasks[0].should.equal(trash);
   });
 
+  it("should not return a match twice", function () {
+    j.watch(chores, [tasksInList], taskAdded);
+    j.fact(trash);
+    j.fact(trash);
+
+    tasks.length.should.equal(1);
+  });
+
   it("should not return if not a match", function () {
     j.watch(chores, [tasksInList], taskAdded);
     j.fact({
