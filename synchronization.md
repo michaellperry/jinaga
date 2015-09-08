@@ -1,6 +1,6 @@
 # Synchronization
 
-Where do messages come from? So far, they came from calls to **q.fact()** on the same browser. But that's not the only source.
+Where do messages come from? So far, they came from calls to **j.fact()** on the same browser. But that's not the only source.
 
 ## Other browsers
 
@@ -9,9 +9,9 @@ Messages come from other people using the same app. A message created in someone
 This is possible because the front end can be connected to a distributor.
 
 ```JavaScript
-var Distributor = require('jinaga.distributor');
+var Distributor = require('jinaga.distributor.client');
 
-j.sync(new Distributor('https://my.distributor.com'));
+j.sync(new Distributor('ws://my.distributor.com/'));
 ```
 
 The distributor stores messages while you are off-line. Start the app again, and you will receive all messages that you query.
