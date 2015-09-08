@@ -1,9 +1,7 @@
 # Jinaga
 JSON Messaging Platform
 
-<iframe src="https://player.vimeo.com/video/137919088" width="500" height="281" frameborder="0" webkitallowfullscreen mozallowfullscreen allowfullscreen></iframe>
-
-Get a quick [video introduction](https://vimeo.com/137919088) to Jinaga.
+Get a quick [video introduction](https://vimeo.com/channels/jinaga) to Jinaga.
 
 - [Mutablity](https://github.com/michaellperry/jinaga/blob/master/mutability.md)
 - [Security](https://github.com/michaellperry/jinaga/blob/master/security.md)

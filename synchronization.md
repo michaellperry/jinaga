@@ -2,6 +2,8 @@
 
 Where do messages come from? So far, they came from calls to **j.fact()** on the same browser. But that's not the only source.
 
+Here's a quick [video](https://vimeo.com/138580022) on this concept.
+
 ## Other browsers
 
 Messages come from other people using the same app. A message created in someone else's browser is shared with everyone who has issued a query. If the message matches your query, then you receive the message.
