@@ -127,17 +127,17 @@ class JinagaDistributor {
     }
 
     fact(fact: Object, sender: JinagaConnection) {
-        this.storage.save(fact, false, function (error: string, saved: Boolean) {
+        this.storage.save(fact, false, function (error: string, saved: Array<Object>) {
             if (error) {
                debug(error);
                return;
             }
-            if (saved) {
+            _.each(saved, function(newFact) {
                 _.each(this.connections, function (connection: JinagaConnection) {
                     if (connection !== sender)
-                        connection.distribute(fact);
-                });
-            }
+                        connection.distribute(newFact);
+                }, this);
+            }, this);
         }, this);
     }
 }

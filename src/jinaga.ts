@@ -43,30 +43,32 @@ class Jinaga {
     }
 
     private factReceived(message: Object, enqueue: Boolean) {
-        this.messages.save(message, enqueue, function (error1: string, saved: Boolean) {
-            if (!error1 && saved) {
-                _.each(this.watches, function (watch: Watch) {
-                    _.each(watch.inverses, function (inverse: Inverse) {
-                        this.messages.executeQuery(message, inverse.affected, function (error2: string, affected: Array<Object>) {
-                            if (!error2) {
-                                var some: any = _.some;
-                                if (some(affected, (obj: Object) => _.isEqual(obj, watch.start))) {
-                                    if (inverse.added && watch.resultAdded) {
-                                        this.messages.executeQuery(message, inverse.added, function (error3: string, added: Array<Object>) {
-                                            if (!error3) {
-                                                _.each(added, watch.resultAdded);
-                                            }
-                                        });
-                                    }
-                                    if (inverse.removed && watch.resultRemoved) {
-                                        this.messages.executeQuery(message, inverse.removed, function (error2: string, added: Array<Object>) {
-                                            if (!error2) {
-                                                _.each(added, watch.resultRemoved);
-                                            }
-                                        });
+        this.messages.save(message, enqueue, function (error1: string, saved: Array<Object>) {
+            if (!error1) {
+                _.each(saved, function (newFact: Object) {
+                    _.each(this.watches, function (watch: Watch) {
+                        _.each(watch.inverses, function (inverse: Inverse) {
+                            this.messages.executeQuery(newFact, inverse.affected, function (error2: string, affected: Array<Object>) {
+                                if (!error2) {
+                                    var some: any = _.some;
+                                    if (some(affected, (obj: Object) => _.isEqual(obj, watch.start))) {
+                                        if (inverse.added && watch.resultAdded) {
+                                            this.messages.executeQuery(newFact, inverse.added, function (error3: string, added: Array<Object>) {
+                                                if (!error3) {
+                                                    _.each(added, watch.resultAdded);
+                                                }
+                                            });
+                                        }
+                                        if (inverse.removed && watch.resultRemoved) {
+                                            this.messages.executeQuery(newFact, inverse.removed, function (error2: string, added: Array<Object>) {
+                                                if (!error2) {
+                                                    _.each(added, watch.resultRemoved);
+                                                }
+                                            });
+                                        }
                                     }
                                 }
-                            }
+                            }, this);
                         }, this);
                     }, this);
                 }, this);

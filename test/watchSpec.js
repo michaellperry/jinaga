@@ -65,4 +65,15 @@ describe("Watch", function () {
     tasks.length.should.equal(1);
     tasks[0].should.equal(trash);
   });
+
+  it("should match a predecessor", function () {
+    j.watch(chores, [tasksInList], taskAdded);
+    j.fact({
+      type: "TaskCompletion",
+      task: trash
+    });
+
+    tasks.length.should.equal(1);
+    tasks[0].should.equal(trash);
+  })
 });

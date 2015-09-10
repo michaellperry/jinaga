@@ -147,7 +147,7 @@ export interface StorageProvider {
     save(
         message: Object,
         enqueue: Boolean,
-        result: (error: string, saved: Boolean) => void,
+        result: (error: string, saved: Array<Object>) => void,
         thisArg: Object
     );
     executeQuery(

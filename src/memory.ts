@@ -43,7 +43,7 @@ class MemoryProvider implements StorageProvider {
     save(
         message: Object,
         enqueue: Boolean,
-        result: (error: string, saved: Boolean) => void,
+        result: (error: string, saved: Array<Object>) => void,
         thisArg: Object
     ) {
 
@@ -109,7 +109,7 @@ class MemoryProvider implements StorageProvider {
         }, this);
     }
 
-    private insertNode(message: Object): {node: Node, saved: Boolean} {
+    private insertNode(message: Object): {node: Node, saved: Array<Object>} {
         var hash = this.computeHash(message);
         var array = this.nodes[hash];
         if (!array) {
@@ -117,13 +117,15 @@ class MemoryProvider implements StorageProvider {
             this.nodes[hash] = array;
         }
         var node = _.find(array, "message", message);
-        var saved = false;
+        var saved: Array<Object> = [];
         if (!node) {
             var predecessors = {};
             for (var field in message) {
                 var value = message[field];
                 if (typeof(value) === "object") {
-                    var predecessor = this.insertNode(value).node;
+                    var result = this.insertNode(value);
+                    var predecessor = result.node;
+                    saved = saved.concat(result.saved);
                     predecessors[field] = [ predecessor ];
                 }
             }
@@ -134,7 +136,7 @@ class MemoryProvider implements StorageProvider {
                 predecessorArray[0].addSuccessor(role, node);
             }
             array.push(node);
-            saved = true;
+            saved.push(message);
         }
         return {node, saved};
     }
