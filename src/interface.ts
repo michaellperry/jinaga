@@ -143,24 +143,27 @@ export function fromDescriptiveString(descriptive: string, index: number = 0): Q
     }
 }
 
+export interface Coordinator {
+    onSaved(fact: Object, source: any);
+    send(fact: Object, source: any);
+    onReceived(fact: Object, source: any);
+}
+
 export interface StorageProvider {
-    save(
-        message: Object,
-        enqueue: Boolean,
-        result: (error: string, saved: Array<Object>) => void,
-        thisArg: Object
-    );
+    init(coordinator: Coordinator);
+    save(fact: Object, source: any);
     executeQuery(
         start: Object,
         query: Query,
-        result: (error: string, messages: Array<Object>) => void,
+        result: (error: string, facts: Array<Object>) => void,
         thisArg: Object
     );
-    sync(network: NetworkProvider);
+    sendAllFacts();
+    push(fact: Object);
 }
 
 export interface NetworkProvider {
-    connect(factReceived: (message: Object) => void);
+    init(coordinator: Coordinator);
     watch(start: Object, query: Query);
     fact(fact: Object);
 }

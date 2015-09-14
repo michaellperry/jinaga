@@ -3,6 +3,7 @@ import Debug = require("debug");
 import Interface = require("./interface");
 import Query = Interface.Query;
 import StorageProvider = Interface.StorageProvider;
+import Coordinator = Interface.Coordinator;
 import _ = require("lodash");
 import QueryInverter = require("./queryInverter");
 import Inverse = QueryInverter.Inverse;
@@ -75,7 +76,7 @@ class JinagaConnection {
             return;
 
         debug("Received fact from " + this.socket.id);
-        this.distributor.fact(message.fact, this);
+        this.distributor.onReceived(message.fact, this);
     }
 
     distribute(fact: Object) {
@@ -102,11 +103,12 @@ class JinagaConnection {
     }
 }
 
-class JinagaDistributor {
+class JinagaDistributor implements Coordinator {
     server: Engine;
     connections: Array<JinagaConnection> = [];
 
     constructor(public storage: StorageProvider) {
+        storage.init(this);
     }
 
     static listen(storage: StorageProvider, port: number): JinagaDistributor {
@@ -121,24 +123,25 @@ class JinagaDistributor {
         this.server.on("connection", this.onConnection.bind(this));
     }
 
-    private onConnection(socket) {
+    onConnection(socket) {
         debug("Connection established");
         this.connections.push(new JinagaConnection(socket, this));
     }
 
-    fact(fact: Object, sender: JinagaConnection) {
-        this.storage.save(fact, false, function (error: string, saved: Array<Object>) {
-            if (error) {
-               debug(error);
-               return;
-            }
-            _.each(saved, function(newFact) {
-                _.each(this.connections, function (connection: JinagaConnection) {
-                    if (connection !== sender)
-                        connection.distribute(newFact);
-                }, this);
-            }, this);
+    send(fact: Object, sender: any) {
+        _.each(this.connections, function (connection: JinagaConnection) {
+            if (connection !== sender)
+                connection.distribute(fact);
         }, this);
+    }
+
+    onReceived(fact: Object, source: any) {
+        this.storage.save(fact, source);
+    }
+
+
+    onSaved(fact:Object, source:any) {
+        this.send(fact, source);
     }
 }
 

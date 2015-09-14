@@ -6,6 +6,7 @@ import NetworkProvider = Interface.NetworkProvider;
 import Query = Interface.Query;
 import Direction = Interface.Direction;
 import Join = Interface.Join;
+import Coordinator = Interface.Coordinator;
 import PropertyCondition = Interface.PropertyCondition;
 import _ = require("lodash");
 
@@ -13,7 +14,7 @@ class Node {
     successors: { [role: string]: Array<Node> } = {};
 
     constructor(
-        public message: Object,
+        public fact: Object,
         public predecessors: Object) {
     }
 
@@ -38,28 +39,20 @@ class Node {
 class MemoryProvider implements StorageProvider {
     nodes: { [hash: number]: Array<Node>; } = {};
     queue: Array<{hash: number, fact: Object}> = [];
-    network: NetworkProvider;
+    coordinator: Coordinator;
 
-    save(
-        message: Object,
-        enqueue: Boolean,
-        result: (error: string, saved: Array<Object>) => void,
-        thisArg: Object
-    ) {
+    init(coordinator: Coordinator) {
+        this.coordinator = coordinator;
+    }
 
-        var saved = this.insertNode(message).saved;
-        if (saved && enqueue) {
-            this.queue.push({ hash: this.computeHash(message), fact: message });
-            if (this.network)
-                this.network.fact(message);
-        }
-        result.bind(thisArg)(null, saved);
+    save(fact: Object, source: any) {
+        this.insertNode(fact, source);
     }
 
     executeQuery(
         start: Object,
         query: Query,
-        result: (error: string, messages: Array<Object>) => void,
+        result: (error: string, facts: Array<Object>) => void,
         thisArg: Object
     ) {
 
@@ -92,70 +85,72 @@ class MemoryProvider implements StorageProvider {
             }
             else if (step instanceof PropertyCondition) {
                 var propertyCondition = <PropertyCondition>step;
-                var template = { message: {} };
-                template.message[propertyCondition.name] = propertyCondition.value;
+                var template = { fact: {} };
+                template.fact[propertyCondition.name] = propertyCondition.value;
                 var nextNodes = _.filter(nodes, template);
                 nodes = nextNodes;
             }
         }
 
-        result.bind(thisArg)(null, _.pluck(nodes, "message"));
+        result.bind(thisArg)(null, _.pluck(nodes, "fact"));
     }
 
-    sync(network: NetworkProvider) {
-        this.network = network;
-        _.each(this.queue, function (item: {hash: number, fact: Object}) {
-            this.network.fact(item.fact);
-        }, this);
+    sendAllFacts() {
+        _.each(this.queue, (item: {hash: number, fact: Object}) => {
+            this.coordinator.send(item.fact, null);
+        });
     }
 
-    private insertNode(message: Object): {node: Node, saved: Array<Object>} {
-        var hash = this.computeHash(message);
+    push(fact:Object) {
+        this.queue.push({ hash: this.computeHash(fact), fact: fact });
+        if (this.coordinator)
+            this.coordinator.send(fact, null);
+    }
+
+    private insertNode(fact: Object, source: any): Node {
+        var hash = this.computeHash(fact);
         var array = this.nodes[hash];
         if (!array) {
             array = [];
             this.nodes[hash] = array;
         }
-        var node = _.find(array, "message", message);
-        var saved: Array<Object> = [];
+        var node = _.find(array, "fact", fact);
         if (!node) {
             var predecessors = {};
-            for (var field in message) {
-                var value = message[field];
+            for (var field in fact) {
+                var value = fact[field];
                 if (typeof(value) === "object") {
-                    var result = this.insertNode(value);
-                    var predecessor = result.node;
-                    saved = saved.concat(result.saved);
+                    var predecessor = this.insertNode(value, source);
                     predecessors[field] = [ predecessor ];
                 }
             }
 
-            node = new Node(message, predecessors);
+            node = new Node(fact, predecessors);
             for (var role in predecessors) {
                 var predecessorArray = <Array<Node>>predecessors[role];
                 predecessorArray[0].addSuccessor(role, node);
             }
             array.push(node);
-            saved.push(message);
+            this.coordinator.onSaved(fact, source);
         }
-        return {node, saved};
+        return node;
     }
 
-    private findNode(message: Object): Node {
-        var hash = this.computeHash(message);
+    private findNode(fact: Object): Node {
+        var hash = this.computeHash(fact);
         var array = this.nodes[hash];
         if (!array) {
             return null;
         }
 
-        return _.find(array, "message", message);
+        return _.find(array, "fact", fact);
     }
 
-    private computeHash(message: Object): number {
-        if (!message)
+    private computeHash(fact: Object): number {
+        if (!fact)
             return 0;
 
-        var hash = _.sum(_.map(_.pairs(message), this.computeMemberHash, this));
+        var hash = _.sum(_.map(_.pairs(fact), this.computeMemberHash, this));
         return hash;
     }
 

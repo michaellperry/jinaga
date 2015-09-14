@@ -3,10 +3,11 @@ import Socket = engine.Socket;
 import Interface = require("./interface");
 import NetworkProvider = Interface.NetworkProvider;
 import Query = Interface.Query;
+import Coordinator = Interface.Coordinator;
 
 class JinagaDistributor implements NetworkProvider {
     socket: Socket;
-    factReceived: (message: Object) => void;
+    coordinator: Coordinator;
 
     constructor(
         endpoint: string
@@ -15,8 +16,8 @@ class JinagaDistributor implements NetworkProvider {
         this.socket.on("message", this.onMessage.bind(this));
     }
 
-    public connect(factReceived: (message: Object) => void) {
-        this.factReceived = factReceived;
+    public init(coordinator: Coordinator) {
+        this.coordinator = coordinator;
     }
 
     public watch(start: Object, query: Query) {
@@ -37,7 +38,7 @@ class JinagaDistributor implements NetworkProvider {
     private onMessage(message) {
         var messageObj = JSON.parse(message);
         if (messageObj.type === "fact") {
-            this.factReceived(messageObj.fact);
+            this.coordinator.onReceived(messageObj.fact, this);
         }
     }
 }
