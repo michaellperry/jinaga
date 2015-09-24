@@ -2,6 +2,7 @@ var mocha = require("mocha");
 var chai = require("chai");
 var MongoProvider = require("../node/jinaga.mongo");
 var Interface = require("../node/interface");
+var url = 'mongodb://localhost:27017/test';
 
 var should = chai.should();
 
@@ -22,8 +23,12 @@ describe("Mongo", function() {
       this.afterSave = function(next) {
         this.continuations.push(next);
       }.bind(this);
+
+      this.onError = function(err) {
+        should.equal("", err);
+      };
     }();
-    mongo = new MongoProvider();
+    mongo = new MongoProvider(url);
     mongo.init(coordinator)
   });
 

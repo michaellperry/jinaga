@@ -143,6 +143,10 @@ class JinagaDistributor implements Coordinator {
     onSaved(fact:Object, source:any) {
         this.send(fact, source);
     }
+
+    onError(err: string) {
+        debug(err);
+    }
 }
 
 export = JinagaDistributor;

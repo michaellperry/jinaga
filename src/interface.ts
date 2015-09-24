@@ -147,6 +147,7 @@ export interface Coordinator {
     onSaved(fact: Object, source: any);
     send(fact: Object, source: any);
     onReceived(fact: Object, source: any);
+    onError(err: string);
 }
 
 export interface StorageProvider {

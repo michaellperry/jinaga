@@ -9,6 +9,8 @@ import MemoryProvider = require("./memory");
 import QueryInverter = require("./queryInverter");
 import Inverse = QueryInverter.Inverse;
 import _ = require("lodash");
+import Debug = require("debug");
+var debug = Debug("jinaga");
 
 class Watch {
     constructor(
@@ -101,6 +103,10 @@ class JinagaCoordinator implements Coordinator {
 
     onReceived(fact: Object, source: any) {
         this.messages.save(fact, source);
+    }
+
+    onError(err: string) {
+        debug(err);
     }
 
     send(fact: Object, source: any) {
