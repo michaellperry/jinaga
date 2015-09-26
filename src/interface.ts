@@ -143,6 +143,51 @@ export function fromDescriptiveString(descriptive: string, index: number = 0): Q
     }
 }
 
+export function computeHash(fact: Object): number {
+    if (!fact)
+        return 0;
+
+    var hash = _.sum(_.map(_.pairs(fact), computeMemberHash, this));
+    return hash;
+}
+
+function computeMemberHash(pair: [any]): number {
+    var name = pair[0];
+    var value = pair[1];
+
+    var valueHash = 0;
+    switch (typeof(value)) {
+        case "string":
+            valueHash = computeStringHash(value);
+            break;
+        case "number":
+            valueHash = value;
+            break;
+        case "object":
+            valueHash = computeHash(value);
+            break;
+        case "boolean":
+            valueHash = value ? 1 : 0;
+            break;
+        default:
+            throw new TypeError("Property " + name + " is a " + typeof(value));
+    }
+
+    var nameHash = computeStringHash(name);
+    return (nameHash << 5) - nameHash + valueHash;
+}
+
+function computeStringHash(str: string): number {
+    if (!str)
+        return 0;
+
+    var hash = 0;
+    for (var index = 0; index < str.length; index++) {
+        hash = (hash << 5) - hash + str.charCodeAt(index);
+    }
+    return hash;
+}
+
 export interface Coordinator {
     onSaved(fact: Object, source: any);
     send(fact: Object, source: any);

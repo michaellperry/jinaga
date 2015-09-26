@@ -8,6 +8,7 @@ import Direction = Interface.Direction;
 import Join = Interface.Join;
 import Coordinator = Interface.Coordinator;
 import PropertyCondition = Interface.PropertyCondition;
+import computeHash = Interface.computeHash;
 import _ = require("lodash");
 
 class Node {
@@ -102,13 +103,13 @@ class MemoryProvider implements StorageProvider {
     }
 
     push(fact:Object) {
-        this.queue.push({ hash: this.computeHash(fact), fact: fact });
+        this.queue.push({ hash: computeHash(fact), fact: fact });
         if (this.coordinator)
             this.coordinator.send(fact, null);
     }
 
     private insertNode(fact: Object, source: any): Node {
-        var hash = this.computeHash(fact);
+        var hash = computeHash(fact);
         var array = this.nodes[hash];
         if (!array) {
             array = [];
@@ -137,58 +138,13 @@ class MemoryProvider implements StorageProvider {
     }
 
     private findNode(fact: Object): Node {
-        var hash = this.computeHash(fact);
+        var hash = computeHash(fact);
         var array = this.nodes[hash];
         if (!array) {
             return null;
         }
 
         return _.find(array, "fact", fact);
-    }
-
-    private computeHash(fact: Object): number {
-        if (!fact)
-            return 0;
-
-        var hash = _.sum(_.map(_.pairs(fact), this.computeMemberHash, this));
-        return hash;
-    }
-
-    private computeMemberHash(pair: [any]): number {
-        var name = pair[0];
-        var value = pair[1];
-
-        var valueHash = 0;
-        switch (typeof(value)) {
-            case "string":
-                valueHash = this.computeStringHash(value);
-                break;
-            case "number":
-                valueHash = value;
-                break;
-            case "object":
-                valueHash = this.computeHash(value);
-                break;
-            case "boolean":
-                valueHash = value ? 1 : 0;
-                break;
-            default:
-                throw new TypeError("Property " + name + " is a " + typeof(value));
-        }
-
-        var nameHash = this.computeStringHash(name);
-        return (nameHash << 5) - nameHash + valueHash;
-    }
-
-    private computeStringHash(str: string): number {
-        if (!str)
-            return 0;
-
-        var hash = 0;
-        for (var index = 0; index < str.length; index++) {
-            hash = (hash << 5) - hash + str.charCodeAt(index);
-        }
-        return hash;
     }
 }
 

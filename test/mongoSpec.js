@@ -6,11 +6,14 @@ var url = 'mongodb://localhost:27017/test';
 
 var should = chai.should();
 
+var MongoDb = require('mongodb');
+var MongoClient = MongoDb.MongoClient;
+
 describe("Mongo", function() {
   var coordinator;
   var mongo;
 
-  beforeEach(function () {
+  beforeEach(function (done) {
     coordinator = new function() {
       this.continuations = [];
 
@@ -29,7 +32,18 @@ describe("Mongo", function() {
       };
     }();
     mongo = new MongoProvider(url);
-    mongo.init(coordinator)
+    mongo.init(coordinator);
+
+    MongoClient.connect(url, function(err, db) {
+      should.equal(null, err);
+      db.collection("facts").drop(function (err) {
+        if (err) {
+          if (err.message !== "ns not found")
+            should.equal(null, err.message);
+        }
+        done();
+      });
+    });
   });
 
   var chores = {
