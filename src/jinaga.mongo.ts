@@ -2,7 +2,10 @@ import Interface = require("./interface");
 import StorageProvider = Interface.StorageProvider;
 import Coordinator = Interface.Coordinator;
 import Query = Interface.Query;
+import Join = Interface.Join;
+import PropertyCondition = Interface.PropertyCondition;
 import computeHash = Interface.computeHash;
+import isPredecessor = Interface.isPredecessor;
 import _ = require("lodash");
 
 //import Debug = require("debug");
@@ -29,7 +32,8 @@ class MongoSave {
     }
 
     execute() {
-        debug("Execute save \"" + this.role + "\" " + JSON.stringify(this.fact));
+        debug("Saving \"" + this.role + "\" " + JSON.stringify(this.fact));
+
         this.hash = computeHash(this.fact);
         this.collection.find({ hash: this.hash })
             .forEach(this.onFound.bind(this), this.onFindFinished.bind(this));
@@ -57,7 +61,7 @@ class MongoSave {
 
             for (var field in this.fact) {
                 var value = this.fact[field];
-                if (typeof(value) === "object") {
+                if (isPredecessor(value)) {
                     var save = new MongoSave(
                         this.coordinator,
                         field,
@@ -101,7 +105,72 @@ class MongoSave {
             this.id = result.ops[0]._id;
         }
         this.isDone = true;
+        this.coordinator.onSaved(this.fact, this.source);
         this.done(this);
+    }
+}
+
+class MongoFind {
+    public id: any;
+
+    constructor(
+        public coordinator: Coordinator,
+        public fact: Object,
+        public join: Join,
+        public collection: any,
+        public done: (MongoFind) => void
+    ) {}
+
+    execute() {
+        debug("Finding " + this.join.toDeclarativeString() + " of " + JSON.stringify(this.fact));
+
+        var hash = computeHash(this.fact);
+        this.collection.find({ hash: hash })
+            .forEach(this.onHashFound.bind(this), this.onHashFindFinished.bind(this));
+    }
+
+    private onHashFound(document) {
+        debug("Found " + JSON.stringify((document)));
+
+        if (_.isEqual(this.fact, document.fact)) {
+            debug("It's a match");
+            this.id = document._id;
+        }
+    }
+
+    private onHashFindFinished(err) {
+        if (err) {
+            this.coordinator.onError(err.message);
+            this.done(this);
+        }
+        else if (this.id) {
+            debug("Starting point found; executing query");
+
+            this.collection.find({
+                predecessors: { $in: [{ role: this.join.role, id: this.id }] }
+            }).forEach(this.onFound.bind(this), this.onFindFinished.bind(this));
+        }
+        else {
+            debug("Starting point not found");
+
+            this.done(this);
+        }
+    }
+
+    private onFound(document) {
+        debug("Found " + JSON.stringify((document)));
+    }
+
+    private onFindFinished(err) {
+        debug("Find finished");
+
+        if (err) {
+            this.coordinator.onError(err.message);
+            this.done(this);
+        }
+        else {
+            this.done(this);
+        }
     }
 }
 
@@ -144,9 +213,19 @@ class MongoProvider implements Interface.StorageProvider {
         result:(error: string, facts: Array<Object>) => void,
         thisArg:Object) {
 
-        setTimeout(() => {
-            result(null, []);
-        }, 100);
+        this.withCollection((facts, done: () => void) => {
+            var find = new MongoFind(
+                this.coordinator,
+                start,
+                <Join>query.steps[0],
+                facts,
+                () => {
+                    result(null, []);
+                    done();
+                }
+            );
+            find.execute();
+        })
     }
 
     private withCollection(action: (facts, done: () => void) => void) {

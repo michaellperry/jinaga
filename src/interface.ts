@@ -143,6 +143,16 @@ export function fromDescriptiveString(descriptive: string, index: number = 0): Q
     }
 }
 
+export function isPredecessor(value: any): boolean {
+    if (typeof(value) !== "object")
+        return false;
+
+    if (value instanceof Date)
+        return false;
+
+    return true;
+}
+
 export function computeHash(fact: Object): number {
     if (!fact)
         return 0;
@@ -164,7 +174,12 @@ function computeMemberHash(pair: [any]): number {
             valueHash = value;
             break;
         case "object":
-            valueHash = computeHash(value);
+            if (value instanceof Date) {
+                valueHash = (<Date>value).getTime();
+            }
+            else {
+                valueHash = computeHash(value);
+            }
             break;
         case "boolean":
             valueHash = value ? 1 : 0;

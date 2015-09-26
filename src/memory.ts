@@ -9,6 +9,7 @@ import Join = Interface.Join;
 import Coordinator = Interface.Coordinator;
 import PropertyCondition = Interface.PropertyCondition;
 import computeHash = Interface.computeHash;
+import isPredecessor = Interface.isPredecessor;
 import _ = require("lodash");
 
 class Node {
@@ -120,7 +121,7 @@ class MemoryProvider implements StorageProvider {
             var predecessors = {};
             for (var field in fact) {
                 var value = fact[field];
-                if (typeof(value) === "object") {
+                if (isPredecessor(value)) {
                     var predecessor = this.insertNode(value, source);
                     predecessors[field] = [ predecessor ];
                 }

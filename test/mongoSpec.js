@@ -6,14 +6,11 @@ var url = 'mongodb://localhost:27017/test';
 
 var should = chai.should();
 
-var MongoDb = require('mongodb');
-var MongoClient = MongoDb.MongoClient;
-
 describe("Mongo", function() {
   var coordinator;
   var mongo;
 
-  beforeEach(function (done) {
+  beforeEach(function () {
     coordinator = new function() {
       this.continuations = [];
 
@@ -34,16 +31,7 @@ describe("Mongo", function() {
     mongo = new MongoProvider(url);
     mongo.init(coordinator);
 
-    MongoClient.connect(url, function(err, db) {
-      should.equal(null, err);
-      db.collection("facts").drop(function (err) {
-        if (err) {
-          if (err.message !== "ns not found")
-            should.equal(null, err.message);
-        }
-        done();
-      });
-    });
+    chores.time = new Date();
   });
 
   var chores = {
@@ -108,7 +96,7 @@ describe("Mongo", function() {
 
   it("should compare based on value", function(done) {
     mongo.save({
-      list: { type: "List", name: "Chores" },
+      list: { type: "List", name: "Chores", time: chores.time },
       description: "Take out the trash"
     }, false, null);
 
@@ -124,7 +112,7 @@ describe("Mongo", function() {
 
   it("should not match if predecessor is different", function(done) {
     mongo.save({
-      list: { type: "List", name: "Fun" },
+      list: { type: "List", name: "Fun", time: chores.time },
       description: "Play XBox"
     }, false, null);
 
