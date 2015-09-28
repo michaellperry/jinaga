@@ -8,9 +8,8 @@ import computeHash = Interface.computeHash;
 import isPredecessor = Interface.isPredecessor;
 import _ = require("lodash");
 
-//import Debug = require("debug");
-//var debug = Debug("jinaga.mongo");
-var debug = function(str) { console.log(str); };
+import Debug = require("debug");
+var debug = Debug("jinaga.mongo");
 
 var MongoDb = require('mongodb');
 var MongoClient = MongoDb.MongoClient;
@@ -281,6 +280,28 @@ class LoadStep implements PipelineStep {
     }
 }
 
+/////
+class FieldStep implements PipelineStep {
+    constructor(
+        private next: PipelineStep,
+        private name: string,
+        private value: any
+    ) { }
+
+    wantsFact():boolean {
+        return true;
+    }
+
+    join(id:any, fact:Object, predecessors:Array<any>) {
+        if (fact[this.name] === this.value)
+            this.next.join(id, fact, predecessors);
+    }
+
+    done() {
+        this.next.done();
+    }
+}
+
 class MongoProvider implements Interface.StorageProvider {
     private url: string;
     private coordinator: Coordinator;
@@ -346,6 +367,10 @@ class MongoProvider implements Interface.StorageProvider {
                     else {
                         next = new SuccessorStep(next, join.role, facts, onError);
                     }
+                }
+                else if (step instanceof PropertyCondition) {
+                    var field = <PropertyCondition>step;
+                    next = new FieldStep(next, field.name, field.value);
                 }
             }
             var startStep = new StartStep(next, facts, onError);
