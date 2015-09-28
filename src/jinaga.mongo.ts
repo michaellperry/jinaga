@@ -110,67 +110,117 @@ class MongoSave {
     }
 }
 
-class MongoFind {
-    public id: any;
+interface PipelineStep {
+    join(id: any, fact: Object, predecessors: Array<any>);
+    done();
+}
 
+/////
+class StartStep {
     constructor(
-        public coordinator: Coordinator,
-        public fact: Object,
-        public join: Join,
-        public collection: any,
-        public done: (MongoFind) => void
-    ) {}
+        private next: PipelineStep,
+        private collection: any,
+        private error: (string) => void
+    ) { }
 
-    execute() {
-        debug("Finding " + this.join.toDeclarativeString() + " of " + JSON.stringify(this.fact));
-
-        var hash = computeHash(this.fact);
+    execute(fact: Object) {
+        var hash = computeHash(fact);
         this.collection.find({ hash: hash })
-            .forEach(this.onHashFound.bind(this), this.onHashFindFinished.bind(this));
-    }
-
-    private onHashFound(document) {
-        debug("Found " + JSON.stringify((document)));
-
-        if (_.isEqual(this.fact, document.fact)) {
-            debug("It's a match");
-            this.id = document._id;
-        }
-    }
-
-    private onHashFindFinished(err) {
-        if (err) {
-            this.coordinator.onError(err.message);
-            this.done(this);
-        }
-        else if (this.id) {
-            debug("Starting point found; executing query");
-
-            this.collection.find({
-                predecessors: { $in: [{ role: this.join.role, id: this.id }] }
-            }).forEach(this.onFound.bind(this), this.onFindFinished.bind(this));
-        }
-        else {
-            debug("Starting point not found");
-
-            this.done(this);
-        }
+            .forEach(this.onFound.bind(this), this.onFinished.bind(this));
     }
 
     private onFound(document) {
-        debug("Found " + JSON.stringify((document)));
+        debug("Starting at " + JSON.stringify(document));
+        this.next.join(document._id, document.fact, document.predecessors);
     }
 
-    private onFindFinished(err) {
-        debug("Find finished");
+    private onFinished(err) {
+        if (err)
+            this.error(err.message);
+        else
+            this.next.done();
+    }
+}
 
+/////
+class GatherStep implements PipelineStep {
+    private facts: Array<Object> = [];
+
+    constructor(
+        private onDone: (facts: Array<Object>) => void
+    ) { }
+
+    join(id:any, fact:Object, predecessors:Array<any>) {
+        this.facts.push(fact);
+    }
+
+    done() {
+        debug("Pipeline finished");
+        this.onDone(this.facts);
+    }
+}
+
+/////
+class PredecessorStep implements PipelineStep {
+    constructor(
+        private next: PipelineStep,
+        private role: string
+    ) { }
+
+    join(id: any, fact: Object, predecessors: Array<any>) {
+        for(var index = 0; index < predecessors.length; index++) {
+            var predecessor = predecessors[index];
+            if (predecessor.role === this.role) {
+                debug("P." + this.role + ": " + predecessor.id);
+                this.next.join(predecessor.id, null, null);
+            }
+        }
+    }
+
+    done() {
+        this.next.done();
+    }
+}
+
+/////
+class SuccessorStep implements PipelineStep {
+    private isDone: boolean;
+    private count: number = 0;
+
+    constructor(
+        private next: PipelineStep,
+        private role: string,
+        private collection: any,
+        private error: (string) => void
+    ) { }
+
+    join(id:any, fact:Object, predecessors:Array<any>) {
+        this.count++;
+        this.collection.find({
+            predecessors: { $in: [{ role: this.role, id: id }] }
+        }).forEach(this.onFound.bind(this), this.onFinished.bind(this));
+    }
+
+    private onFound(document) {
+        debug("S." + this.role + ": " + JSON.stringify(document));
+        this.next.join(document._id, document.fact, document.predecessors);
+    }
+
+    private onFinished(err) {
         if (err) {
-            this.coordinator.onError(err.message);
-            this.done(this);
+            this.error(err.message);
         }
         else {
-            this.done(this);
+            this.count--;
+            if (this.isDone && this.count === 0)
+                this.next.done();
         }
+    }
+
+    done() {
+        this.isDone = true;
+        if (this.count === 0)
+            this.next.done();
     }
 }
 
@@ -214,17 +264,27 @@ class MongoProvider implements Interface.StorageProvider {
         thisArg:Object) {
 
         this.withCollection((facts, done: () => void) => {
-            var find = new MongoFind(
-                this.coordinator,
-                start,
-                <Join>query.steps[0],
-                facts,
-                () => {
-                    result(null, []);
-                    done();
-                }
-            );
-            find.execute();
+            var isComplete = false;
+            var onError = function(error: string) {
+                if (!isComplete)
+                    result(error, []);
+                isComplete = true;
+            };
+
+            var step: PipelineStep = new GatherStep((facts: Array<Object>) => {
+                if (!isComplete)
+                    result(null, facts);
+                isComplete = true;
+            });
+            var join = <Join>query.steps[0];
+            if (join.direction === Interface.Direction.Predecessor) {
+                step = new PredecessorStep(step, join.role);
+            }
+            else {
+                step = new SuccessorStep(step, join.role, facts, onError);
+            }
+            var startStep = new StartStep(step, facts, onError);
+            startStep.execute(start);
         })
     }
 
