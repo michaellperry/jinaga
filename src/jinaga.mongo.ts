@@ -111,6 +111,7 @@ class MongoSave {
 }
 
 interface PipelineStep {
+    wantsFact(): boolean;
     join(id: any, fact: Object, predecessors: Array<any>);
     done();
 }
@@ -150,6 +151,10 @@ class GatherStep implements PipelineStep {
         private onDone: (facts: Array<Object>) => void
     ) { }
 
+    wantsFact(): boolean {
+        return true;
+    }
+
     join(id:any, fact:Object, predecessors:Array<any>) {
         this.facts.push(fact);
     }
@@ -166,6 +171,10 @@ class PredecessorStep implements PipelineStep {
         private next: PipelineStep,
         private role: string
     ) { }
+
+    wantsFact(): boolean {
+        return true;
+    }
 
     join(id: any, fact: Object, predecessors: Array<any>) {
         for(var index = 0; index < predecessors.length; index++) {
@@ -194,6 +203,10 @@ class SuccessorStep implements PipelineStep {
         private error: (string) => void
     ) { }
 
+    wantsFact(): boolean {
+        return false;
+    }
+
     join(id:any, fact:Object, predecessors:Array<any>) {
         this.count++;
         this.collection.find({
@@ -209,6 +222,50 @@ class SuccessorStep implements PipelineStep {
     private onFinished(err) {
         if (err) {
             this.error(err.message);
+        }
+        else {
+            this.count--;
+            if (this.isDone && this.count === 0)
+                this.next.done();
+        }
+    }
+
+    done() {
+        this.isDone = true;
+        if (this.count === 0)
+            this.next.done();
+    }
+}
+
+/////
+class LoadStep implements PipelineStep {
+    private isDone: boolean;
+    private count: number = 0;
+
+    constructor(
+        private next: PipelineStep,
+        private collection: any,
+        private onError: (error: string) => void
+    ) { }
+
+    wantsFact():boolean {
+        return false;
+    }
+
+    join(id:any, fact:Object, predecessors:Array<any>) {
+        this.count++;
+        this.collection.find({ _id: id })
+            .forEach(this.onFound.bind(this), this.onFinished.bind(this));
+    }
+
+    private onFound(document) {
+        debug("Loaded: " + JSON.stringify(document));
+        this.next.join(document._id, document.fact, document.predecessors);
+    }
+
+    private onFinished(err) {
+        if (err) {
+            this.onError(err.message);
         }
         else {
             this.count--;
@@ -267,23 +324,31 @@ class MongoProvider implements Interface.StorageProvider {
             var isComplete = false;
             var onError = function(error: string) {
                 if (!isComplete)
-                    result(error, []);
+                    result.bind(thisArg)(error, []);
                 isComplete = true;
             };
 
-            var step: PipelineStep = new GatherStep((facts: Array<Object>) => {
+            var next: PipelineStep = new GatherStep((facts: Array<Object>) => {
                 if (!isComplete)
-                    result(null, facts);
+                    result.bind(thisArg)(null, facts);
                 isComplete = true;
             });
-            var join = <Join>query.steps[0];
-            if (join.direction === Interface.Direction.Predecessor) {
-                step = new PredecessorStep(step, join.role);
+            for (var index = query.steps.length-1; index >= 0; index--) {
+                var step = query.steps[index];
+                if (step instanceof Join) {
+                    var join = <Join>step;
+                    if (join.direction === Interface.Direction.Predecessor) {
+                        if (next.wantsFact()) {
+                            next = new LoadStep(next, facts, onError);
+                        }
+                        next = new PredecessorStep(next, join.role);
+                    }
+                    else {
+                        next = new SuccessorStep(next, join.role, facts, onError);
+                    }
+                }
             }
-            else {
-                step = new SuccessorStep(step, join.role, facts, onError);
-            }
-            var startStep = new StartStep(step, facts, onError);
+            var startStep = new StartStep(next, facts, onError);
             startStep.execute(start);
         })
     }
