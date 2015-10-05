@@ -10,7 +10,8 @@ import QueryInverter = require("./queryInverter");
 import Inverse = QueryInverter.Inverse;
 import _ = require("lodash");
 import Debug = require("debug");
-var debug = Debug("jinaga");
+
+var debug: (string) => void = Debug ? Debug("jinaga") : function() {};
 
 class Watch {
     constructor(

@@ -7,9 +7,6 @@
   ],
   "description": "Historical Modeling framework for JavaScript",
   "main": "web/index.html",
-  "moduleType": [
-    "amd"
-  ],
   "keywords": [
     "Messaging"
   ],
@@ -22,6 +19,7 @@
     "tests"
   ],
   "dependencies": {
+    "debug": "*",
     "engine.io-client": "~1.5.2",
     "lodash": "~3.10.1"
   }

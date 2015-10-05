@@ -1,7 +1,8 @@
 require.config({
   paths: {
     lodash: "../bower_components/lodash/lodash",
-    "engine.io-client": "../bower_components/engine.io-client/engine.io"
+    "engine.io-client": "../bower_components/engine.io-client/engine.io",
+    "debug": "../bower_components/debug/debug"
   }
 });
 
