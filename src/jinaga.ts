@@ -140,6 +140,19 @@ class Jinaga {
         resultRemoved: (result: Object) => void) {
         this.coordinator.watch(start, templates, resultAdded, resultRemoved);
     }
+
+    public where(
+        specification: Object,
+        conditions: Array<(target: Proxy) => Object>
+    ) {
+        return new Interface.ConditionalSpecification(specification, conditions, true);
+    }
+
+    public not(
+        specification: Object
+    ) {
+        return new Interface.InverseSpecification(specification);
+    }
 }
 
 export = Jinaga;

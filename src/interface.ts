@@ -5,7 +5,7 @@ export enum Direction {
     Successor
 }
 
-enum Quantifier {
+export enum Quantifier {
     Exists,
     NotExists
 }
@@ -18,11 +18,17 @@ export class Step {
     }
 }
 
-class ExistentialCondition extends Step {
+export class ExistentialCondition extends Step {
     constructor(
         public quantifier: Quantifier,
         public steps: Array<Step>
     ) { super(); }
+
+    public toDeclarativeString(): string {
+        return (this.quantifier === Quantifier.Exists ? "E(" : "N(") +
+            _.map(this.steps, s => s.toDeclarativeString()).join(" ") +
+            ")";
+    }
 }
 
 export class PropertyCondition extends Step {
@@ -55,6 +61,20 @@ export class Query {
     public toDescriptiveString(): string {
         return _.map(this.steps, s => s.toDeclarativeString()).join(" ");
     }
+}
+
+export class ConditionalSpecification {
+    constructor(
+        public specification: Object,
+        public conditions: Array<(target: Proxy) => Object>,
+        public isAny: boolean
+    ) { }
+}
+
+export class InverseSpecification {
+    constructor(
+        public specification: Object
+    ) { }
 }
 
 function done(descriptive: string, index: number): boolean {

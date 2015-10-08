@@ -43,6 +43,22 @@ function findTarget(spec:Object): Array<Step> {
     if (spec instanceof ParserProxy) {
         return (<ParserProxy>spec).createQuery();
     }
+    if (spec instanceof Interface.ConditionalSpecification) {
+        var conditional = <Interface.ConditionalSpecification>spec;
+        var head = findTarget(spec.specification);
+        var tail = parse(spec.conditions);
+        if (tail.steps.length === 1 && tail.steps[0] instanceof Interface.ExistentialCondition) {
+            return head.concat(tail.steps);
+        }
+        else {
+            return head.concat(new Interface.ExistentialCondition(Interface.Quantifier.Exists, tail.steps));
+        }
+    }
+    if (spec instanceof Interface.InverseSpecification) {
+        var inverse = <Interface.InverseSpecification>spec;
+        var steps = findTarget(spec.specification);
+        return [new Interface.ExistentialCondition(Interface.Quantifier.NotExists, steps)];
+    }
     if (spec instanceof Object) {
         var steps: Array<Step> = [];
         var targetQuery: Array<Step> = null;
