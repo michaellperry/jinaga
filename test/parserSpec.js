@@ -68,6 +68,13 @@ describe("QueryParser", function() {
     }, [taskIsCompleted]);
   }
 
+  function uncompletedTasksInListAlt(l) {
+    return j.where({
+      type: "Task",
+      list: l
+    }, [j.not(taskIsCompleted)]);
+  }
+
   beforeEach(function () {
     j = new Jinaga();
   });
@@ -100,5 +107,10 @@ describe("QueryParser", function() {
   it("should parse a positive existential condition", function () {
     var query = parse([completedTasksInList]);
     query.toDescriptiveString().should.equal("S.list F.type=\"Task\" E(S.task F.type=\"Completion\")");
+  });
+
+  it("should parse a negative outside of template function", function () {
+    var query = parse([uncompletedTasksInListAlt]);
+    query.toDescriptiveString().should.equal("S.list F.type=\"Task\" N(S.task F.type=\"Completion\")");
   });
 });
