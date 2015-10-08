@@ -75,6 +75,13 @@ describe("QueryParser", function() {
     }, [j.not(taskIsCompleted)]);
   }
 
+  function completedTasksInListAlt(l) {
+    return j.where({
+      type: "Task",
+      list: l
+    }, [j.not(taskIsNotCompleted)]);
+  }
+
   beforeEach(function () {
     j = new Jinaga();
   });
@@ -112,5 +119,10 @@ describe("QueryParser", function() {
   it("should parse a negative outside of template function", function () {
     var query = parse([uncompletedTasksInListAlt]);
     query.toDescriptiveString().should.equal("S.list F.type=\"Task\" N(S.task F.type=\"Completion\")");
+  });
+
+  it("should parse a double negative", function () {
+    var query = parse([completedTasksInListAlt]);
+    query.toDescriptiveString().should.equal("S.list F.type=\"Task\" E(S.task F.type=\"Completion\")");
   });
 });

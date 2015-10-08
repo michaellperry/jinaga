@@ -5,6 +5,10 @@ import Query = Interface.Query;
 import Proxy = Interface.Proxy;
 import Direction = Interface.Direction;
 import Step = Interface.Step;
+import ConditionalSpecification = Interface.ConditionalSpecification;
+import ExistentialCondition = Interface.ExistentialCondition;
+import Quantifier = Interface.Quantifier;
+import InverseSpecification = Interface.InverseSpecification;
 import _ = require("lodash");
 
 class ParserProxy implements Proxy {
@@ -43,21 +47,30 @@ function findTarget(spec:Object): Array<Step> {
     if (spec instanceof ParserProxy) {
         return (<ParserProxy>spec).createQuery();
     }
-    if (spec instanceof Interface.ConditionalSpecification) {
-        var conditional = <Interface.ConditionalSpecification>spec;
+    if (spec instanceof ConditionalSpecification) {
+        var conditional = <ConditionalSpecification>spec;
         var head = findTarget(spec.specification);
         var tail = parse(spec.conditions);
-        if (tail.steps.length === 1 && tail.steps[0] instanceof Interface.ExistentialCondition) {
+        if (tail.steps.length === 1 && tail.steps[0] instanceof ExistentialCondition) {
             return head.concat(tail.steps);
         }
         else {
-            return head.concat(new Interface.ExistentialCondition(Interface.Quantifier.Exists, tail.steps));
+            return head.concat(<Step>new ExistentialCondition(Quantifier.Exists, tail.steps));
         }
     }
-    if (spec instanceof Interface.InverseSpecification) {
-        var inverse = <Interface.InverseSpecification>spec;
+    if (spec instanceof InverseSpecification) {
+        var inverse = <InverseSpecification>spec;
         var steps = findTarget(spec.specification);
-        return [new Interface.ExistentialCondition(Interface.Quantifier.NotExists, steps)];
+        if (steps.length === 1 && steps[0] instanceof ExistentialCondition) {
+            var inner = <ExistentialCondition>steps[0];
+            return [new ExistentialCondition(
+                inner.quantifier === Quantifier.Exists ? Quantifier.NotExists : Quantifier.Exists,
+                inner.steps
+            )]
+        }
+        else {
+            return [new ExistentialCondition(Quantifier.NotExists, steps)];
+        }
     }
     if (spec instanceof Object) {
         var steps: Array<Step> = [];

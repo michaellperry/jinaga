@@ -148,10 +148,17 @@ class Jinaga {
         return new Interface.ConditionalSpecification(specification, conditions, true);
     }
 
-    public not(
-        specification: Object
-    ) {
-        return new Interface.InverseSpecification(specification);
+    public not(condition: (target: Proxy) => Object): (target: Proxy) => Object;
+    public not(specification: Object): Object;
+    public not(conditionOrSpecification: any): any {
+        if (typeof(conditionOrSpecification) === "function") {
+            var condition = <(target: Proxy) => Object>conditionOrSpecification;
+            return (t: Proxy) => new Interface.InverseSpecification(condition(t));
+        }
+        else {
+            var specification = <Object>conditionOrSpecification;
+            return new Interface.InverseSpecification(specification);
+        }
     }
 }
 
