@@ -8,7 +8,6 @@ import parse = require("./queryParser");
 import MemoryProvider = require("./memory");
 import QueryInverter = require("./queryInverter");
 import Inverse = QueryInverter.Inverse;
-import _ = require("lodash");
 import Debug = require("debug");
 
 var debug: (string) => void = Debug ? Debug("jinaga") : function() {};
@@ -63,7 +62,7 @@ class JinagaCoordinator implements Coordinator {
         }
 
         this.messages.executeQuery(start, query, function(error, results) {
-            _.each(results, resultAdded);
+            results.map(resultAdded);
         }, this);
 
         if (this.network) {
@@ -75,23 +74,23 @@ class JinagaCoordinator implements Coordinator {
         if (source === null) {
             this.messages.push(fact);
         }
-        _.each(this.watches, function (watch: Watch) {
-            _.each(watch.inverses, function (inverse: Inverse) {
+        this.watches.map(function (watch: Watch) {
+            watch.inverses.map(function (inverse: Inverse) {
                 this.messages.executeQuery(fact, inverse.affected, function (error2: string, affected: Array<Object>) {
                     if (!error2) {
-                        var some: any = _.some;
-                        if (some(affected, (obj: Object) => _.isEqual(obj, watch.start))) {
+                        
+                        if (Interface._some(affected, (obj: Object) => Interface._isEqual(obj, watch.start))) {
                             if (inverse.added && watch.resultAdded) {
                                 this.messages.executeQuery(fact, inverse.added, function (error3: string, added: Array<Object>) {
                                     if (!error3) {
-                                        _.each(added, watch.resultAdded);
+                                        added.map(watch.resultAdded);
                                     }
                                 });
                             }
                             if (inverse.removed && watch.resultRemoved) {
                                 this.messages.executeQuery(fact, inverse.removed, function (error2: string, added: Array<Object>) {
                                     if (!error2) {
-                                        _.each(added, watch.resultRemoved);
+                                        added.map(watch.resultRemoved);
                                     }
                                 });
                             }

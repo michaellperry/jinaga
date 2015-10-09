@@ -8,7 +8,7 @@ require.config({
 
 requirejs(["jinaga", "jinaga.distributor.client"], function(Jinaga, JinagaDistributor) {
   var j = new Jinaga();
-  j.sync(new JinagaDistributor("ws://localhost/"));
+  j.sync(new JinagaDistributor("ws://localhost:8888/"));
 
   function paragraph(className, innerText) {
     var p = document.createElement('p');
