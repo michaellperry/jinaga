@@ -78,19 +78,21 @@ export class InverseSpecification {
 }
 
 function done(descriptive: string, index: number): boolean {
-    return index === descriptive.length;
+    return index === descriptive.length || lookahead(descriptive, index) === ")";
 }
 
 function lookahead(descriptive: string, index: number): string {
     if (descriptive.length <= index) {
-        throw Error("Malformed descriptive string " + descriptive + " at " + index);
+        throw Error("Malformed descriptive string " + descriptive + " at " + index +
+            ". Reached the end of the string prematurely.");
     }
     return descriptive.charAt(index);
 }
 
 function consume(descriptive: string, index: number, expected: string): number {
     if (lookahead(descriptive, index) !== expected) {
-        throw Error("Malformed descriptive string " + descriptive + " at " + index);
+        throw Error("Malformed descriptive string " + descriptive + " at " + index +
+            ". Expecting " + expected + " but found " + lookahead(descriptive, index) + ".");
     }
     return index + 1;
 }
@@ -121,26 +123,26 @@ function quotedValue(descriptive: string, index: number): {value: string, index:
     return {value, index};
 }
 
-export function fromDescriptiveString(descriptive: string, index: number = 0): Query {
+export function fromDescriptiveString(descriptive: string) {
+    var {steps, index} = parseDescriptiveString(descriptive, 0);
+    return new Query(steps);
+}
+
+function parseDescriptiveString(descriptive: string, index: number): {steps: Array<Step>, index: number} {
     if (done(descriptive, index)) {
-        return new Query([]);
+        return { steps: [], index };
     }
 
     var steps: Array<Step> = [];
     while (true) {
         var next = lookahead(descriptive, index);
-        if (next === "P") {
-            index = consume(descriptive, index, "P");
+        if (next === "P" || next === "S") {
+            index = consume(descriptive, index, next);
             index = consume(descriptive, index, ".");
             var {id, index} = identifier(descriptive, index);
-            var join = new Join(Direction.Predecessor, id);
-            steps.push(join);
-        }
-        else if (next === "S") {
-            index = consume(descriptive, index, "S");
-            index = consume(descriptive, index, ".");
-            var {id, index} = identifier(descriptive, index);
-            var join = new Join(Direction.Successor, id);
+            var join = new Join(
+                next === "P" ? Direction.Predecessor : Direction.Successor,
+                id);
             steps.push(join);
         }
         else if (next === "F") {
@@ -152,12 +154,23 @@ export function fromDescriptiveString(descriptive: string, index: number = 0): Q
             var property = new PropertyCondition(id, value);
             steps.push(property);
         }
+        else if (next === "N" || next === "E") {
+            index = consume(descriptive, index, next);
+            index = consume(descriptive, index, "(");
+            var childQuery = parseDescriptiveString(descriptive, index);
+            index = childQuery.index;
+            index = consume(descriptive, index, ")");
+            var step = new ExistentialCondition(
+                next === "N" ? Quantifier.NotExists : Quantifier.Exists,
+                childQuery.steps);
+            steps.push(step);
+        }
         else {
             throw Error("Malformed descriptive string " + descriptive + " at " + index);
         }
 
         if (done(descriptive, index)) {
-            return new Query(steps);
+            return { steps, index };
         }
         index = consume(descriptive, index, " ");
     }
