@@ -4,7 +4,6 @@ import Interface = require("./interface");
 import Query = Interface.Query;
 import StorageProvider = Interface.StorageProvider;
 import Coordinator = Interface.Coordinator;
-import _ = require("lodash");
 import QueryInverter = require("./queryInverter");
 import Inverse = QueryInverter.Inverse;
 
@@ -53,7 +52,7 @@ class JinagaConnection {
             var query = Interface.fromDescriptiveString(message.query);
             // TODO: This is incorrect. Each segment of the query should be executed.
             this.distributor.storage.executeQuery(message.start, query, function (error: string, results: Array<Object>) {
-                _.each(results, function (result: Object) {
+                results.forEach(function (result: Object) {
                     debug("Sending result");
                     this.socket.send(JSON.stringify({
                         type: "fact",
@@ -62,7 +61,7 @@ class JinagaConnection {
                 }, this);
             }, this);
             var inverses = QueryInverter.invertQuery(query);
-            _.each(inverses, function (inverse: Inverse) {
+            inverses.forEach(function (inverse: Inverse) {
                 this.watches.push(new Watch(message.start, inverse.affected));
             }, this);
         }
@@ -81,14 +80,14 @@ class JinagaConnection {
 
     distribute(fact: Object) {
         debug("Distributing to " + this.socket.id);
-        _.each(this.watches, function(watch) {
+        this.watches.forEach(function(watch) {
             this.distributor.storage.executeQuery(fact, watch.affected, function (error: string, affected: Array<Object>) {
                 if (error) {
                     debug(error);
                     return;
                 }
-                var some: any = _.some;
-                if (some(affected, (obj: Object) => _.isEqual(obj, watch.start))) {
+                var some: any = Interface._some;
+                if (some(affected, (obj: Object) => Interface._isEqual(obj, watch.start))) {
                     debug("Sending fact");
                     this.socket.send(JSON.stringify({
                         type: "fact",
@@ -129,7 +128,7 @@ class JinagaDistributor implements Coordinator {
     }
 
     send(fact: Object, sender: any) {
-        _.each(this.connections, function (connection: JinagaConnection) {
+        this.connections.forEach(function (connection: JinagaConnection) {
             if (connection !== sender)
                 connection.distribute(fact);
         }, this);

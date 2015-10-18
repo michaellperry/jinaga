@@ -9,7 +9,6 @@ import ConditionalSpecification = Interface.ConditionalSpecification;
 import ExistentialCondition = Interface.ExistentialCondition;
 import Quantifier = Interface.Quantifier;
 import InverseSpecification = Interface.InverseSpecification;
-import _ = require("lodash");
 
 class ParserProxy implements Proxy {
     constructor(

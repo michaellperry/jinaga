@@ -10,7 +10,6 @@ import Coordinator = Interface.Coordinator;
 import PropertyCondition = Interface.PropertyCondition;
 import computeHash = Interface.computeHash;
 import isPredecessor = Interface.isPredecessor;
-import _ = require("lodash");
 
 class Node {
     successors: { [role: string]: Array<Node> } = {};
@@ -87,18 +86,25 @@ class MemoryProvider implements StorageProvider {
             }
             else if (step instanceof PropertyCondition) {
                 var propertyCondition = <PropertyCondition>step;
-                var template = { fact: {} };
-                template.fact[propertyCondition.name] = propertyCondition.value;
-                var nextNodes = _.filter(nodes, template);
+                var nextNodes: Array<Node> = [];
+                nodes.forEach(function (node) {
+                   if (node.fact[propertyCondition.name] == propertyCondition.value) {
+                       nextNodes.push(node);
+                   }
+                });
                 nodes = nextNodes;
             }
         }
 
-        result.bind(thisArg)(null, _.pluck(nodes, "fact"));
+        var facts: Array<Object> = [];
+        nodes.forEach(function (node) {
+           facts.push(node.fact);
+        });
+        result.bind(thisArg)(null, facts);
     }
 
     sendAllFacts() {
-        _.each(this.queue, (item: {hash: number, fact: Object}) => {
+        this.queue.forEach((item: {hash: number, fact: Object}) => {
             this.coordinator.send(item.fact, null);
         });
     }
@@ -109,6 +115,15 @@ class MemoryProvider implements StorageProvider {
             this.coordinator.send(fact, null);
     }
 
+    private findNodeWithFact(array: Array<Node>, fact: Object) : Node {
+        for(var index = 0; index < array.length; index++) {
+            if (Interface._isEqual(array[index].fact, fact)) {
+                return array[index];
+            }
+        }
+        return null;
+    }
+
     private insertNode(fact: Object, source: any): Node {
         var hash = computeHash(fact);
         var array = this.nodes[hash];
@@ -116,7 +131,7 @@ class MemoryProvider implements StorageProvider {
             array = [];
             this.nodes[hash] = array;
         }
-        var node = _.find(array, "fact", fact);
+        var node = this.findNodeWithFact(array, fact);
         if (!node) {
             var predecessors = {};
             for (var field in fact) {
@@ -145,7 +160,7 @@ class MemoryProvider implements StorageProvider {
             return null;
         }
 
-        return _.find(array, "fact", fact);
+        return this.findNodeWithFact(array, fact);
     }
 }
 

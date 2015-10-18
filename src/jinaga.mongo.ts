@@ -6,7 +6,6 @@ import Join = Interface.Join;
 import PropertyCondition = Interface.PropertyCondition;
 import computeHash = Interface.computeHash;
 import isPredecessor = Interface.isPredecessor;
-import _ = require("lodash");
 
 import Debug = require("debug");
 var debug = Debug("jinaga.mongo");
@@ -41,7 +40,7 @@ class MongoSave {
     private onFound(document) {
         debug("Found " + JSON.stringify((document)));
 
-        if (_.isEqual(this.fact, document.fact)) {
+        if (Interface._isEqual(this.fact, document.fact)) {
             debug("It's a match");
             this.isDone = true;
             this.id = document._id;
