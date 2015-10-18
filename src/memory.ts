@@ -10,6 +10,8 @@ import Coordinator = Interface.Coordinator;
 import PropertyCondition = Interface.PropertyCondition;
 import computeHash = Interface.computeHash;
 import isPredecessor = Interface.isPredecessor;
+import Collections = require("./collections");
+import _isEqual = Collections._isEqual;
 
 class Node {
     successors: { [role: string]: Array<Node> } = {};
@@ -117,7 +119,7 @@ class MemoryProvider implements StorageProvider {
 
     private findNodeWithFact(array: Array<Node>, fact: Object) : Node {
         for(var index = 0; index < array.length; index++) {
-            if (Interface._isEqual(array[index].fact, fact)) {
+            if (_isEqual(array[index].fact, fact)) {
                 return array[index];
             }
         }

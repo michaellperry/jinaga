@@ -6,6 +6,9 @@ import StorageProvider = Interface.StorageProvider;
 import Coordinator = Interface.Coordinator;
 import QueryInverter = require("./queryInverter");
 import Inverse = QueryInverter.Inverse;
+import Collections = require("./collections");
+import _isEqual = Collections._isEqual;
+import _some = Collections._some;
 
 var debug = Debug("jinaga.distributor.server");
 
@@ -86,8 +89,8 @@ class JinagaConnection {
                     debug(error);
                     return;
                 }
-                var some: any = Interface._some;
-                if (some(affected, (obj: Object) => Interface._isEqual(obj, watch.start))) {
+                var some: any = _some;
+                if (some(affected, (obj: Object) => _isEqual(obj, watch.start))) {
                     debug("Sending fact");
                     this.socket.send(JSON.stringify({
                         type: "fact",

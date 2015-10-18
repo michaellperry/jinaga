@@ -9,6 +9,9 @@ import MemoryProvider = require("./memory");
 import QueryInverter = require("./queryInverter");
 import Inverse = QueryInverter.Inverse;
 import Debug = require("debug");
+import Collections = require("./collections");
+import _isEqual = Collections._isEqual;
+import _some = Collections._some;
 
 var debug: (string) => void = Debug ? Debug("jinaga") : function() {};
 
@@ -79,7 +82,7 @@ class JinagaCoordinator implements Coordinator {
                 this.messages.executeQuery(fact, inverse.affected, function (error2: string, affected: Array<Object>) {
                     if (!error2) {
                         
-                        if (Interface._some(affected, (obj: Object) => Interface._isEqual(obj, watch.start))) {
+                        if (_some(affected, (obj: Object) => _isEqual(obj, watch.start))) {
                             if (inverse.added && watch.resultAdded) {
                                 this.messages.executeQuery(fact, inverse.added, function (error3: string, added: Array<Object>) {
                                     if (!error3) {
