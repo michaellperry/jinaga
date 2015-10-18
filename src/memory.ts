@@ -58,16 +58,25 @@ class MemoryProvider implements StorageProvider {
         result: (error: string, facts: Array<Object>) => void,
         thisArg: Object
     ) {
-
         var startingNode = this.findNode(start);
         if (!startingNode) {
             result.bind(thisArg)(null, []);
             return;
         }
 
-        var nodes: Array<Node> = [startingNode];
-        for (var index = 0; index < query.steps.length; index++) {
-            var step = query.steps[index];
+        var nodes = this.queryNodes(startingNode, query.steps);
+
+        var facts: Array<Object> = [];
+        nodes.forEach(function (node) {
+           facts.push(node.fact);
+        });
+        result.bind(thisArg)(null, facts);
+    }
+
+    private queryNodes(startingNode, steps:Array<Interface.Step>): Array<Node> {
+        var nodes:Array<Node> = [startingNode];
+        for (var index = 0; index < steps.length; index++) {
+            var step = steps[index];
 
             if (nodes.length === 0) {
                 break;
@@ -75,7 +84,7 @@ class MemoryProvider implements StorageProvider {
 
             if (step instanceof Join) {
                 var join = <Join>step;
-                var nextNodes: Array<Node> = [];
+                var nextNodes:Array<Node> = [];
                 for (var nodeIndex in nodes) {
                     var node = nodes[nodeIndex];
 
@@ -88,21 +97,28 @@ class MemoryProvider implements StorageProvider {
             }
             else if (step instanceof PropertyCondition) {
                 var propertyCondition = <PropertyCondition>step;
-                var nextNodes: Array<Node> = [];
+                var nextNodes:Array<Node> = [];
                 nodes.forEach(function (node) {
-                   if (node.fact[propertyCondition.name] == propertyCondition.value) {
-                       nextNodes.push(node);
-                   }
+                    if (node.fact[propertyCondition.name] == propertyCondition.value) {
+                        nextNodes.push(node);
+                    }
+                });
+                nodes = nextNodes;
+            }
+            else if (step instanceof Interface.ExistentialCondition) {
+                var existentialCondition = <Interface.ExistentialCondition>step;
+                var nextNodes:Array<Node> = [];
+                nodes.forEach((node) => {
+                    var subNodes = this.queryNodes(node, existentialCondition.steps);
+                    if (existentialCondition.quantifier === Interface.Quantifier.Exists
+                            ? subNodes.length > 0 : subNodes.length === 0) {
+                        nextNodes.push(node);
+                    }
                 });
                 nodes = nextNodes;
             }
         }
-
-        var facts: Array<Object> = [];
-        nodes.forEach(function (node) {
-           facts.push(node.fact);
-        });
-        result.bind(thisArg)(null, facts);
+        return nodes;
     }
 
     sendAllFacts() {
