@@ -110,10 +110,18 @@ class MongoSave {
     }
 }
 
+class Point {
+    constructor(
+        public id: any,
+        public fact: Object,
+        public predecessors: Array<any>
+    ) { }
+}
+
 interface PipelineStep {
     wantsFact(): boolean;
-    join(id: any, fact: Object, predecessors: Array<any>);
-    done();
+    join(point: Point, context: any);
+    done(stack: Array<Array<Point>>);
 }
 
 /////
@@ -132,14 +140,14 @@ class StartStep {
 
     private onFound(document) {
         debug("Starting at " + JSON.stringify(document));
-        this.next.join(document._id, document.fact, document.predecessors);
+        this.next.join(new Point(document._id, document.fact, document.predecessors), null);
     }
 
     private onFinished(err) {
         if (err)
             this.error(err.message);
         else
-            this.next.done();
+            this.next.done([]);
     }
 }
 
@@ -155,11 +163,11 @@ class GatherStep implements PipelineStep {
         return true;
     }
 
-    join(id:any, fact:Object, predecessors:Array<any>) {
-        this.facts.push(fact);
+    join(point: Point, context: any) {
+        this.facts.push(point.fact);
     }
 
-    done() {
+    done(stack: Array<Array<Point>>) {
         debug("Pipeline finished");
         this.onDone(this.facts);
     }
@@ -176,24 +184,26 @@ class PredecessorStep implements PipelineStep {
         return true;
     }
 
-    join(id: any, fact: Object, predecessors: Array<any>) {
+    join(point: Point, context: any) {
+        var predecessors = point.predecessors;
         for(var index = 0; index < predecessors.length; index++) {
             var predecessor = predecessors[index];
             if (predecessor.role === this.role) {
                 debug("P." + this.role + ": " + predecessor.id);
-                this.next.join(predecessor.id, null, null);
+                this.next.join(new Point(predecessor.id, null, null), context);
             }
         }
     }
 
-    done() {
-        this.next.done();
+    done(stack: Array<Array<Point>>) {
+        this.next.done(stack);
     }
 }
 
 /////
 class SuccessorStep implements PipelineStep {
     private isDone: boolean;
+    private stack: Array<Array<Point>>;
     private count: number = 0;
 
     constructor(
@@ -207,16 +217,16 @@ class SuccessorStep implements PipelineStep {
         return false;
     }
 
-    join(id:any, fact:Object, predecessors:Array<any>) {
+    join(point: Point, context: any) {
         this.count++;
         this.collection.find({
-            predecessors: { $in: [{ role: this.role, id: id }] }
-        }).forEach(this.onFound.bind(this), this.onFinished.bind(this));
+            predecessors: { $in: [{ role: this.role, id: point.id }] }
+        }).forEach((document) => { this.onFound(document, context); }, (err) => { this.onFinished(err); });
     }
 
-    private onFound(document) {
+    private onFound(document, context) {
         debug("S." + this.role + ": " + JSON.stringify(document));
-        this.next.join(document._id, document.fact, document.predecessors);
+        this.next.join(new Point(document._id, document.fact, document.predecessors), context);
     }
 
     private onFinished(err) {
@@ -226,20 +236,22 @@ class SuccessorStep implements PipelineStep {
         else {
             this.count--;
             if (this.isDone && this.count === 0)
-                this.next.done();
+                this.next.done(this.stack);
         }
     }
 
-    done() {
+    done(stack: Array<Array<Point>>) {
         this.isDone = true;
+        this.stack = stack;
         if (this.count === 0)
-            this.next.done();
+            this.next.done(this.stack);
     }
 }
 
 /////
 class LoadStep implements PipelineStep {
     private isDone: boolean;
+    private stack: Array<Array<Point>>;
     private count: number = 0;
 
     constructor(
@@ -252,15 +264,15 @@ class LoadStep implements PipelineStep {
         return false;
     }
 
-    join(id:any, fact:Object, predecessors:Array<any>) {
+    join(point: Point, context) {
         this.count++;
-        this.collection.find({ _id: id })
-            .forEach(this.onFound.bind(this), this.onFinished.bind(this));
+        this.collection.find({ _id: point.id })
+            .forEach((document) => { this.onFound(document, context); }, (err) => { this.onFinished(err); });
     }
 
-    private onFound(document) {
+    private onFound(document, context) {
         debug("Loaded: " + JSON.stringify(document));
-        this.next.join(document._id, document.fact, document.predecessors);
+        this.next.join(new Point(document._id, document.fact, document.predecessors), context);
     }
 
     private onFinished(err) {
@@ -270,14 +282,15 @@ class LoadStep implements PipelineStep {
         else {
             this.count--;
             if (this.isDone && this.count === 0)
-                this.next.done();
+                this.next.done(this.stack);
         }
     }
 
-    done() {
+    done(stack: Array<Array<Point>>) {
         this.isDone = true;
+        this.stack = stack;
         if (this.count === 0)
-            this.next.done();
+            this.next.done(this.stack);
     }
 }
 
@@ -293,13 +306,74 @@ class FieldStep implements PipelineStep {
         return true;
     }
 
-    join(id:any, fact:Object, predecessors:Array<any>) {
-        if (fact[this.name] === this.value)
-            this.next.join(id, fact, predecessors);
+    join(point: Point, context) {
+        if (point.fact[this.name] === this.value)
+            this.next.join(point, context);
     }
 
-    done() {
-        this.next.done();
+    done(stack: Array<Array<Point>>) {
+        this.next.done(stack);
+    }
+}
+
+/////
+class PushStep implements PipelineStep {
+    private startingPoints: Array<Point> = [];
+
+    constructor(
+        private next: PipelineStep
+    ) { }
+
+    wantsFact(): boolean {
+        return true;
+    }
+
+    join(point: Point, context: any) {
+        this.startingPoints.push(point);
+        this.next.join(point, point.id);
+    }
+
+    done(stack: Array<Array<Point>>) {
+        this.next.done([this.startingPoints].concat(stack));
+        this.startingPoints = [];
+    }
+}
+
+/////
+class ExistentialStep implements PipelineStep {
+    private visited: Array<any> = [];
+
+    constructor(
+        private next: PipelineStep,
+        private quantifier: Interface.Quantifier
+    ) { }
+
+    wantsFact(): boolean {
+        return false;
+    }
+
+    join(point:Point, context: any) {
+        this.visited.push(context);
+    }
+
+    done(stack:Array<Array<Point>>) {
+        var startingPoints = stack[0];
+        startingPoints.forEach((point: Point) => {
+            if (this.isMatch(point.id)) {
+                this.next.join(point, null); // TODO: Where does the previous context come from?
+            }
+        });
+        this.next.done(stack.slice(1));
+    }
+
+    private isMatch(id): boolean {
+        var contains: boolean = false;
+        this.visited.forEach((visitedId) => {
+            if (visitedId == id) {
+                contains = true;
+            }
+        });
+        return this.quantifier === Interface.Quantifier.Exists ? contains : !contains;
     }
 }
 
@@ -355,28 +429,39 @@ class MongoProvider implements Interface.StorageProvider {
                     result.bind(thisArg)(null, facts);
                 isComplete = true;
             });
-            for (var index = query.steps.length-1; index >= 0; index--) {
-                var step = query.steps[index];
-                if (step instanceof Join) {
-                    var join = <Join>step;
-                    if (join.direction === Interface.Direction.Predecessor) {
-                        if (next.wantsFact()) {
-                            next = new LoadStep(next, facts, onError);
-                        }
-                        next = new PredecessorStep(next, join.role);
-                    }
-                    else {
-                        next = new SuccessorStep(next, join.role, facts, onError);
-                    }
-                }
-                else if (step instanceof PropertyCondition) {
-                    var field = <PropertyCondition>step;
-                    next = new FieldStep(next, field.name, field.value);
-                }
-            }
+            next = this.constructSteps(query.steps, next, facts, onError);
             var startStep = new StartStep(next, facts, onError);
             startStep.execute(start);
         })
+    }
+
+    private constructSteps(steps:any, next:PipelineStep, facts, onError:(p1:any)=>void): PipelineStep {
+        for (var index = steps.length - 1; index >= 0; index--) {
+            var step = steps[index];
+            if (step instanceof Join) {
+                var join = <Join>step;
+                if (join.direction === Interface.Direction.Predecessor) {
+                    if (next.wantsFact()) {
+                        next = new LoadStep(next, facts, onError);
+                    }
+                    next = new PredecessorStep(next, join.role);
+                }
+                else {
+                    next = new SuccessorStep(next, join.role, facts, onError);
+                }
+            }
+            else if (step instanceof PropertyCondition) {
+                var field = <PropertyCondition>step;
+                next = new FieldStep(next, field.name, field.value);
+            }
+            else if (step instanceof Interface.ExistentialCondition) {
+                var existentialCondition = <Interface.ExistentialCondition>step;
+                next = new ExistentialStep(next, existentialCondition.quantifier);
+                next = this.constructSteps(existentialCondition.steps, next, facts, onError);
+                next = new PushStep(next);
+            }
+        }
+        return next;
     }
 
     private withCollection(action: (facts, done: () => void) => void) {

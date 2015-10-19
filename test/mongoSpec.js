@@ -39,14 +39,16 @@ describe("Mongo", function() {
     name: "Chores"
   };
 
+  var task = {
+    type: "Task",
+    list: chores,
+    description: "Empty the dishwasher"
+  };
+
   var completion = {
     type: "TaskComplete",
     completed: true,
-    task: {
-      type: "Task",
-      list: chores,
-      description: "Empty the dishwasher"
-    }
+    task: task
   };
 
   var query = Interface.fromDescriptiveString("S.list");
@@ -182,6 +184,78 @@ describe("Mongo", function() {
     coordinator.afterSave(function() {
       mongo.executeQuery(completion, Interface.fromDescriptiveString("P.task F.type=\"No Match\" P.list F.type=\"List\""), function (error2, messages) {
         should.equal(null, error2);
+        messages.length.should.equal(0);
+        done();
+      });
+    });
+  });
+
+  it("should not match not exists if completion exists", function(done) {
+    mongo.save(completion, false, null);
+
+    coordinator.afterSave(function() {
+      mongo.executeQuery(chores, Interface.fromDescriptiveString("S.list N(S.task)"), function (error, messages) {
+        should.equal(null, error);
+        messages.length.should.equal(0);
+        done();
+      });
+    });
+  });
+
+  it("should match not exists if completion does not exist", function(done) {
+    mongo.save(task, false, null);
+
+    coordinator.afterSave(function() {
+      mongo.executeQuery(chores, Interface.fromDescriptiveString("S.list N(S.task)"), function (error, messages) {
+        should.equal(null, error);
+        messages.length.should.equal(1);
+        done();
+      });
+    });
+  });
+
+  it("should match exists if completion exists", function(done) {
+    mongo.save(completion, false, null);
+
+    coordinator.afterSave(function() {
+      mongo.executeQuery(chores, Interface.fromDescriptiveString("S.list E(S.task)"), function (error, messages) {
+        should.equal(null, error);
+        messages.length.should.equal(1);
+        done();
+      });
+    });
+  });
+
+  it("should not match exists if completion does not exist", function(done) {
+    mongo.save(task, false, null);
+
+    coordinator.afterSave(function() {
+      mongo.executeQuery(chores, Interface.fromDescriptiveString("S.list E(S.task)"), function (error, messages) {
+        should.equal(null, error);
+        messages.length.should.equal(0);
+        done();
+      });
+    });
+  });
+
+  it("existential condition works with field conditions negative", function(done) {
+    mongo.save(task, false, null);
+
+    coordinator.afterSave(function() {
+      mongo.executeQuery(chores, Interface.fromDescriptiveString("F.type=\"List\" S.list F.type=\"Task\" N(S.task F.type=\"TaskComplete\")"), function (error, messages) {
+        should.equal(null, error);
+        messages.length.should.equal(1);
+        done();
+      });
+    });
+  });
+
+  it("existential condition works with field conditions positive", function(done) {
+    mongo.save(completion, false, null);
+
+    coordinator.afterSave(function() {
+      mongo.executeQuery(chores, Interface.fromDescriptiveString("F.type=\"List\" S.list F.type=\"Task\" N(S.task F.type=\"TaskComplete\")"), function (error, messages) {
+        should.equal(null, error);
         messages.length.should.equal(0);
         done();
       });
