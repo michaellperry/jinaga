@@ -27,12 +27,20 @@ requirejs(["jinaga", "jinaga.distributor.client"], function(Jinaga, JinagaDistri
     container.appendChild(item);
   }
 
+  function futureMeeting(m) {
+    m.type = "Meeting";
+    return j.not({
+      type: "MeetingOccurred",
+      meeting: m
+    });
+  }
+
   function meetingsInGroup(g) {
     g.type = "UserGroup";
-    return {
+    return j.where({
       type: "Meeting",
       group: g
-    }
+    }, [futureMeeting]);
   }
 
   var group = {
