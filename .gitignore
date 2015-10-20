@@ -6,3 +6,4 @@ web/*.js
 typings/
 src/*.js
 src/*.js.map
+*.tgz

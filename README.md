@@ -11,7 +11,59 @@ Get a quick [video introduction](https://vimeo.com/channels/jinaga) to Jinaga.
 - Checkpoints (coming soon)
 - [Comparison with alternatives](https://github.com/michaellperry/jinaga/blob/master/alternatives.md)
 
-[Please help](https://github.com/michaellperry/jinaga/blob/master/contributing.md)
+[Contributing](https://github.com/michaellperry/jinaga/blob/master/contributing.md)
+
+## Hello World
+
+Install the Jinaga NPM package.
+
+```
+npm install jinaga
+```
+
+Create an application.
+
+``` JavaScript
+var Jinaga = require("jinaga");
+
+var j = new Jinaga();
+
+j.fact({
+  message: "Hello",
+  target: {
+    name: "World"
+  }
+});
+
+function messagesForTarget(t) {
+  return {
+    target: t
+  }
+}
+
+function messageAdded(message) {
+  console.log(message.message + ", " + message.target.name + "!");
+}
+
+j.watch({
+  name: "World"
+}, [messagesForTarget], messageAdded);
+
+j.fact({
+  message: "Goodbye",
+  target: {
+    name: "World"
+  }
+});
+```
+
+Run the application.
+
+```
+node app.js
+```
+
+Enjoy.
 
 ## Historical Modeling
 To reliably synchronize different browsers, you want to use a message-based protocol. But if a user makes changes while the browser is off-line, or if two users make changes at the same time, then each browser will see the messages in a different order. Most messaging patterns rely upon knowing the order of events. This is called "total ordering". Historical Modeling is a set of messaging patterns that only rely upon "partial ordering". Messages are known to have come after their predecessors, but the order between unrelated messages is not strictly known.
