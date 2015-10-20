@@ -17,6 +17,22 @@ requirejs(["jinaga", "jinaga.distributor.client"], function(Jinaga, JinagaDistri
     return p;
   }
 
+  function button(clickHandler) {
+    var b = document.createElement('input');
+    b.setAttribute("type", "button");
+    b.className = "close_button";
+    b.value = "x";
+    b.addEventListener("click", clickHandler);
+    return b;
+  }
+
+  function closeMeeting(meeting) {
+    j.fact({
+      type: "MeetingOccurred",
+      meeting: meeting
+    });
+  }
+
   function meetingAdded(meeting) {
     var container = document.getElementById('container');
     var item = document.createElement('div');
@@ -24,7 +40,15 @@ requirejs(["jinaga", "jinaga.distributor.client"], function(Jinaga, JinagaDistri
     item.appendChild(paragraph("name", meeting.name));
     item.appendChild(paragraph("time", meeting.time));
     item.appendChild(paragraph("location", meeting.location));
+    item.appendChild(button(function() { closeMeeting(meeting); }));
     container.appendChild(item);
+
+    return item;
+  }
+
+  function meetingRemoved(meeting, item) {
+    var container = document.getElementById('container');
+    container.removeChild(item);
   }
 
   function futureMeeting(m) {
@@ -47,7 +71,7 @@ requirejs(["jinaga", "jinaga.distributor.client"], function(Jinaga, JinagaDistri
     type: "UserGroup",
     name: "Papers We Love"
   };
-  j.watch(group, [meetingsInGroup], meetingAdded);
+  j.watch(group, [meetingsInGroup], meetingAdded, meetingRemoved);
 
   window.j = j;
   window.newMeeting = function(name, time, location, groupName) {
