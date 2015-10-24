@@ -68,6 +68,7 @@ Create facts inside of main.js.
 
 ```JavaScript
 var j = new Jinaga();
+j.sync(new JinagaDistributor("ws://localhost:8888/"));
 
 j.fact({
   type: "Task",
