@@ -13,7 +13,7 @@ Get a quick [video introduction](https://vimeo.com/channels/jinaga) to Jinaga.
 
 [Contributing](https://github.com/michaellperry/jinaga/blob/master/contributing.md)
 
-## Hello World
+## Universal Back End
 
 Install the Jinaga NPM package.
 
@@ -21,40 +21,22 @@ Install the Jinaga NPM package.
 npm install jinaga
 ```
 
-Create an application.
+Create an app.js.
 
 ``` JavaScript
-var Jinaga = require("jinaga");
+var JinagaDistributor = require("jinaga/jinaga.distributor.server");
+var MongoProvider = require("jinaga/jinaga.mongo");
+var url = 'mongodb://localhost:27017/dev';
+var port = 8888;
 
-var j = new Jinaga();
+var mongo = new MongoProvider(url);
+JinagaDistributor.listen(mongo, port);
+```
 
-j.fact({
-  message: "Hello",
-  target: {
-    name: "World"
-  }
-});
+Start Mongo.
 
-function messagesForTarget(t) {
-  return {
-    target: t
-  }
-}
-
-function messageAdded(message) {
-  console.log(message.message + ", " + message.target.name + "!");
-}
-
-j.watch({
-  name: "World"
-}, [messagesForTarget], messageAdded);
-
-j.fact({
-  message: "Goodbye",
-  target: {
-    name: "World"
-  }
-});
+```
+mongod.exe
 ```
 
 Run the application.
@@ -63,15 +45,28 @@ Run the application.
 node app.js
 ```
 
-Enjoy.
+Your back end is now running. Spend the rest of your time on the front end.
 
-## Historical Modeling
-To reliably synchronize different browsers, you want to use a message-based protocol. But if a user makes changes while the browser is off-line, or if two users make changes at the same time, then each browser will see the messages in a different order. Most messaging patterns rely upon knowing the order of events. This is called "total ordering". Historical Modeling is a set of messaging patterns that only rely upon "partial ordering". Messages are known to have come after their predecessors, but the order between unrelated messages is not strictly known.
+## Front End
 
-A message knows its predecessors: those messages that came immediately before it. For example, if I need to add a task to a to-do list, then I would let the task know about the list. The list is the predecessor, because it must exist before we can add tasks to it.
+Your front end application saves facts whenever the user does something. These facts are persisted to your back end, and shared in real-time with other browsers.
+
+Install the client-side library.
+
+```
+bower install jinaga
+```
+
+Include the script in your page.
+
+```
+<script src="bower_components/jinaga/jinaga.js"></script>
+<script src="main.js"></script>
+```
+
+Create facts inside of main.js.
 
 ```JavaScript
-var Jinaga = require ('jinaga');
 var j = new Jinaga();
 
 j.fact({
@@ -84,7 +79,7 @@ j.fact({
 });
 ```
 
-This code represents two messages. The first is:
+This code actually represents two facts. The first is:
 
 ```JavaScript
 var chores = {
@@ -103,11 +98,11 @@ var trash = {
 };
 ```
 
-The second message knows about the first. That makes the first message (**chores**) a predecessor to the second (**trash**). The order between these two messages is known. **Chores** will always come before **trash**. But messages with no such relationship can occur in any order.
+The second fact knows about the first. That makes the first fact (**chores**) a predecessor to the second (**trash**). The order between these two is known. **Chores** will always come before **trash**. But facts with no such relationship can occur in any order.
 
 ## Queries
 
-Now that you can express that **chores** is a predecessor of **trash**, you might want to query for all messages with that same predecessor. These are called successors. For example, you might want to find all of the tasks on the **chores** list. You write this as a query. Provide a template that all desired messages will fit. For example, for a given list, this template will match all tasks on that list:
+Now that you can express that **chores** is a predecessor of **trash**, you might want to query for all facts with that same predecessor. These are called successors. For example, you might want to find all of the tasks on the **chores** list. You write this as a query. Provide a template that all desired facts will fit. For example, for a given list, this template will match all tasks on that list:
 
 ```JavaScript
 function tasksInList(l) {
@@ -118,7 +113,7 @@ function tasksInList(l) {
 }
 ```
 
-When a message matching the template is found, we want to call a function. We'll watch the query, and call a function when the results change.
+When a fact matching the template is found, we want to call a function. We'll watch the query, and call a function when the results change.
 
 ```JavaScript
 function taskAdded(task) {
@@ -139,10 +134,10 @@ var dishes = {
 
 j.fact(dishes);
 
-// taskAdded is called with the dishes message.
+// taskAdded is called with the dishes fact.
 ```
 
-A callback is only executed once per message. If you happen to add the same message again, the callback will not be invoked.
+A callback is only executed once per fact. If you happen to add the same fact again, the callback will not be invoked.
 
 The watch is in effect for the current session. It is destroyed implicitly with the Jinaga instance when no longer in use. If you wish to explicitly stop watching, capture the return value.
 
@@ -156,7 +151,7 @@ deregisterWatchChores();
 
 ## Conditions
 
-Now I want to mark a task completed. Let's capture that as another message.
+Now I want to mark a task completed. Let's capture that as another fact.
 
 ```JavaScript
 j.fact({
@@ -166,7 +161,7 @@ j.fact({
 });
 ```
 
-Let's write a template that matches this message for a given task.
+Let's write a template that matches this fact for a given task.
 
 ```JavaScript
 function taskIsNotCompleted(t) {
@@ -210,7 +205,7 @@ j.fact({
   completed: true
 });
 
-// taskRemoved is called with the dishes message.
+// taskRemoved is called with the dishes fact.
 ```
 
-Messages are immutable, so there is no callback for updating a result. They can only be added or removed. To handle updates, please see [Mutablity](https://github.com/michaellperry/jinaga/blob/master/mutability.md).
+Facts are immutable, so there is no callback for updating a result. They can only be added or removed. To handle updates, please see [Mutablity](https://github.com/michaellperry/jinaga/blob/master/mutability.md).

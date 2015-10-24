@@ -24,7 +24,5 @@
   "ignore": [
   ],
   "dependencies": {
-    "debug": "*",
-    "engine.io-client": "~1.5.2"
   }
 }
