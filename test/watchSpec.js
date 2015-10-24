@@ -76,4 +76,12 @@ describe("Watch", function () {
     tasks.length.should.equal(1);
     tasks[0].should.equal(trash);
   })
+
+  it("should stop watching", function () {
+    var watch = j.watch(chores, [tasksInList], taskAdded);
+    watch.stop();
+    j.fact(trash);
+
+    tasks.length.should.equal(0);
+  });
 });

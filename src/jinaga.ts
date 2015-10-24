@@ -51,17 +51,19 @@ class JinagaCoordinator implements Coordinator {
         start: Object,
         templates: Array<(target: Proxy) => Object>,
         resultAdded: (result: Object) => void,
-        resultRemoved: (result: Object) => void) {
+        resultRemoved: (result: Object) => void) : Watch {
 
+        var watch: Watch = null;
         var query = parse(templates);
         var inverses = QueryInverter.invertQuery(query);
         if (inverses.length > 0) {
-            this.watches.push(new Watch(
+            watch = new Watch(
                 start,
                 query,
                 resultAdded,
                 resultRemoved,
-                inverses));
+                inverses);
+            this.watches.push(watch);
         }
 
         this.messages.executeQuery(start, query, function(error, results) {
@@ -70,6 +72,16 @@ class JinagaCoordinator implements Coordinator {
 
         if (this.network) {
             this.network.watch(start, query);
+        }
+        return watch;
+    }
+
+    removeWatch(watch: Watch) {
+        for (var index = 0; index < this.watches.length; ++index) {
+            if (this.watches[index] === watch) {
+                this.watches.splice(index, 1);
+                return;
+            }
         }
     }
 
@@ -118,6 +130,18 @@ class JinagaCoordinator implements Coordinator {
     }
 }
 
+class WatchProxy {
+    constructor(
+        private coordinator: JinagaCoordinator,
+        private watch: Watch
+    ) { }
+
+    public stop() {
+        if (this.watch)
+            this.coordinator.removeWatch(this.watch);
+    }
+}
+
 class Jinaga {
     private coordinator: JinagaCoordinator;
 
@@ -139,8 +163,9 @@ class Jinaga {
         start: Object,
         templates: Array<(target: Proxy) => Object>,
         resultAdded: (result: Object) => void,
-        resultRemoved: (result: Object) => void) {
-        this.coordinator.watch(start, templates, resultAdded, resultRemoved);
+        resultRemoved: (result: Object) => void) : WatchProxy {
+        var watch = this.coordinator.watch(start, templates, resultAdded, resultRemoved);
+        return new WatchProxy(this.coordinator, watch);
     }
 
     public where(
