@@ -121,6 +121,14 @@ class JinagaDistributor implements Coordinator {
         return distributor;
     }
 
+    static attach(storage: StorageProvider, http): JinagaDistributor {
+        var distributor = new JinagaDistributor(storage);
+        distributor.server = Engine.attach(http);
+        debug("Attached to HTTP server");
+        distributor.start();
+        return distributor;
+    }
+
     private start() {
         this.server.on("connection", this.onConnection.bind(this));
     }
