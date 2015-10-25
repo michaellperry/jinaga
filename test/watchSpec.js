@@ -1,7 +1,10 @@
 var chai = require("chai");
 var Jinaga = require("../node/jinaga");
+var Collections = require("../node/collections");
 
 chai.should();
+var expect = chai.expect;
+var _isEqual = Collections._isEqual;
 
 describe("Watch", function () {
   var j;
@@ -35,7 +38,7 @@ describe("Watch", function () {
     j.fact(trash);
 
     tasks.length.should.equal(1);
-    tasks[0].should.equal(trash);
+    expect(_isEqual(tasks[0], trash)).to.be.true;
   });
 
   it("should not return a match twice", function () {
@@ -63,7 +66,7 @@ describe("Watch", function () {
     j.watch(chores, [tasksInList], taskAdded);
 
     tasks.length.should.equal(1);
-    tasks[0].should.equal(trash);
+    expect(_isEqual(tasks[0], trash)).to.be.true;
   });
 
   it("should match a predecessor", function () {
@@ -74,7 +77,7 @@ describe("Watch", function () {
     });
 
     tasks.length.should.equal(1);
-    tasks[0].should.equal(trash);
+    expect(_isEqual(tasks[0], trash)).to.be.true;
   })
 
   it("should stop watching", function () {

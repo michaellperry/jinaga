@@ -157,14 +157,14 @@ class Jinaga {
         this.coordinator.sync(network);
     }
     public fact(message: Object) {
-        this.coordinator.fact(message);
+        this.coordinator.fact(JSON.parse(JSON.stringify(message)));
     }
     public watch(
         start: Object,
         templates: Array<(target: Proxy) => Object>,
         resultAdded: (result: Object) => void,
         resultRemoved: (result: Object) => void) : WatchProxy {
-        var watch = this.coordinator.watch(start, templates, resultAdded, resultRemoved);
+        var watch = this.coordinator.watch(JSON.parse(JSON.stringify(start)), templates, resultAdded, resultRemoved);
         return new WatchProxy(this.coordinator, watch);
     }
 
