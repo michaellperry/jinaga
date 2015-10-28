@@ -1,6 +1,6 @@
 {
   "name": "jinaga",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "description": "JSON Messaging Platform",
   "main": "jinaga.js",
   "repository": {
