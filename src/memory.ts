@@ -39,28 +39,19 @@ class Node {
     }
 }
 
-class MemoryProvider implements StorageProvider {
-    nodes: { [hash: number]: Array<Node>; } = {};
-    queue: Array<{hash: number, fact: Object}> = [];
-    coordinator: Coordinator;
-
-    init(coordinator: Coordinator) {
-        this.coordinator = coordinator;
-    }
-
-    save(fact: Object, source: any) {
-        this.insertNode(fact, source);
-    }
+class MemoryConnection implements Interface.StorageConnection {
+    constructor(
+        private findNode: (fact: Object) => Node
+    ) { }
 
     executeQuery(
         start: Object,
         query: Query,
-        result: (error: string, facts: Array<Object>) => void,
-        thisArg: Object
+        result: (error: string, facts: Array<Object>) => void
     ) {
         var startingNode = this.findNode(start);
         if (!startingNode) {
-            result.bind(thisArg)(null, []);
+            result(null, []);
             return;
         }
 
@@ -68,10 +59,12 @@ class MemoryProvider implements StorageProvider {
 
         var facts: Array<Object> = [];
         nodes.forEach(function (node) {
-           facts.push(node.fact);
+            facts.push(node.fact);
         });
-        result.bind(thisArg)(null, facts);
+        result(null, facts);
     }
+
+    close() { }
 
     private queryNodes(startingNode, steps:Array<Interface.Step>): Array<Node> {
         var nodes:Array<Node> = [startingNode];
@@ -119,6 +112,24 @@ class MemoryProvider implements StorageProvider {
             }
         }
         return nodes;
+    }
+}
+
+class MemoryProvider implements StorageProvider {
+    nodes: { [hash: number]: Array<Node>; } = {};
+    queue: Array<{hash: number, fact: Object}> = [];
+    coordinator: Coordinator;
+
+    init(coordinator: Coordinator) {
+        this.coordinator = coordinator;
+    }
+
+    save(fact: Object, source: any) {
+        this.insertNode(fact, source);
+    }
+
+    open(action: (connection: Interface.StorageConnection) => void) {
+        action(new MemoryConnection((fact: Object) => { return this.findNode(fact); }));
     }
 
     sendAllFacts() {

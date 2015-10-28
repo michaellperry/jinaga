@@ -377,6 +377,70 @@ class ExistentialStep implements PipelineStep {
     }
 }
 
+class MongoConnection implements Interface.StorageConnection {
+    constructor(
+        private facts: any,
+        private onClose: () => void
+    ) { }
+
+    executeQuery(
+        start:Object,
+        query:Query,
+        result:(error: string, facts: Array<Object>) => void) {
+
+        var isComplete = false;
+        var onError = (error: string) => {
+            if (!isComplete)
+                result(error, []);
+            isComplete = true;
+            this.onClose();
+        };
+
+        var next: PipelineStep = new GatherStep((facts: Array<Object>) => {
+            if (!isComplete)
+                result(null, facts);
+            isComplete = true;
+            this.onClose();
+        });
+        next = this.constructSteps(query.steps, next, onError);
+        var startStep = new StartStep(next, this.facts, onError);
+        startStep.execute(start);
+    }
+
+    private constructSteps(steps:any, next:PipelineStep, onError:(p1:any)=>void): PipelineStep {
+        for (var index = steps.length - 1; index >= 0; index--) {
+            var step = steps[index];
+            if (step instanceof Join) {
+                var join = <Join>step;
+                if (join.direction === Interface.Direction.Predecessor) {
+                    if (next.wantsFact()) {
+                        next = new LoadStep(next, this.facts, onError);
+                    }
+                    next = new PredecessorStep(next, join.role);
+                }
+                else {
+                    next = new SuccessorStep(next, join.role, this.facts, onError);
+                }
+            }
+            else if (step instanceof PropertyCondition) {
+                var field = <PropertyCondition>step;
+                next = new FieldStep(next, field.name, field.value);
+            }
+            else if (step instanceof Interface.ExistentialCondition) {
+                var existentialCondition = <Interface.ExistentialCondition>step;
+                next = new ExistentialStep(next, existentialCondition.quantifier);
+                next = this.constructSteps(existentialCondition.steps, next, onError);
+                next = new PushStep(next);
+            }
+        }
+        return next;
+    }
+
+    close() {
+        this.onClose();
+    }
+}
+
 class MongoProvider implements Interface.StorageProvider {
     private url: string;
     private coordinator: Coordinator;
@@ -410,60 +474,10 @@ class MongoProvider implements Interface.StorageProvider {
         });
     }
 
-    executeQuery(
-        start:Object,
-        query:Query,
-        result:(error: string, facts: Array<Object>) => void,
-        thisArg:Object) {
-
+    open(action: (connection:Interface.StorageConnection) => void) {
         this.withCollection((facts, done: () => void) => {
-            var isComplete = false;
-            var onError = function(error: string) {
-                if (!isComplete)
-                    result.bind(thisArg)(error, []);
-                isComplete = true;
-                done();
-            };
-
-            var next: PipelineStep = new GatherStep((facts: Array<Object>) => {
-                if (!isComplete)
-                    result.bind(thisArg)(null, facts);
-                isComplete = true;
-                done();
-            });
-            next = this.constructSteps(query.steps, next, facts, onError);
-            var startStep = new StartStep(next, facts, onError);
-            startStep.execute(start);
+            action(new MongoConnection(facts, done));
         })
-    }
-
-    private constructSteps(steps:any, next:PipelineStep, facts, onError:(p1:any)=>void): PipelineStep {
-        for (var index = steps.length - 1; index >= 0; index--) {
-            var step = steps[index];
-            if (step instanceof Join) {
-                var join = <Join>step;
-                if (join.direction === Interface.Direction.Predecessor) {
-                    if (next.wantsFact()) {
-                        next = new LoadStep(next, facts, onError);
-                    }
-                    next = new PredecessorStep(next, join.role);
-                }
-                else {
-                    next = new SuccessorStep(next, join.role, facts, onError);
-                }
-            }
-            else if (step instanceof PropertyCondition) {
-                var field = <PropertyCondition>step;
-                next = new FieldStep(next, field.name, field.value);
-            }
-            else if (step instanceof Interface.ExistentialCondition) {
-                var existentialCondition = <Interface.ExistentialCondition>step;
-                next = new ExistentialStep(next, existentialCondition.quantifier);
-                next = this.constructSteps(existentialCondition.steps, next, facts, onError);
-                next = new PushStep(next);
-            }
-        }
-        return next;
     }
 
     private withCollection(action: (facts, done: () => void) => void) {

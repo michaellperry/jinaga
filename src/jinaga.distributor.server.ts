@@ -9,6 +9,9 @@ import Inverse = QueryInverter.Inverse;
 import Collections = require("./collections");
 import _isEqual = Collections._isEqual;
 import _some = Collections._some;
+import Tasks = require("./tasks");
+import Task = Tasks.Task;
+import TaskQueue = Tasks.TaskQueue;
 
 var debug = Debug("jinaga.distributor.server");
 
@@ -54,15 +57,18 @@ class JinagaConnection {
         try {
             var query = Interface.fromDescriptiveString(message.query);
             // TODO: This is incorrect. Each segment of the query should be executed.
-            this.distributor.storage.executeQuery(message.start, query, function (error: string, results: Array<Object>) {
-                results.forEach(function (result: Object) {
-                    debug("Sending result");
-                    this.socket.send(JSON.stringify({
-                        type: "fact",
-                        fact: result
-                    }));
-                }, this);
-            }, this);
+            this.distributor.storage.open((connection: Interface.StorageConnection) => {
+                connection.executeQuery(message.start, query, (error: string, results: Array<Object>) => {
+                    results.forEach((result: Object) => {
+                        debug("Sending result");
+                        this.socket.send(JSON.stringify({
+                            type: "fact",
+                            fact: result
+                        }));
+                    });
+                    connection.close();
+                });
+            });
             var inverses = QueryInverter.invertQuery(query);
             inverses.forEach(function (inverse: Inverse) {
                 this.watches.push(new Watch(message.start, inverse.affected));
@@ -83,25 +89,33 @@ class JinagaConnection {
 
     distribute(fact: Object) {
         debug("Distributing to " + this.socket.id);
-        this.watches.forEach(function(watch) {
-            this.distributor.storage.executeQuery(fact, watch.affected, function (error: string, affected: Array<Object>) {
-                if (error) {
-                    debug(error);
-                    return;
-                }
-                var some: any = _some;
-                if (some(affected, (obj: Object) => _isEqual(obj, watch.start))) {
-                    debug("Sending fact");
-                    this.socket.send(JSON.stringify({
-                        type: "fact",
-                        fact: fact
-                    }));
-                }
-                else {
-                    debug("No match");
-                }
-            }, this);
-        }, this);
+        this.distributor.storage.open((connection: Interface.StorageConnection) => {
+            var tasks = new TaskQueue();
+            this.watches.forEach((watch) => {
+                var task = new Task();
+                connection.executeQuery(fact, watch.affected, (error: string, affected: Array<Object>) => {
+                    if (error) {
+                        debug(error);
+                        task.done();
+                        return;
+                    }
+                    var some: any = _some;
+                    if (some(affected, (obj: Object) => _isEqual(obj, watch.start))) {
+                        debug("Sending fact");
+                        this.socket.send(JSON.stringify({
+                            type: "fact",
+                            fact: fact
+                        }));
+                    }
+                    else {
+                        debug("No match");
+                    }
+                    task.done();
+                });
+                tasks.push(task);
+            });
+            tasks.whenFinished(() => { connection.close(); });
+        });
     }
 }
 
