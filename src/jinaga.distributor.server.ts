@@ -9,9 +9,6 @@ import Inverse = QueryInverter.Inverse;
 import Collections = require("./collections");
 import _isEqual = Collections._isEqual;
 import _some = Collections._some;
-import Tasks = require("./tasks");
-import Task = Tasks.Task;
-import TaskQueue = Tasks.TaskQueue;
 
 var debug = Debug("jinaga.distributor.server");
 
@@ -57,22 +54,19 @@ class JinagaConnection {
         try {
             var query = Interface.fromDescriptiveString(message.query);
             // TODO: This is incorrect. Each segment of the query should be executed.
-            this.distributor.storage.open((connection: Interface.StorageConnection) => {
-                connection.executeQuery(message.start, query, (error: string, results: Array<Object>) => {
-                    results.forEach((result: Object) => {
-                        debug("Sending result");
-                        this.socket.send(JSON.stringify({
-                            type: "fact",
-                            fact: result
-                        }));
-                    });
-                    connection.close();
+            this.distributor.storage.executeQuery(message.start, query, (error: string, results: Array<Object>) => {
+                results.forEach((result: Object) => {
+                    debug("Sending result");
+                    this.socket.send(JSON.stringify({
+                        type: "fact",
+                        fact: result
+                    }));
                 });
             });
             var inverses = QueryInverter.invertQuery(query);
-            inverses.forEach(function (inverse: Inverse) {
+            inverses.forEach((inverse: Inverse) => {
                 this.watches.push(new Watch(message.start, inverse.affected));
-            }, this);
+            });
         }
         catch (x) {
             debug(x.message);
@@ -89,32 +83,24 @@ class JinagaConnection {
 
     distribute(fact: Object) {
         debug("Distributing to " + this.socket.id);
-        this.distributor.storage.open((connection: Interface.StorageConnection) => {
-            var tasks = new TaskQueue();
-            this.watches.forEach((watch) => {
-                var task = new Task();
-                connection.executeQuery(fact, watch.affected, (error: string, affected: Array<Object>) => {
-                    if (error) {
-                        debug(error);
-                        task.done();
-                        return;
-                    }
-                    var some: any = _some;
-                    if (some(affected, (obj: Object) => _isEqual(obj, watch.start))) {
-                        debug("Sending fact");
-                        this.socket.send(JSON.stringify({
-                            type: "fact",
-                            fact: fact
-                        }));
-                    }
-                    else {
-                        debug("No match");
-                    }
-                    task.done();
-                });
-                tasks.push(task);
+        this.watches.forEach((watch) => {
+            this.distributor.storage.executeQuery(fact, watch.affected, (error: string, affected: Array<Object>) => {
+                if (error) {
+                    debug(error);
+                    return;
+                }
+                var some: any = _some;
+                if (some(affected, (obj: Object) => _isEqual(obj, watch.start))) {
+                    debug("Sending fact");
+                    this.socket.send(JSON.stringify({
+                        type: "fact",
+                        fact: fact
+                    }));
+                }
+                else {
+                    debug("No match");
+                }
             });
-            tasks.whenFinished(() => { connection.close(); });
         });
     }
 }
@@ -153,10 +139,10 @@ class JinagaDistributor implements Coordinator {
     }
 
     send(fact: Object, sender: any) {
-        this.connections.forEach(function (connection: JinagaConnection) {
+        this.connections.forEach((connection: JinagaConnection) => {
             if (connection !== sender)
                 connection.distribute(fact);
-        }, this);
+        });
     }
 
     onReceived(fact: Object, source: any) {

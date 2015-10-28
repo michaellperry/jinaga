@@ -1,7 +1,6 @@
 import Interface = require("./interface");
 import Query = Interface.Query;
 import StorageProvider = Interface.StorageProvider;
-import StorageConnection = Interface.StorageConnection;
 import NetworkProvider = Interface.NetworkProvider;
 import Proxy = Interface.Proxy;
 import Coordinator = Interface.Coordinator;
@@ -13,9 +12,6 @@ import Debug = require("debug");
 import Collections = require("./collections");
 import _isEqual = Collections._isEqual;
 import _some = Collections._some;
-import Tasks = require("./tasks");
-import Task = Tasks.Task;
-import TaskQueue = Tasks.TaskQueue;
 
 var debug: (string) => void = Debug ? Debug("jinaga") : function() {};
 
@@ -70,10 +66,8 @@ class JinagaCoordinator implements Coordinator {
             this.watches.push(watch);
         }
 
-        this.messages.open((connection: StorageConnection) => {
-            connection.executeQuery(start, query, (error, results) => {
-                results.forEach(resultAdded);
-            });
+        this.messages.executeQuery(start, query, (error, results) => {
+            results.map(resultAdded);
         });
 
         if (this.network) {
@@ -91,52 +85,33 @@ class JinagaCoordinator implements Coordinator {
         }
     }
 
-    private execute(
-        connection: StorageConnection,
-        fact: Object,
-        query: Query,
-        handler: (result: Array<Object>) => void): Task {
-
-        var task = new Task();
-        if (query && handler) {
-            connection.executeQuery(fact, query, (error: string, result: Array<Object>) => {
-                if (!error) {
-                    handler(result);
-                }
-                task.done();
-            });
-        }
-        else {
-            task.done();
-        }
-        return task;
-    }
-
     onSaved(fact: Object, source: any) {
         if (source === null) {
             this.messages.push(fact);
         }
-        this.messages.open((connection: StorageConnection) => {
-            var tasks = new TaskQueue();
-            this.watches.forEach((watch: Watch) => {
-                watch.inverses.forEach((inverse: Inverse) => {
-                    tasks.push(this.execute(connection, fact, inverse.affected, (affected: Array<Object>) => {
+        this.watches.map((watch: Watch) => {
+            watch.inverses.map((inverse: Inverse) => {
+                this.messages.executeQuery(fact, inverse.affected, (error2: string, affected: Array<Object>) => {
+                    if (!error2) {
                         if (_some(affected, (obj: Object) => _isEqual(obj, watch.start))) {
                             if (inverse.added && watch.resultAdded) {
-                                tasks.push(this.execute(connection, fact, inverse.added, (added: Array<Object>) => {
-                                    added.forEach(watch.resultAdded);
-                                }));
+                                this.messages.executeQuery(fact, inverse.added, (error3: string, added: Array<Object>) => {
+                                    if (!error3) {
+                                        added.map(watch.resultAdded);
+                                    }
+                                });
                             }
                             if (inverse.removed && watch.resultRemoved) {
-                                tasks.push(this.execute(connection, fact, inverse.removed, (removed: Array<Object>) => {
-                                    removed.forEach(watch.resultRemoved);
-                                }));
+                                this.messages.executeQuery(fact, inverse.removed, (error2: string, added: Array<Object>) => {
+                                    if (!error2) {
+                                        added.map(watch.resultRemoved);
+                                    }
+                                });
                             }
                         }
-                    }));
-                }, this);
-            }, this);
-            tasks.whenFinished(() => { connection.close(); });
+                    }
+                });
+            });
         });
     }
 

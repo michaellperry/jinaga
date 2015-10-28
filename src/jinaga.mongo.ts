@@ -8,6 +8,7 @@ import computeHash = Interface.computeHash;
 import isPredecessor = Interface.isPredecessor;
 import Collections = require("./collections");
 import _isEqual = Collections._isEqual;
+import Pool = require("./pool");
 
 import Debug = require("debug");
 var debug = Debug("jinaga.mongo");
@@ -377,73 +378,17 @@ class ExistentialStep implements PipelineStep {
     }
 }
 
-class MongoConnection implements Interface.StorageConnection {
+class MongoConnection {
     constructor(
-        private facts: any,
-        private onClose: () => void
+        public db: any,
+        public facts: any
     ) { }
-
-    executeQuery(
-        start:Object,
-        query:Query,
-        result:(error: string, facts: Array<Object>) => void) {
-
-        var isComplete = false;
-        var onError = (error: string) => {
-            if (!isComplete)
-                result(error, []);
-            isComplete = true;
-            this.onClose();
-        };
-
-        var next: PipelineStep = new GatherStep((facts: Array<Object>) => {
-            if (!isComplete)
-                result(null, facts);
-            isComplete = true;
-            this.onClose();
-        });
-        next = this.constructSteps(query.steps, next, onError);
-        var startStep = new StartStep(next, this.facts, onError);
-        startStep.execute(start);
-    }
-
-    private constructSteps(steps:any, next:PipelineStep, onError:(p1:any)=>void): PipelineStep {
-        for (var index = steps.length - 1; index >= 0; index--) {
-            var step = steps[index];
-            if (step instanceof Join) {
-                var join = <Join>step;
-                if (join.direction === Interface.Direction.Predecessor) {
-                    if (next.wantsFact()) {
-                        next = new LoadStep(next, this.facts, onError);
-                    }
-                    next = new PredecessorStep(next, join.role);
-                }
-                else {
-                    next = new SuccessorStep(next, join.role, this.facts, onError);
-                }
-            }
-            else if (step instanceof PropertyCondition) {
-                var field = <PropertyCondition>step;
-                next = new FieldStep(next, field.name, field.value);
-            }
-            else if (step instanceof Interface.ExistentialCondition) {
-                var existentialCondition = <Interface.ExistentialCondition>step;
-                next = new ExistentialStep(next, existentialCondition.quantifier);
-                next = this.constructSteps(existentialCondition.steps, next, onError);
-                next = new PushStep(next);
-            }
-        }
-        return next;
-    }
-
-    close() {
-        this.onClose();
-    }
 }
 
 class MongoProvider implements Interface.StorageProvider {
     private url: string;
     private coordinator: Coordinator;
+    private pool: Pool<MongoConnection> = null;
 
     constructor(url: string) {
         this.url = url;
@@ -474,22 +419,86 @@ class MongoProvider implements Interface.StorageProvider {
         });
     }
 
-    open(action: (connection:Interface.StorageConnection) => void) {
+    executeQuery(
+        start:Object,
+        query:Query,
+        result:(error: string, facts: Array<Object>) => void) {
+
         this.withCollection((facts, done: () => void) => {
-            action(new MongoConnection(facts, done));
+            var isComplete = false;
+            var onError = function(error: string) {
+                if (!isComplete)
+                    result(error, []);
+                isComplete = true;
+                done();
+            };
+
+            var next: PipelineStep = new GatherStep((facts: Array<Object>) => {
+                if (!isComplete)
+                    result(null, facts);
+                isComplete = true;
+                done();
+            });
+            next = this.constructSteps(query.steps, next, facts, onError);
+            var startStep = new StartStep(next, facts, onError);
+            startStep.execute(start);
         })
     }
 
+    private constructSteps(steps:any, next:PipelineStep, facts, onError:(p1:any)=>void): PipelineStep {
+        for (var index = steps.length - 1; index >= 0; index--) {
+            var step = steps[index];
+            if (step instanceof Join) {
+                var join = <Join>step;
+                if (join.direction === Interface.Direction.Predecessor) {
+                    if (next.wantsFact()) {
+                        next = new LoadStep(next, facts, onError);
+                    }
+                    next = new PredecessorStep(next, join.role);
+                }
+                else {
+                    next = new SuccessorStep(next, join.role, facts, onError);
+                }
+            }
+            else if (step instanceof PropertyCondition) {
+                var field = <PropertyCondition>step;
+                next = new FieldStep(next, field.name, field.value);
+            }
+            else if (step instanceof Interface.ExistentialCondition) {
+                var existentialCondition = <Interface.ExistentialCondition>step;
+                next = new ExistentialStep(next, existentialCondition.quantifier);
+                next = this.constructSteps(existentialCondition.steps, next, facts, onError);
+                next = new PushStep(next);
+            }
+        }
+        return next;
+    }
+
     private withCollection(action: (facts, done: () => void) => void) {
-        MongoClient.connect(this.url, (err, db) => {
-            if (err) {
-                this.coordinator.onError(err.message);
-            }
-            else {
-                action(db.collection("facts"), () => {
-                   db.close();
-                });
-            }
+        if (!this.pool) {
+            this.pool = new Pool<MongoConnection>(
+                (done: (connection: MongoConnection) => void) => {
+                    debug("Opening Mongo connection.");
+                    MongoClient.connect(this.url, (err, db) => {
+                        if (err) {
+                            this.coordinator.onError(err.message);
+                            done(null);
+                        }
+                        else {
+                            done(new MongoConnection(db, db.collection("facts")));
+                        }
+                    });
+                },
+                (connection: MongoConnection) => {
+                    debug("Closing Mongo connection.");
+                    connection.db.close();
+                }
+            );
+        }
+        this.pool.begin((connection: MongoConnection, done: () => void) => {
+            action(connection.facts, () => {
+                done();
+            });
         });
     }
 }

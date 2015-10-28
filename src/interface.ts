@@ -249,19 +249,14 @@ export interface Coordinator {
     onError(err: string);
 }
 
-export interface StorageConnection {
+export interface StorageProvider {
+    init(coordinator: Coordinator);
+    save(fact: Object, source: any);
     executeQuery(
         start: Object,
         query: Query,
         result: (error: string, facts: Array<Object>) => void
     );
-    close();
-}
-
-export interface StorageProvider {
-    init(coordinator: Coordinator);
-    save(fact: Object, source: any);
-    open(action: (connection: StorageConnection) => void);
     sendAllFacts();
     push(fact: Object);
 }

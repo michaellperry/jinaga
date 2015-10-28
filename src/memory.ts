@@ -39,10 +39,18 @@ class Node {
     }
 }
 
-class MemoryConnection implements Interface.StorageConnection {
-    constructor(
-        private findNode: (fact: Object) => Node
-    ) { }
+class MemoryProvider implements StorageProvider {
+    nodes: { [hash: number]: Array<Node>; } = {};
+    queue: Array<{hash: number, fact: Object}> = [];
+    coordinator: Coordinator;
+
+    init(coordinator: Coordinator) {
+        this.coordinator = coordinator;
+    }
+
+    save(fact: Object, source: any) {
+        this.insertNode(fact, source);
+    }
 
     executeQuery(
         start: Object,
@@ -59,12 +67,10 @@ class MemoryConnection implements Interface.StorageConnection {
 
         var facts: Array<Object> = [];
         nodes.forEach(function (node) {
-            facts.push(node.fact);
+           facts.push(node.fact);
         });
         result(null, facts);
     }
-
-    close() { }
 
     private queryNodes(startingNode, steps:Array<Interface.Step>): Array<Node> {
         var nodes:Array<Node> = [startingNode];
@@ -112,24 +118,6 @@ class MemoryConnection implements Interface.StorageConnection {
             }
         }
         return nodes;
-    }
-}
-
-class MemoryProvider implements StorageProvider {
-    nodes: { [hash: number]: Array<Node>; } = {};
-    queue: Array<{hash: number, fact: Object}> = [];
-    coordinator: Coordinator;
-
-    init(coordinator: Coordinator) {
-        this.coordinator = coordinator;
-    }
-
-    save(fact: Object, source: any) {
-        this.insertNode(fact, source);
-    }
-
-    open(action: (connection: Interface.StorageConnection) => void) {
-        action(new MemoryConnection((fact: Object) => { return this.findNode(fact); }));
     }
 
     sendAllFacts() {
