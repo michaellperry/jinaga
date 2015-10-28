@@ -422,12 +422,14 @@ class MongoProvider implements Interface.StorageProvider {
                 if (!isComplete)
                     result.bind(thisArg)(error, []);
                 isComplete = true;
+                done();
             };
 
             var next: PipelineStep = new GatherStep((facts: Array<Object>) => {
                 if (!isComplete)
                     result.bind(thisArg)(null, facts);
                 isComplete = true;
+                done();
             });
             next = this.constructSteps(query.steps, next, facts, onError);
             var startStep = new StartStep(next, facts, onError);
