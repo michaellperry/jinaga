@@ -1,6 +1,8 @@
 # Jinaga
 Real-time client-to-server-to-client messaging with persistence. Replace your REST API, document database, and web sockets code with this one simple, universal back end.
 
+See an example application: [Yaca](http://jinaga.cloudapp.net) - Yet Another Chat App.
+
 Get a quick [video introduction](https://vimeo.com/channels/jinaga) to Jinaga.
 
 - [Mutablity](https://github.com/michaellperry/jinaga/blob/master/mutability.md)
