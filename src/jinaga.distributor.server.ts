@@ -109,20 +109,30 @@ class JinagaDistributor implements Coordinator {
     server: Engine;
     connections: Array<JinagaConnection> = [];
 
-    constructor(public storage: StorageProvider) {
+    constructor(
+        public storage: StorageProvider,
+        private authenticate: (socket: any, done: (user: Object) => void) => void)
+    {
+        if (!this.authenticate) {
+            this.authenticate = (socket: any, done: (user: Object) => void) => {
+                done(null);
+            };
+        }
         storage.init(this);
     }
 
-    static listen(storage: StorageProvider, port: number): JinagaDistributor {
-        var distributor = new JinagaDistributor(storage);
+    static listen(storage: StorageProvider, port: number, authenticate: (socket: any, done: (user: Object) => void) => void): JinagaDistributor {
+        var distributor = new JinagaDistributor(storage, authenticate);
         distributor.server = Engine.listen(port);
         debug("Listening on port " + port);
         distributor.start();
         return distributor;
     }
 
-    static attach(storage: StorageProvider, http): JinagaDistributor {
-        var distributor = new JinagaDistributor(storage);
+    static attach(storage: StorageProvider, http, authenticate: (req: any, done: (user: Object) => void) => void): JinagaDistributor {
+        var distributor = new JinagaDistributor(storage, (socket: any, done: (user: Object) => void) => {
+            authenticate(socket.request, done);
+        });
         distributor.server = Engine.attach(http);
         debug("Attached to HTTP server");
         distributor.start();
@@ -135,7 +145,9 @@ class JinagaDistributor implements Coordinator {
 
     onConnection(socket) {
         debug("Connection established");
-        this.connections.push(new JinagaConnection(socket, this));
+        this.authenticate(socket, (user: any) => {
+            this.connections.push(new JinagaConnection(socket, this));
+        });
     }
 
     send(fact: Object, sender: any) {
