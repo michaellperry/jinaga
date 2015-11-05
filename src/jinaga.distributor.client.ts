@@ -35,10 +35,19 @@ class JinagaDistributor implements NetworkProvider {
         }));
     }
 
+    public login() {
+        this.socket.send(JSON.stringify({
+            type: "login"
+        }));
+    }
+
     private onMessage(message) {
         var messageObj = JSON.parse(message);
         if (messageObj.type === "fact") {
-            this.coordinator.onReceived(messageObj.fact, this);
+            this.coordinator.onReceived(messageObj.fact, null, this);
+        }
+        if (messageObj.type === "loggedIn") {
+            this.coordinator.onLoggedIn(messageObj.userFact);
         }
     }
 }

@@ -386,10 +386,12 @@ class MongoConnection {
     ) { }
 }
 
-class MongoProvider implements Interface.StorageProvider {
+class MongoProvider implements Interface.StorageProvider, Interface.KeystoreProvider {
     private url: string;
     private coordinator: Coordinator;
     private pool: Pool<MongoConnection> = null;
+    private count: number = 0;
+    private done: () => void;
 
     constructor(url: string) {
         this.url = url;
@@ -423,6 +425,7 @@ class MongoProvider implements Interface.StorageProvider {
     executeQuery(
         start:Object,
         query:Query,
+        readerFact: Object,
         result:(error: string, facts: Array<Object>) => void) {
 
         this.withCollection("facts", (facts, done: () => void) => {
@@ -475,7 +478,7 @@ class MongoProvider implements Interface.StorageProvider {
         return next;
     }
 
-    getUserFact(userIdentity:Interface.UserIdentity, done:(userFact:any)=>void) {
+    getUserFact(userIdentity:Interface.UserIdentity, done:(userFact:Object)=>void) {
         if (!userIdentity) {
             done(null);
         }
@@ -490,16 +493,16 @@ class MongoProvider implements Interface.StorageProvider {
                 }, (error: any) => {
                     if (error) {
                         this.coordinator.onError(error);
-                        close();
                         done(null);
+                        close();
                     }
                     else {
                         if (publicKey) {
-                            close();
                             done({
                                 type: "Jinaga.User",
                                 publicKey: publicKey
                             });
+                            close();
                         }
                         else {
                             var pair = Keypair({ bits: 1024 });
@@ -513,15 +516,15 @@ class MongoProvider implements Interface.StorageProvider {
                             }, (error: string, result) => {
                                 if (error) {
                                     this.coordinator.onError(error);
-                                    close();
                                     done(null);
+                                    close();
                                 }
                                 else {
-                                    close();
                                     done({
                                         type: "Jinaga.User",
                                         publicKey: publicKey
                                     });
+                                    close();
                                 }
                             });
                         }
@@ -532,6 +535,7 @@ class MongoProvider implements Interface.StorageProvider {
     }
 
     private withCollection(collectionName:string, action:(collection:any, done:()=>void)=>void) {
+        this.count++;
         if (!this.pool) {
             this.pool = new Pool<MongoConnection>(
                 (done: (connection: MongoConnection) => void) => {
@@ -555,8 +559,33 @@ class MongoProvider implements Interface.StorageProvider {
         this.pool.begin((connection: MongoConnection, done: () => void) => {
             action(connection.facts, () => {
                 done();
+                this.count--;
+                if (this.count === 0 && this.done) {
+                    this.done();
+                }
             });
         });
+    }
+
+    whenDone(done: () => void) {
+        if (this.count === 0) {
+            done();
+        }
+        else {
+            var prior = this.done;
+            if (prior) {
+                this.done = () => {
+                    prior();
+                    done();
+                }
+            }
+            else {
+                this.done = () => {
+                    this.done = null;
+                    done();
+                };
+            }
+        }
     }
 }
 

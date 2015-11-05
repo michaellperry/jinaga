@@ -250,8 +250,9 @@ export interface UserIdentity {
 export interface Coordinator {
     onSaved(fact: Object, source: any);
     send(fact: Object, source: any);
-    onReceived(fact: Object, source: any);
+    onReceived(fact: Object, userFact: Object, source: any);
     onError(err: string);
+    onLoggedIn(userFact: Object);
 }
 
 export interface StorageProvider {
@@ -260,17 +261,22 @@ export interface StorageProvider {
     executeQuery(
         start: Object,
         query: Query,
+        readerFact: Object,
         result: (error: string, facts: Array<Object>) => void
     );
     sendAllFacts();
     push(fact: Object);
-    getUserFact(userIdentity: UserIdentity, done: (userFact: any) => void);
+}
+
+export interface KeystoreProvider {
+    getUserFact(userIdentity: UserIdentity, done: (userFact: Object) => void);
 }
 
 export interface NetworkProvider {
     init(coordinator: Coordinator);
     watch(start: Object, query: Query);
     fact(fact: Object);
+    login();
 }
 
 

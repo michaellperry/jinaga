@@ -29,6 +29,9 @@ class JinagaCoordinator implements Coordinator {
     private watches: Array<Watch> = [];
     private messages: StorageProvider = null;
     private network: NetworkProvider = null;
+    private loggedIn: boolean = false;
+    private userFact: Object = null;
+    private loginCallbacks: Array<(userFact: Object) => void> = [];
 
     save(storage: StorageProvider) {
         this.messages = storage;
@@ -66,7 +69,7 @@ class JinagaCoordinator implements Coordinator {
             this.watches.push(watch);
         }
 
-        this.messages.executeQuery(start, query, (error, results) => {
+        this.messages.executeQuery(start, query, this.userFact, (error, results) => {
             results.map(resultAdded);
         });
 
@@ -85,24 +88,37 @@ class JinagaCoordinator implements Coordinator {
         }
     }
 
+    login(callback: (userFact: Object) => void) {
+        if (this.loggedIn) {
+            callback(this.userFact);
+        }
+        else if (this.network) {
+            this.loginCallbacks.push(callback);
+            this.network.login();
+        }
+        else {
+            callback(null);
+        }
+    }
+
     onSaved(fact: Object, source: any) {
         if (source === null) {
             this.messages.push(fact);
         }
         this.watches.map((watch: Watch) => {
             watch.inverses.map((inverse: Inverse) => {
-                this.messages.executeQuery(fact, inverse.affected, (error2: string, affected: Array<Object>) => {
+                this.messages.executeQuery(fact, inverse.affected, this.userFact, (error2: string, affected: Array<Object>) => {
                     if (!error2) {
                         if (_some(affected, (obj: Object) => _isEqual(obj, watch.start))) {
                             if (inverse.added && watch.resultAdded) {
-                                this.messages.executeQuery(fact, inverse.added, (error3: string, added: Array<Object>) => {
+                                this.messages.executeQuery(fact, inverse.added, this.userFact, (error3: string, added: Array<Object>) => {
                                     if (!error3) {
                                         added.map(watch.resultAdded);
                                     }
                                 });
                             }
                             if (inverse.removed && watch.resultRemoved) {
-                                this.messages.executeQuery(fact, inverse.removed, (error2: string, added: Array<Object>) => {
+                                this.messages.executeQuery(fact, inverse.removed, this.userFact, (error2: string, added: Array<Object>) => {
                                     if (!error2) {
                                         added.map(watch.resultRemoved);
                                     }
@@ -126,6 +142,15 @@ class JinagaCoordinator implements Coordinator {
     send(fact: Object, source: any) {
         if (this.network)
             this.network.fact(fact);
+    }
+
+    onLoggedIn(userFact: Object) {
+        this.userFact = userFact;
+        this.loggedIn = true;
+        this.loginCallbacks.forEach((callback: (userFact: Object) => void) => {
+            callback(userFact);
+        });
+        this.loginCallbacks = [];
     }
 }
 
@@ -165,6 +190,9 @@ class Jinaga {
         resultRemoved: (result: Object) => void) : WatchProxy {
         var watch = this.coordinator.watch(JSON.parse(JSON.stringify(start)), templates, resultAdded, resultRemoved);
         return new WatchProxy(this.coordinator, watch);
+    }
+    public login(callback: (userFact: Object) => void) {
+        this.coordinator.login(callback);
     }
 
     public where(

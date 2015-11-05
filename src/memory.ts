@@ -55,6 +55,7 @@ class MemoryProvider implements StorageProvider {
     executeQuery(
         start: Object,
         query: Query,
+        readerFact: Object,
         result: (error: string, facts: Array<Object>) => void
     ) {
         var startingNode = this.findNode(start);
@@ -178,10 +179,6 @@ class MemoryProvider implements StorageProvider {
         }
 
         return this.findNodeWithFact(array, fact);
-    }
-
-    getUserFact(userIdentity:Interface.UserIdentity, done:(userFact:any)=>void) {
-        done(null);
     }
 }
 

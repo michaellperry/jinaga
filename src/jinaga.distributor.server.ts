@@ -15,7 +15,8 @@ var debug = Debug("jinaga.distributor.server");
 class Watch {
     constructor(
         public start: Object,
-        public affected: Query
+        public affected: Query,
+        public userFact: Object
     ) {}
 }
 
@@ -24,7 +25,11 @@ class JinagaConnection {
     distributor: JinagaDistributor;
     watches: Array<Watch> = [];
 
-    constructor(socket, distributor: JinagaDistributor) {
+    constructor(
+        socket,
+        private userFact: Object,
+        distributor: JinagaDistributor)
+    {
         this.socket = socket;
         this.distributor = distributor;
         socket.on("message", this.onMessage.bind(this));
@@ -40,6 +45,9 @@ class JinagaConnection {
         else if (messageObj.type === "fact") {
             this.fact(messageObj);
         }
+        else if (messageObj.type === "login") {
+            this.login();
+        }
     }
 
     private onClose() {
@@ -54,7 +62,7 @@ class JinagaConnection {
         try {
             var query = Interface.fromDescriptiveString(message.query);
             // TODO: This is incorrect. Each segment of the query should be executed.
-            this.distributor.storage.executeQuery(message.start, query, (error: string, results: Array<Object>) => {
+            this.distributor.storage.executeQuery(message.start, query, this.userFact, (error: string, results: Array<Object>) => {
                 results.forEach((result: Object) => {
                     debug("Sending result");
                     this.socket.send(JSON.stringify({
@@ -65,7 +73,7 @@ class JinagaConnection {
             });
             var inverses = QueryInverter.invertQuery(query);
             inverses.forEach((inverse: Inverse) => {
-                this.watches.push(new Watch(message.start, inverse.affected));
+                this.watches.push(new Watch(message.start, inverse.affected, this.userFact));
             });
         }
         catch (x) {
@@ -78,13 +86,21 @@ class JinagaConnection {
             return;
 
         debug("Received fact from " + this.socket.id);
-        this.distributor.onReceived(message.fact, this);
+        this.distributor.onReceived(message.fact, this.userFact, this);
+    }
+
+    private login() {
+        debug("Received login from " + this.socket.id);
+        this.socket.send(JSON.stringify({
+            type: "loggedIn",
+            userFact: this.userFact
+        }));
     }
 
     distribute(fact: Object) {
         debug("Distributing to " + this.socket.id);
         this.watches.forEach((watch) => {
-            this.distributor.storage.executeQuery(fact, watch.affected, (error: string, affected: Array<Object>) => {
+            this.distributor.storage.executeQuery(fact, watch.affected, watch.userFact, (error: string, affected: Array<Object>) => {
                 if (error) {
                     debug(error);
                     return;
@@ -111,6 +127,7 @@ class JinagaDistributor implements Coordinator {
 
     constructor(
         public storage: StorageProvider,
+        private keystore: Interface.KeystoreProvider,
         private authenticate: (socket: any, done: (user: Object) => void) => void)
     {
         if (!this.authenticate) {
@@ -121,16 +138,16 @@ class JinagaDistributor implements Coordinator {
         storage.init(this);
     }
 
-    static listen(storage: StorageProvider, port: number, authenticate: (socket: any, done: (user: Object) => void) => void): JinagaDistributor {
-        var distributor = new JinagaDistributor(storage, authenticate);
+    static listen(storage: StorageProvider, keystore: Interface.KeystoreProvider, port: number, authenticate: (socket: any, done: (user: Object) => void) => void): JinagaDistributor {
+        var distributor = new JinagaDistributor(storage, keystore, authenticate);
         distributor.server = Engine.listen(port);
         debug("Listening on port " + port);
         distributor.start();
         return distributor;
     }
 
-    static attach(storage: StorageProvider, http, authenticate: (req: any, done: (user: Object) => void) => void): JinagaDistributor {
-        var distributor = new JinagaDistributor(storage, (socket: any, done: (user: Object) => void) => {
+    static attach(storage: StorageProvider, keystore: Interface.KeystoreProvider, http, authenticate: (req: any, done: (user: Object) => void) => void): JinagaDistributor {
+        var distributor = new JinagaDistributor(storage, keystore, (socket: any, done: (user: Object) => void) => {
             authenticate(socket.request, done);
         });
         distributor.server = Engine.attach(http);
@@ -146,8 +163,8 @@ class JinagaDistributor implements Coordinator {
     onConnection(socket) {
         debug("Connection established");
         this.authenticate(socket, (user: Interface.UserIdentity) => {
-            this.storage.getUserFact(user, (userFact: any) => {
-                this.connections.push(new JinagaConnection(socket, this));
+            this.keystore.getUserFact(user, (userFact: Object) => {
+                this.connections.push(new JinagaConnection(socket, userFact, this));
             });
         });
     }
@@ -159,10 +176,10 @@ class JinagaDistributor implements Coordinator {
         });
     }
 
-    onReceived(fact: Object, source: any) {
-        this.storage.save(fact, source);
-    }
-
+    onReceived(fact: Object, userFact: Object, source: any) {
+        if (this.authorizeWrite(fact, userFact))
+            this.storage.save(fact, source);
+   }
 
     onSaved(fact:Object, source:any) {
         this.send(fact, source);
@@ -170,6 +187,30 @@ class JinagaDistributor implements Coordinator {
 
     onError(err: string) {
         debug(err);
+    }
+
+    onLoggedIn(userFact:Object) {
+    }
+
+    private authorizeWrite(fact, userFact): boolean {
+        if (fact.hasOwnProperty("from")) {
+            if (!_isEqual(userFact, fact["from"])) {
+                // Impersonating another user.
+                return false;
+            }
+        }
+        if (fact.hasOwnProperty("in")) {
+            var locked = fact["in"];
+            if (!locked.hasOwnProperty("from")) {
+                // Locked facts must have an original user.
+                return false;
+            }
+            if (!_isEqual(locked["from"], userFact)) {
+                // Not the original user.
+                return false;
+            }
+        }
+        return true;
     }
 }
 
