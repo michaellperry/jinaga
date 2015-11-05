@@ -1,6 +1,6 @@
 {
   "name": "jinaga",
-  "version": "1.0.9",
+  "version": "1.0.10",
   "description": "JSON Messaging Platform",
   "main": "jinaga.js",
   "repository": {
@@ -20,6 +20,7 @@
     "debug": "^2.2.0",
     "engine.io": "^1.5.2",
     "engine.io-client": "^1.5.2",
+    "keypair": "^1.0.0",
     "minimist": "^1.2.0",
     "mongodb": "^2.0.43",
     "requirejs": "^2.1.20"
