@@ -242,6 +242,11 @@ function computeStringHash(str: string): number {
     return hash;
 }
 
+export interface UserIdentity {
+    provider: string;
+    id: string;
+}
+
 export interface Coordinator {
     onSaved(fact: Object, source: any);
     send(fact: Object, source: any);
@@ -259,6 +264,7 @@ export interface StorageProvider {
     );
     sendAllFacts();
     push(fact: Object);
+    getUserFact(userIdentity: UserIdentity, done: (userFact: any) => void);
 }
 
 export interface NetworkProvider {

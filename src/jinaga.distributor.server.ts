@@ -145,8 +145,10 @@ class JinagaDistributor implements Coordinator {
 
     onConnection(socket) {
         debug("Connection established");
-        this.authenticate(socket, (user: any) => {
-            this.connections.push(new JinagaConnection(socket, this));
+        this.authenticate(socket, (user: Interface.UserIdentity) => {
+            this.storage.getUserFact(user, (userFact: any) => {
+                this.connections.push(new JinagaConnection(socket, this));
+            });
         });
     }
 

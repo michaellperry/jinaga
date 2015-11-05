@@ -9,6 +9,7 @@ import isPredecessor = Interface.isPredecessor;
 import Collections = require("./collections");
 import _isEqual = Collections._isEqual;
 import Pool = require("./pool");
+import Keypair = require("keypair");
 
 import Debug = require("debug");
 var debug = Debug("jinaga.mongo");
@@ -406,7 +407,7 @@ class MongoProvider implements Interface.StorageProvider {
 
     save(fact:Object, source:any) {
         var hash = computeHash(fact);
-        this.withCollection((facts, done: () => void) => {
+        this.withCollection("facts", (facts, done: () => void) => {
             var save = new MongoSave(
                 this.coordinator,
                 "",
@@ -424,7 +425,7 @@ class MongoProvider implements Interface.StorageProvider {
         query:Query,
         result:(error: string, facts: Array<Object>) => void) {
 
-        this.withCollection((facts, done: () => void) => {
+        this.withCollection("facts", (facts, done: () => void) => {
             var isComplete = false;
             var onError = function(error: string) {
                 if (!isComplete)
@@ -474,7 +475,63 @@ class MongoProvider implements Interface.StorageProvider {
         return next;
     }
 
-    private withCollection(action: (facts, done: () => void) => void) {
+    getUserFact(userIdentity:Interface.UserIdentity, done:(userFact:any)=>void) {
+        if (!userIdentity) {
+            done(null);
+        }
+        else {
+            this.withCollection("users", (users, close: () => void) => {
+                var publicKey = null;
+                users.find({
+                    provider: userIdentity.provider,
+                    userId: userIdentity.id
+                }).forEach((userDocument: any) => {
+                    publicKey = userDocument.publicKey;
+                }, (error: any) => {
+                    if (error) {
+                        this.coordinator.onError(error);
+                        close();
+                        done(null);
+                    }
+                    else {
+                        if (publicKey) {
+                            close();
+                            done({
+                                type: "Jinaga.User",
+                                publicKey: publicKey
+                            });
+                        }
+                        else {
+                            var pair = Keypair({ bits: 1024 });
+                            var privateKey = pair.private;
+                            publicKey = pair.public;
+                            users.insertOne({
+                                provider: userIdentity.provider,
+                                userId: userIdentity.id,
+                                privateKey: privateKey,
+                                publicKey: publicKey
+                            }, (error: string, result) => {
+                                if (error) {
+                                    this.coordinator.onError(error);
+                                    close();
+                                    done(null);
+                                }
+                                else {
+                                    close();
+                                    done({
+                                        type: "Jinaga.User",
+                                        publicKey: publicKey
+                                    });
+                                }
+                            });
+                        }
+                    }
+                });
+            });
+        }
+    }
+
+    private withCollection(collectionName:string, action:(collection:any, done:()=>void)=>void) {
         if (!this.pool) {
             this.pool = new Pool<MongoConnection>(
                 (done: (connection: MongoConnection) => void) => {
@@ -485,7 +542,7 @@ class MongoProvider implements Interface.StorageProvider {
                             done(null);
                         }
                         else {
-                            done(new MongoConnection(db, db.collection("facts")));
+                            done(new MongoConnection(db, db.collection(collectionName)));
                         }
                     });
                 },

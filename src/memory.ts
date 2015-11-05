@@ -179,6 +179,10 @@ class MemoryProvider implements StorageProvider {
 
         return this.findNodeWithFact(array, fact);
     }
+
+    getUserFact(userIdentity:Interface.UserIdentity, done:(userFact:any)=>void) {
+        done(null);
+    }
 }
 
 export = MemoryProvider;
