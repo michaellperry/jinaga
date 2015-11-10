@@ -212,6 +212,7 @@ class SuccessorStep implements PipelineStep {
         private next: PipelineStep,
         private role: string,
         private collection: any,
+        private readerFact: Object,
         private error: (string) => void
     ) { }
 
@@ -228,7 +229,8 @@ class SuccessorStep implements PipelineStep {
 
     private onFound(document, context) {
         debug("S." + this.role + ": " + JSON.stringify(document));
-        this.next.join(new Point(document._id, document.fact, document.predecessors), context);
+        if (this.authorizeRead(document.fact, this.readerFact))
+            this.next.join(new Point(document._id, document.fact, document.predecessors), context);
     }
 
     private onFinished(err) {
@@ -247,6 +249,24 @@ class SuccessorStep implements PipelineStep {
         this.stack = stack;
         if (this.count === 0)
             this.next.done(this.stack);
+    }
+
+    private authorizeRead(fact: Object, readerFact: Object) {
+        if (!fact.hasOwnProperty("in")) {
+            // Not in a locked fact
+            return true;
+        }
+        var locked = fact["in"];
+        if (!locked.hasOwnProperty("from")) {
+            // Locked fact is not from a user, so no one has access
+            return false;
+        }
+        var owner = locked["from"];
+        if (_isEqual(owner, readerFact)) {
+            // The owner has access.
+            return true;
+        }
+        return false;
     }
 }
 
@@ -443,13 +463,13 @@ class MongoProvider implements Interface.StorageProvider, Interface.KeystoreProv
                 isComplete = true;
                 done();
             });
-            next = this.constructSteps(query.steps, next, facts, onError);
+            next = this.constructSteps(query.steps, next, facts, readerFact, onError);
             var startStep = new StartStep(next, facts, onError);
             startStep.execute(start);
         })
     }
 
-    private constructSteps(steps:any, next:PipelineStep, facts, onError:(p1:any)=>void): PipelineStep {
+    private constructSteps(steps:any, next:PipelineStep, facts, readerFact: Object, onError:(p1:any)=>void): PipelineStep {
         for (var index = steps.length - 1; index >= 0; index--) {
             var step = steps[index];
             if (step instanceof Join) {
@@ -461,7 +481,7 @@ class MongoProvider implements Interface.StorageProvider, Interface.KeystoreProv
                     next = new PredecessorStep(next, join.role);
                 }
                 else {
-                    next = new SuccessorStep(next, join.role, facts, onError);
+                    next = new SuccessorStep(next, join.role, facts, readerFact, onError);
                 }
             }
             else if (step instanceof PropertyCondition) {
@@ -471,7 +491,7 @@ class MongoProvider implements Interface.StorageProvider, Interface.KeystoreProv
             else if (step instanceof Interface.ExistentialCondition) {
                 var existentialCondition = <Interface.ExistentialCondition>step;
                 next = new ExistentialStep(next, existentialCondition.quantifier);
-                next = this.constructSteps(existentialCondition.steps, next, facts, onError);
+                next = this.constructSteps(existentialCondition.steps, next, facts, readerFact, onError);
                 next = new PushStep(next);
             }
         }

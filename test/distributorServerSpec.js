@@ -27,15 +27,18 @@ function SocketProxy() {
   }
 }
 
-var thisUser = {
-  type: "Jinaga.User",
-  publicKey: "-----BEGIN RSA PUBLIC KEY-----\nMIGJAoGBAMBAAE=\n-----END RSA PUBLIC KEY-----\n"
+var thisUserCredential = {
+  provider: "Test",
+  id: "thisuser"
 };
 
-var otherUser = {
-  type: "Jinaga.User",
-  publicKey: "-----BEGIN RSA PUBLIC KEY-----\notheruser\n-----END RSA PUBLIC KEY-----\n"
+var otherUserCredential = {
+  provider: "Test",
+  id: "otheruser"
 };
+
+var thisUser;
+var otherUser;
 
 function authenticateFor(user) {
   return function authenticate(socket, done) {
@@ -44,19 +47,31 @@ function authenticateFor(user) {
 }
 
 describe("DistributorServer", function() {
+  var mongo;
+
   var topic = {
     type: "Yaca.Topic",
-    from: thisUser,
     name: "Space Paranoids"
   };
 
+  before(function (done) {
+    mongo = new MongoProvider(url);
+    mongo.getUserFact(thisUserCredential, function (thisUserFact) {
+      thisUser = thisUserFact;
+      mongo.getUserFact(otherUserCredential, function (otherUserFact) {
+        otherUser = otherUserFact;
+        done();
+      });
+    })
+  });
+
   beforeEach(function () {
     topic.createdAt = new Date().toJSON();
+    topic.from = thisUser;
   });
 
   it("should send fact to endpoint", function (done) {
-    var mongo = new MongoProvider(url);
-    var distributor = new JinagaDistributor(mongo, mongo, authenticateFor(thisUser));
+    var distributor = new JinagaDistributor(mongo, mongo, authenticateFor(thisUserCredential));
 
     var proxy = new SocketProxy();
     distributor.onConnection(proxy);
@@ -76,8 +91,7 @@ describe("DistributorServer", function() {
   });
 
   it ("should allow facts in topics from this user", function (done) {
-    var mongo = new MongoProvider(url);
-    var distributor = new JinagaDistributor(mongo, mongo, authenticateFor(thisUser));
+    var distributor = new JinagaDistributor(mongo, mongo, authenticateFor(thisUserCredential));
 
     var proxy = new SocketProxy();
     distributor.onConnection(proxy);
@@ -99,8 +113,7 @@ describe("DistributorServer", function() {
   });
 
   it ("should disallow facts sent by another user", function (done) {
-    var mongo = new MongoProvider(url);
-    var distributor = new JinagaDistributor(mongo, mongo, authenticateFor(thisUser));
+    var distributor = new JinagaDistributor(mongo, mongo, authenticateFor(thisUserCredential));
 
     var proxy = new SocketProxy();
     distributor.onConnection(proxy);
@@ -122,8 +135,7 @@ describe("DistributorServer", function() {
   });
 
   it ("should disallow facts in topics not from this user, especially when sent by another", function (done) {
-    var mongo = new MongoProvider(url);
-    var distributor = new JinagaDistributor(mongo, mongo, authenticateFor(thisUser));
+    var distributor = new JinagaDistributor(mongo, mongo, authenticateFor(thisUserCredential));
 
     var proxy = new SocketProxy();
     distributor.onConnection(proxy);
@@ -145,8 +157,7 @@ describe("DistributorServer", function() {
   });
 
   it ("should disallow facts in topics not from this user", function (done) {
-    var mongo = new MongoProvider(url);
-    var distributor = new JinagaDistributor(mongo, mongo, authenticateFor(thisUser));
+    var distributor = new JinagaDistributor(mongo, mongo, authenticateFor(thisUserCredential));
 
     var proxy = new SocketProxy();
     distributor.onConnection(proxy);
@@ -168,8 +179,7 @@ describe("DistributorServer", function() {
   });
 
   it ("should not return existing facts in a predecessor to an unauthorized user", function (done) {
-    var mongo = new MongoProvider(url);
-    var distributor = new JinagaDistributor(mongo, mongo, authenticateFor(otherUser));
+    var distributor = new JinagaDistributor(mongo, mongo, authenticateFor(otherUserCredential));
 
     var proxy = new SocketProxy();
     distributor.onConnection(proxy);
@@ -191,8 +201,7 @@ describe("DistributorServer", function() {
   });
 
   it ("should return existing facts in a predecessor to an authorized user", function (done) {
-    var mongo = new MongoProvider(url);
-    var distributor = new JinagaDistributor(mongo, mongo, authenticateFor(thisUser));
+    var distributor = new JinagaDistributor(mongo, mongo, authenticateFor(thisUserCredential));
 
     var proxy = new SocketProxy();
     distributor.onConnection(proxy);
