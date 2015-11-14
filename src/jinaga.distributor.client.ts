@@ -8,12 +8,15 @@ import Coordinator = Interface.Coordinator;
 class JinagaDistributor implements NetworkProvider {
     socket: Socket;
     coordinator: Coordinator;
+    isOpen: boolean = false;
+    pending: Array<string> = [];
 
     constructor(
         endpoint: string
     ) {
         this.socket = new Socket(endpoint);
-        this.socket.on("message", this.onMessage.bind(this));
+        this.socket.on("open", () => { this.onOpen(); });
+        this.socket.on("message", (message) => { this.onMessage(message); });
     }
 
     public init(coordinator: Coordinator) {
@@ -21,24 +24,42 @@ class JinagaDistributor implements NetworkProvider {
     }
 
     public watch(start: Object, query: Query) {
-        this.socket.send(JSON.stringify({
+        this.send(JSON.stringify({
             type: "watch",
             start: start,
             query: query.toDescriptiveString()
         }));
     }
 
+    public query(start: Object, query: Query, token: number) {
+        this.send(JSON.stringify({
+            type: "query",
+            start: start,
+            query: query.toDescriptiveString(),
+            token: token
+        }));
+    }
+
     public fact(fact: Object) {
-        this.socket.send(JSON.stringify({
+        this.send(JSON.stringify({
             type: "fact",
             fact: fact
         }));
     }
 
-    public login() {
-        this.socket.send(JSON.stringify({
-            type: "login"
-        }));
+    private send(message: string) {
+        if (this.isOpen)
+            this.socket.send(message);
+        else
+            this.pending.push(message);
+    }
+
+    private onOpen() {
+        this.isOpen = true;
+        this.pending.forEach((message: string) => {
+            this.socket.send(message);
+        });
+        this.pending = [];
     }
 
     private onMessage(message) {
@@ -47,7 +68,10 @@ class JinagaDistributor implements NetworkProvider {
             this.coordinator.onReceived(messageObj.fact, null, this);
         }
         if (messageObj.type === "loggedIn") {
-            this.coordinator.onLoggedIn(messageObj.userFact);
+            this.coordinator.onLoggedIn(messageObj.userFact, messageObj.profile);
+        }
+        if (messageObj.type === "done") {
+            this.coordinator.onDone(messageObj.token);
         }
     }
 }

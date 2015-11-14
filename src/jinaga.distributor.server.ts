@@ -24,10 +24,10 @@ class JinagaConnection {
     socket;
     distributor: JinagaDistributor;
     watches: Array<Watch> = [];
+    private userFact: Object;
 
     constructor(
         socket,
-        private userFact: Object,
         distributor: JinagaDistributor)
     {
         this.socket = socket;
@@ -36,17 +36,29 @@ class JinagaConnection {
         socket.on("close", this.onClose.bind(this));
     }
 
+    setUser(
+        userFact: Object,
+        profile: Object
+    ) {
+        this.userFact = userFact;
+        this.socket.send(JSON.stringify({
+            type: "loggedIn",
+            userFact: userFact,
+            profile: profile
+        }));
+    }
+
     private onMessage(message) {
         debug("Received message: " + message);
         var messageObj = JSON.parse(message);
         if (messageObj.type === "watch") {
             this.watch(messageObj);
         }
+        else if (messageObj.type === "query") {
+            this.query(messageObj);
+        }
         else if (messageObj.type === "fact") {
             this.fact(messageObj);
-        }
-        else if (messageObj.type === "login") {
-            this.login();
         }
     }
 
@@ -81,20 +93,40 @@ class JinagaConnection {
         }
     }
 
+    private query(message) {
+        if (!message.start || !message.query || !message.token)
+            return;
+
+        debug("Begin query");
+        try {
+            var query = Interface.fromDescriptiveString(message.query);
+            // TODO: This is incorrect. Each segment of the query should be executed.
+            this.distributor.storage.executeQuery(message.start, query, this.userFact, (error: string, results: Array<Object>) => {
+                results.forEach((result: Object) => {
+                    debug("Sending result");
+                    this.socket.send(JSON.stringify({
+                        type: "fact",
+                        fact: result
+                    }));
+                });
+                debug("Done with query");
+                this.socket.send(JSON.stringify({
+                    type: "done",
+                    token: message.token
+                }));
+            });
+        }
+        catch (x) {
+            debug(x.message);
+        }
+    }
+
     private fact(message) {
         if (!message.fact)
             return;
 
         debug("Received fact from " + this.socket.id);
         this.distributor.onReceived(message.fact, this.userFact, this);
-    }
-
-    private login() {
-        debug("Received login from " + this.socket.id);
-        this.socket.send(JSON.stringify({
-            type: "loggedIn",
-            userFact: this.userFact
-        }));
     }
 
     distribute(fact: Object) {
@@ -162,9 +194,11 @@ class JinagaDistributor implements Coordinator {
 
     onConnection(socket) {
         debug("Connection established");
+        var connection = new JinagaConnection(socket, this);
         this.authenticate(socket, (user: Interface.UserIdentity) => {
             this.keystore.getUserFact(user, (userFact: Object) => {
-                this.connections.push(new JinagaConnection(socket, userFact, this));
+                connection.setUser(userFact, user.profile);
+                this.connections.push(connection);
             });
         });
     }
@@ -183,6 +217,9 @@ class JinagaDistributor implements Coordinator {
 
     onSaved(fact:Object, source:any) {
         this.send(fact, source);
+    }
+
+    onDone(token:number) {
     }
 
     onError(err: string) {

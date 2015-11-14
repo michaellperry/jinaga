@@ -87,4 +87,13 @@ describe("Watch", function () {
 
     tasks.length.should.equal(0);
   });
+
+  it("should query existing message", function (done) {
+    j.fact(trash);
+    j.query(chores, [tasksInList], function (results) {
+      results.length.should.equal(1);
+      expect(_isEqual(results[0], trash)).to.be.true;
+      done();
+    });
+  });
 });

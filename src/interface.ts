@@ -245,14 +245,16 @@ function computeStringHash(str: string): number {
 export interface UserIdentity {
     provider: string;
     id: string;
+    profile: Object;
 }
 
 export interface Coordinator {
     onSaved(fact: Object, source: any);
     send(fact: Object, source: any);
     onReceived(fact: Object, userFact: Object, source: any);
+    onDone(token: number);
     onError(err: string);
-    onLoggedIn(userFact: Object);
+    onLoggedIn(userFact: Object, profile: Object);
 }
 
 export interface StorageProvider {
@@ -275,8 +277,8 @@ export interface KeystoreProvider {
 export interface NetworkProvider {
     init(coordinator: Coordinator);
     watch(start: Object, query: Query);
+    query(start: Object, query: Query, token: number);
     fact(fact: Object);
-    login();
 }
 
 

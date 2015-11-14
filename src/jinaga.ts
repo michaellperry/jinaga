@@ -31,7 +31,10 @@ class JinagaCoordinator implements Coordinator {
     private network: NetworkProvider = null;
     private loggedIn: boolean = false;
     private userFact: Object = null;
-    private loginCallbacks: Array<(userFact: Object) => void> = [];
+    private profile: Object = null;
+    private loginCallbacks: Array<(userFact: Object, profile: Object) => void> = [];
+    private nextToken: number = 1;
+    private queries: Array<{ token: number, callback: () => void }> = [];
 
     save(storage: StorageProvider) {
         this.messages = storage;
@@ -79,6 +82,27 @@ class JinagaCoordinator implements Coordinator {
         return watch;
     }
 
+    query(
+        start: Object,
+        templates: Array<(target: Proxy) => Object>,
+        done: (results: Array<Object>) => void
+    ) {
+        var query = parse(templates);
+        var executeQueryLocal = () => {
+            this.messages.executeQuery(start, query, this.userFact, (error, results) => {
+                done(results);
+            });
+        };
+        if (this.network) {
+            this.queries.push({ token: this.nextToken, callback: executeQueryLocal });
+            this.network.query(start, query, this.nextToken);
+            this.nextToken++;
+        }
+        else {
+            executeQueryLocal();
+        }
+    }
+
     removeWatch(watch: Watch) {
         for (var index = 0; index < this.watches.length; ++index) {
             if (this.watches[index] === watch) {
@@ -88,16 +112,15 @@ class JinagaCoordinator implements Coordinator {
         }
     }
 
-    login(callback: (userFact: Object) => void) {
+    login(callback: (userFact: Object, profile: Object) => void) {
         if (this.loggedIn) {
-            callback(this.userFact);
+            callback(this.userFact, this.profile);
         }
         else if (this.network) {
             this.loginCallbacks.push(callback);
-            this.network.login();
         }
         else {
-            callback(null);
+            callback(null, null);
         }
     }
 
@@ -135,6 +158,20 @@ class JinagaCoordinator implements Coordinator {
         this.messages.save(fact, source);
     }
 
+    onDone(token: number) {
+        var index: number = -1;
+        for(var i = 0; i < this.queries.length; i++) {
+            var query = this.queries[i];
+            if (query.token === token) {
+                index = i;
+                break;
+            }
+        }
+        if (index >= 0) {
+            this.queries.splice(index, 1)[0].callback();
+        }
+    }
+
     onError(err: string) {
         debug(err);
     }
@@ -144,11 +181,12 @@ class JinagaCoordinator implements Coordinator {
             this.network.fact(fact);
     }
 
-    onLoggedIn(userFact: Object) {
+    onLoggedIn(userFact: Object, profile: Object) {
         this.userFact = userFact;
+        this.profile = profile;
         this.loggedIn = true;
-        this.loginCallbacks.forEach((callback: (userFact: Object) => void) => {
-            callback(userFact);
+        this.loginCallbacks.forEach((callback: (userFact: Object, profile: Object) => void) => {
+            callback(userFact, profile);
         });
         this.loginCallbacks = [];
     }
@@ -190,6 +228,13 @@ class Jinaga {
         resultRemoved: (result: Object) => void) : WatchProxy {
         var watch = this.coordinator.watch(JSON.parse(JSON.stringify(start)), templates, resultAdded, resultRemoved);
         return new WatchProxy(this.coordinator, watch);
+    }
+    public query(
+        start: Object,
+        templates: Array<(target: Proxy) => Object>,
+        done: (result: Array<Object>) => void
+    ) {
+        this.coordinator.query(JSON.parse(JSON.stringify(start)), templates, done);
     }
     public login(callback: (userFact: Object) => void) {
         this.coordinator.login(callback);

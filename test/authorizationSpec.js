@@ -15,13 +15,11 @@ var DistributorProxy = (function () {
   }
   DistributorProxy.prototype.init = function (coordinator) {
     this.coordinator = coordinator;
+    this.coordinator.onLoggedIn(thisUser)
   };
   DistributorProxy.prototype.watch = function (start, query) {
   };
   DistributorProxy.prototype.fact = function (fact) {
-  };
-  DistributorProxy.prototype.login = function (callback) {
-    this.coordinator.onLoggedIn(thisUser)
   };
   DistributorProxy.prototype.onMessage = function (message) {
   };
