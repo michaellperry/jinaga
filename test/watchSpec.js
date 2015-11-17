@@ -23,14 +23,30 @@ describe("Watch", function () {
   };
 
   function tasksInList(l) {
-    return {
+    return j.where({
       list: l
+    }, [j.not(isCompleted)]);
+  }
+
+  function isCompleted(t) {
+    return {
+      type: "Completed",
+      task: t
     };
   }
 
   var tasks;
   function taskAdded(task) {
     tasks.push(task);
+    return {
+      task: task
+    }
+  }
+
+  function taskRemoved(mapping) {
+    var index = tasks.indexOf(mapping.task);
+    if (index >= 0)
+      tasks.splice(index, 1);
   }
 
   it("should return a matching message", function () {
@@ -95,5 +111,21 @@ describe("Watch", function () {
       expect(_isEqual(results[0], trash)).to.be.true;
       done();
     });
+  });
+
+  it ("should remove a fact when a successor is added", function () {
+    var watch = j.watch(chores, [tasksInList], taskAdded, taskRemoved);
+    j.fact(trash);
+    j.fact({ type: "Completed", task: trash });
+    expect(tasks.length).to.equal(0);
+    watch.stop();
+  });
+
+  it ("should remove an existing fact when a successor is added", function () {
+    j.fact(trash);
+    var watch = j.watch(chores, [tasksInList], taskAdded, taskRemoved);
+    j.fact({ type: "Completed", task: trash });
+    expect(tasks.length).to.equal(0);
+    watch.stop();
   });
 });

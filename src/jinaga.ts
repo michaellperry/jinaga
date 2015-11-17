@@ -1,4 +1,5 @@
 import Interface = require("./interface");
+import computeHash = Interface.computeHash;
 import Query = Interface.Query;
 import StorageProvider = Interface.StorageProvider;
 import NetworkProvider = Interface.NetworkProvider;
@@ -16,12 +17,41 @@ import _some = Collections._some;
 var debug: (string) => void = Debug ? Debug("jinaga") : function() {};
 
 class Watch {
+    private mappings: { [hash: number]: Array<{ fact: Object, mapping: any }>; } = {};
+
     constructor(
         public start: Object,
         public joins: Query,
-        public resultAdded: (message: Object) => void,
-        public resultRemoved: (message: Object) => void,
+        public resultAdded: (fact: Object) => any,
+        public resultRemoved: (mapping: any) => void,
         public inverses: Array<Inverse>) {
+    }
+
+    public push(fact: Object, mapping: any) {
+        if (!mapping)
+            return;
+        var hash = computeHash(fact);
+        var array = this.mappings[hash];
+        if (!array) {
+            array = [];
+            this.mappings[hash] = array;
+        }
+        array.push({ fact, mapping });
+    }
+
+    public pop(fact: Object): any {
+        var hash = computeHash(fact);
+        var array = this.mappings[hash];
+        if (!array)
+            return null;
+        for(var index = 0; index < array.length; index++) {
+            if (_isEqual(array[index].fact, fact)) {
+                var mapping = array[index].mapping;
+                array.splice(index, 1);
+                return mapping;
+            }
+        }
+        return null;
     }
 }
 
@@ -73,7 +103,11 @@ class JinagaCoordinator implements Coordinator {
         }
 
         this.messages.executeQuery(start, query, this.userFact, (error, results) => {
-            results.map(resultAdded);
+            results.forEach((fact) => {
+                var mapping = resultAdded(fact);
+                if (watch)
+                    watch.push(fact, mapping);
+            });
         });
 
         if (this.network) {
@@ -136,14 +170,21 @@ class JinagaCoordinator implements Coordinator {
                             if (inverse.added && watch.resultAdded) {
                                 this.messages.executeQuery(fact, inverse.added, this.userFact, (error3: string, added: Array<Object>) => {
                                     if (!error3) {
-                                        added.map(watch.resultAdded);
+                                        added.forEach((fact) => {
+                                            var mapping = watch.resultAdded(fact);
+                                            watch.push(fact, mapping);
+                                        });
                                     }
                                 });
                             }
                             if (inverse.removed && watch.resultRemoved) {
                                 this.messages.executeQuery(fact, inverse.removed, this.userFact, (error2: string, added: Array<Object>) => {
                                     if (!error2) {
-                                        added.map(watch.resultRemoved);
+                                        added.forEach((fact) => {
+                                            var mapping = watch.pop(fact);
+                                            if (mapping)
+                                                watch.resultRemoved(mapping);
+                                        });
                                     }
                                 });
                             }
