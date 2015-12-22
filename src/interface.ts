@@ -186,6 +186,9 @@ export function isPredecessor(value: any): boolean {
     if (value instanceof Date)
         return false;
 
+    if (Array.isArray(value))
+        return false;
+
     return true;
 }
 
@@ -215,6 +218,9 @@ function computeMemberHash(pair: [any]): number {
         case "object":
             if (value instanceof Date) {
                 valueHash = (<Date>value).getTime();
+            }
+            else if (Array.isArray(value)) {
+                valueHash = value.reduce((sum, v) => sum + computeHash(v), 0);
             }
             else {
                 valueHash = computeHash(value);

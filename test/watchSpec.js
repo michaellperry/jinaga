@@ -128,4 +128,20 @@ describe("Watch", function () {
     expect(tasks.length).to.equal(0);
     watch.stop();
   });
+
+  it ("should remove a fact when a successor is added via array", function () {
+    var watch = j.watch(chores, [tasksInList], taskAdded, taskRemoved);
+    j.fact(trash);
+    j.fact({ type: "Completed", task: [trash] });
+    expect(tasks.length).to.equal(0);
+    watch.stop();
+  });
+
+  it ("should remove an existing fact when a successor is added via array", function () {
+    j.fact(trash);
+    var watch = j.watch(chores, [tasksInList], taskAdded, taskRemoved);
+    j.fact({ type: "Completed", task: [trash] });
+    expect(tasks.length).to.equal(0);
+    watch.stop();
+  });
 });

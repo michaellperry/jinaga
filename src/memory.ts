@@ -158,6 +158,9 @@ class MemoryProvider implements StorageProvider {
                     var predecessor = this.insertNode(value, source);
                     predecessors[field] = [ predecessor ];
                 }
+                else if (Array.isArray(value) && value.every(v => isPredecessor(v))) {
+                    predecessors[field] = value.map(v => this.insertNode(v, source));
+                }
             }
 
             node = new Node(fact, predecessors);
