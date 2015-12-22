@@ -21,19 +21,24 @@ class Watch {
 }
 
 class JinagaConnection {
-    socket;
-    distributor: JinagaDistributor;
     watches: Array<Watch> = [];
     private userFact: Object;
+    private identicon: string;
 
     constructor(
-        socket,
-        distributor: JinagaDistributor)
+        private socket,
+        private distributor: JinagaDistributor)
     {
-        this.socket = socket;
-        this.distributor = distributor;
         socket.on("message", this.onMessage.bind(this));
         socket.on("close", this.onClose.bind(this));
+
+        this.identicon = "";
+        var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+
+        for( var i=0; i < 5; i++ )
+            this.identicon += possible.charAt(Math.floor(Math.random() * possible.length));
+
+        debug("[" + this.identicon + "] Connected");
     }
 
     setUser(
@@ -49,7 +54,6 @@ class JinagaConnection {
     }
 
     private onMessage(message) {
-        debug("Received message: " + message);
         var messageObj = JSON.parse(message);
         if (messageObj.type === "watch") {
             this.watch(messageObj);
@@ -63,20 +67,20 @@ class JinagaConnection {
     }
 
     private onClose() {
-        debug("Connection closed");
+        debug("[" + this.identicon + "] Closed");
+        this.distributor.onClose(this);
     }
 
     private watch(message) {
         if (!message.start || !message.query)
             return;
 
-        debug("Begin watch");
         try {
             var query = Interface.fromDescriptiveString(message.query);
             // TODO: This is incorrect. Each segment of the query should be executed.
             this.distributor.storage.executeQuery(message.start, query, this.userFact, (error: string, results: Array<Object>) => {
                 results.forEach((result: Object) => {
-                    debug("Sending result");
+                    debug("[" + this.identicon + "] Sending " + JSON.stringify(result));
                     this.socket.send(JSON.stringify({
                         type: "fact",
                         fact: result
@@ -97,19 +101,17 @@ class JinagaConnection {
         if (!message.start || !message.query || !message.token)
             return;
 
-        debug("Begin query");
         try {
             var query = Interface.fromDescriptiveString(message.query);
             // TODO: This is incorrect. Each segment of the query should be executed.
             this.distributor.storage.executeQuery(message.start, query, this.userFact, (error: string, results: Array<Object>) => {
                 results.forEach((result: Object) => {
-                    debug("Sending result");
+                    debug("[" + this.identicon + "] Sending " + JSON.stringify(result));
                     this.socket.send(JSON.stringify({
                         type: "fact",
                         fact: result
                     }));
                 });
-                debug("Done with query");
                 this.socket.send(JSON.stringify({
                     type: "done",
                     token: message.token
@@ -125,12 +127,11 @@ class JinagaConnection {
         if (!message.fact)
             return;
 
-        debug("Received fact from " + this.socket.id);
+        debug("[" + this.identicon + "] Received " + JSON.stringify(message.fact));
         this.distributor.onReceived(message.fact, this.userFact, this);
     }
 
     distribute(fact: Object) {
-        debug("Distributing to " + this.socket.id);
         this.watches.forEach((watch) => {
             this.distributor.storage.executeQuery(fact, watch.affected, watch.userFact, (error: string, affected: Array<Object>) => {
                 if (error) {
@@ -139,14 +140,11 @@ class JinagaConnection {
                 }
                 var some: any = _some;
                 if (some(affected, (obj: Object) => _isEqual(obj, watch.start))) {
-                    debug("Sending fact");
+                    debug("[" + this.identicon + "] Sending " + JSON.stringify(fact));
                     this.socket.send(JSON.stringify({
                         type: "fact",
                         fact: fact
                     }));
-                }
-                else {
-                    debug("No match");
                 }
             });
         });
@@ -193,14 +191,25 @@ class JinagaDistributor implements Coordinator {
     }
 
     onConnection(socket) {
-        debug("Connection established");
         var connection = new JinagaConnection(socket, this);
         this.authenticate(socket, (user: Interface.UserIdentity) => {
-            this.keystore.getUserFact(user, (userFact: Object) => {
-                connection.setUser(userFact, user.profile);
+            if (user) {
+                this.keystore.getUserFact(user, (userFact: Object) => {
+                    connection.setUser(userFact, user.profile);
+                    this.connections.push(connection);
+                });
+            }
+            else {
                 this.connections.push(connection);
-            });
+            }
         });
+    }
+
+    onClose(connection: JinagaConnection) {
+        var index = this.connections.indexOf(connection);
+        if (index > -1) {
+            this.connections.splice(index, 1);
+        }
     }
 
     send(fact: Object, sender: any) {

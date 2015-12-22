@@ -8,4 +8,4 @@ var url = 'mongodb://localhost:27017/dev';
 
 //var memory = new MemoryProvider();
 var mongo = new MongoProvider(url);
-var distributor = JinagaDistributor.listen(mongo, port);
+var distributor = JinagaDistributor.listen(mongo, mongo, port);

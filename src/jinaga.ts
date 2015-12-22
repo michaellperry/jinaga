@@ -195,7 +195,7 @@ class JinagaCoordinator implements Coordinator {
         });
     }
 
-    onReceived(fact: Object, source: any) {
+    onReceived(fact: Object, userFact: Object, source: any) {
         this.messages.save(fact, source);
     }
 

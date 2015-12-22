@@ -37,7 +37,7 @@ function meetingAdded(meeting) {
   return item;
 }
 
-function meetingRemoved(meeting, item) {
+function meetingRemoved(item) {
   var container = document.getElementById('container');
   container.removeChild(item);
 }

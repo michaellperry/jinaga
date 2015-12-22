@@ -34,18 +34,13 @@ class MongoSave {
     }
 
     execute() {
-        debug("Saving \"" + this.role + "\" " + JSON.stringify(this.fact));
-
         this.hash = computeHash(this.fact);
         this.collection.find({ hash: this.hash })
             .forEach(this.onFound.bind(this), this.onFindFinished.bind(this));
     }
 
     private onFound(document) {
-        debug("Found " + JSON.stringify((document)));
-
         if (_isEqual(this.fact, document.fact)) {
-            debug("It's a match");
             this.isDone = true;
             this.id = document._id;
             this.done(this);
@@ -59,7 +54,7 @@ class MongoSave {
             this.done(this);
         }
         else if (!this.isDone) {
-            debug("No match found");
+            debug("Saving " + JSON.stringify(this.fact));
 
             for (var field in this.fact) {
                 var value = this.fact[field];
@@ -98,8 +93,6 @@ class MongoSave {
     }
 
     private onSaveFinished(err, result) {
-        debug("Saved " + JSON.stringify(this.fact));
-
         if (err) {
             this.coordinator.onError(err.message);
         }
@@ -141,7 +134,6 @@ class StartStep {
     }
 
     private onFound(document) {
-        debug("Starting at " + JSON.stringify(document));
         this.next.join(new Point(document._id, document.fact, document.predecessors), null);
     }
 
@@ -170,7 +162,6 @@ class GatherStep implements PipelineStep {
     }
 
     done(stack: Array<Array<Point>>) {
-        debug("Pipeline finished");
         this.onDone(this.facts);
     }
 }
@@ -191,7 +182,6 @@ class PredecessorStep implements PipelineStep {
         for(var index = 0; index < predecessors.length; index++) {
             var predecessor = predecessors[index];
             if (predecessor.role === this.role) {
-                debug("P." + this.role + ": " + predecessor.id);
                 this.next.join(new Point(predecessor.id, null, null), context);
             }
         }
@@ -228,7 +218,6 @@ class SuccessorStep implements PipelineStep {
     }
 
     private onFound(document, context) {
-        debug("S." + this.role + ": " + JSON.stringify(document));
         if (this.authorizeRead(document.fact, this.readerFact))
             this.next.join(new Point(document._id, document.fact, document.predecessors), context);
     }
@@ -559,7 +548,6 @@ class MongoProvider implements Interface.StorageProvider, Interface.KeystoreProv
         if (!this.pool) {
             this.pool = new Pool<MongoConnection>(
                 (done: (connection: MongoConnection) => void) => {
-                    debug("Opening Mongo connection.");
                     MongoClient.connect(this.url, (err, db) => {
                         if (err) {
                             this.coordinator.onError(err.message);
@@ -571,7 +559,6 @@ class MongoProvider implements Interface.StorageProvider, Interface.KeystoreProv
                     });
                 },
                 (connection: MongoConnection) => {
-                    debug("Closing Mongo connection.");
                     connection.db.close();
                 }
             );
