@@ -74,8 +74,19 @@ export function _isEqual(o1:any, o2:any) {
             if (isArray(o1)) {
                 if (!isArray(o2)) return false;
                 if ((length = o1.length) == o2.length) {
+                    // Order does not matter.
+                    var remaining = o2.slice();
                     for (key = 0; key < length; key++) {
-                        if (!_isEqual(o1[key], o2[key])) return false;
+                        var found: boolean = false;
+                        for (var search = 0; search < remaining.length; search++) {
+                            if (_isEqual(o1[key], remaining[search])) {
+                                remaining.splice(search, 1);
+                                found = true;
+                                break;
+                            }
+                        }
+                        if (!found)
+                            return false;
                     }
                     return true;
                 }

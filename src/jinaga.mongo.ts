@@ -69,6 +69,19 @@ class MongoSave {
                     this.predecessors.push(save);
                     save.execute();
                 }
+                else if (Array.isArray(value) && value.every(v => isPredecessor(v))) {
+                    value.forEach(v => {
+                        var save = new MongoSave(
+                            this.coordinator,
+                            field,
+                            v,
+                            this.source,
+                            this.collection,
+                            this.onSaved.bind(this));
+                        this.predecessors.push(save);
+                        save.execute();
+                    });
+                }
             }
             if (this.predecessors.length === 0) {
                 this.gather();
