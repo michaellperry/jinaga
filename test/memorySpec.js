@@ -257,4 +257,15 @@ describe("Memory", function() {
       done();
     });
   });
+
+  it("order of predecessors should not matter", function(done) {
+    memory.save(completionForward, null);
+    memory.save(completionBackward, null);
+
+    memory.executeQuery(task, Interface.fromDescriptiveString("S.task"), null, function (error, messages) {
+      should.equal(null, error);
+      messages.length.should.equal(1);
+      done();
+    })
+  })
 });
