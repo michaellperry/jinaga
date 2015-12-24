@@ -166,7 +166,7 @@ class MemoryProvider implements StorageProvider {
             node = new Node(fact, predecessors);
             for (var role in predecessors) {
                 var predecessorArray = <Array<Node>>predecessors[role];
-                predecessorArray[0].addSuccessor(role, node);
+                predecessorArray.forEach(pred => pred.addSuccessor(role, node));
             }
             array.push(node);
             this.coordinator.onSaved(fact, source);

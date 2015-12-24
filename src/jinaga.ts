@@ -171,7 +171,7 @@ class JinagaCoordinator implements Coordinator {
                                 this.messages.executeQuery(fact, inverse.added, this.userFact, (error3: string, added: Array<Object>) => {
                                     if (!error3) {
                                         added.forEach((fact) => {
-                                            var mapping = watch.resultAdded(fact);
+                                            var mapping = watch.resultAdded(fact) || fact;
                                             watch.push(fact, mapping);
                                         });
                                     }
