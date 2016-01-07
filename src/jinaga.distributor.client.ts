@@ -52,7 +52,7 @@ class JinagaDistributor implements NetworkProvider {
     private createSocket() {
         this.socket = new Socket(this.endpoint);
         this.socket.on("open", () => { this.onOpen(); });
-        this.socket.on("error", () => { this.onError(); });
+        this.socket.on("error", error => { this.onError(error.message); });
     }
 
     private send(message: string) {
@@ -63,6 +63,8 @@ class JinagaDistributor implements NetworkProvider {
     }
 
     private onOpen() {
+        this.coordinator.onError(null);
+        
         this.socket.on("message", (message) => { this.onMessage(message); });
         this.socket.on("close", () => { this.onClose(); });
 
@@ -75,7 +77,8 @@ class JinagaDistributor implements NetworkProvider {
         this.pending = [];
     }
 
-    private onError() {
+    private onError(error) {
+        this.coordinator.onError(error);
         this.retry();
     }
 
