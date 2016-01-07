@@ -1,5 +1,7 @@
 var j = new Jinaga();
 j.sync(new JinagaDistributor("ws://localhost:8888/"));
+j.onProgress(updateProgress);
+j.onError(updateError);
 
 function paragraph(className, innerText) {
   var p = document.createElement('p');
@@ -56,6 +58,16 @@ function meetingsInGroup(g) {
     type: "Meeting",
     group: g
   }, [futureMeeting]);
+}
+
+function updateProgress(queueCount) {
+  var span = document.getElementById('queue');
+  span.innerText = queueCount;
+}
+
+function updateError(message) {
+  var span = document.getElementById('error');
+  error.innerText = message;
 }
 
 var group = {

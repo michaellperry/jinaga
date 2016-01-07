@@ -129,8 +129,19 @@ class MemoryProvider implements StorageProvider {
 
     push(fact:Object) {
         this.queue.push({ hash: computeHash(fact), fact: fact });
-        if (this.coordinator)
+        if (this.coordinator) {
             this.coordinator.send(fact, null);
+            this.coordinator.onProgress(this.queue.length);
+        }
+    }
+
+    dequeue(token:number, destination:any) {
+        for (var position = this.queue.length - 1; position >= 0; position--) {
+            if (this.queue[position].hash === token)
+                this.queue.splice(position, 1);
+        }
+        if (this.coordinator)
+            this.coordinator.onProgress(this.queue.length);
     }
 
     private findNodeWithFact(array: Array<Node>, fact: Object) : Node {

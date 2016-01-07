@@ -129,6 +129,10 @@ class JinagaConnection {
 
         debug("[" + this.identicon + "] Received " + JSON.stringify(message.fact));
         this.distributor.onReceived(message.fact, this.userFact, this);
+        this.socket.send(JSON.stringify({
+            type: "received",
+            token: message.token
+        }));
     }
 
     distribute(fact: Object) {
@@ -222,7 +226,11 @@ class JinagaDistributor implements Coordinator {
     onReceived(fact: Object, userFact: Object, source: any) {
         if (this.authorizeWrite(fact, userFact))
             this.storage.save(fact, source);
-   }
+    }
+
+    onDelivered(token:number, destination:any) {
+        // TODO: Remove the fact from the queue of messages bound for this client.
+    }
 
     onSaved(fact:Object, source:any) {
         this.send(fact, source);
@@ -231,11 +239,17 @@ class JinagaDistributor implements Coordinator {
     onDone(token:number) {
     }
 
+    onProgress(queueCount:number) {
+    }
+
     onError(err: string) {
         debug(err);
     }
 
     onLoggedIn(userFact:Object) {
+    }
+
+    resendMessages() {
     }
 
     private authorizeWrite(fact, userFact): boolean {

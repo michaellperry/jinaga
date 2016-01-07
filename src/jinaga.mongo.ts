@@ -429,6 +429,9 @@ class MongoProvider implements Interface.StorageProvider, Interface.KeystoreProv
     push(fact:Object) {
     }
 
+    dequeue(token:number, destination:any) {
+    }
+
     save(fact:Object, source:any) {
         var hash = computeHash(fact);
         this.withCollection("facts", (facts, done: () => void) => {

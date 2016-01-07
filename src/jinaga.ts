@@ -56,6 +56,8 @@ class Watch {
 }
 
 class JinagaCoordinator implements Coordinator {
+    private errorHandlers: Array<(message: string) => void> = [];
+    private progressHandlers: Array<(count: number) => void> = [];
     private watches: Array<Watch> = [];
     private messages: StorageProvider = null;
     private network: NetworkProvider = null;
@@ -77,6 +79,14 @@ class JinagaCoordinator implements Coordinator {
         this.network = network;
         this.network.init(this);
         this.messages.sendAllFacts();
+    }
+
+    addErrorHandler(callback: (message: string) => void) {
+        this.errorHandlers.push(callback);
+    }
+
+    addProgressHandler(callback: (count: number) => void) {
+        this.progressHandlers.push(callback);
     }
 
     fact(message: Object) {
@@ -162,8 +172,8 @@ class JinagaCoordinator implements Coordinator {
         if (source === null) {
             this.messages.push(fact);
         }
-        this.watches.map((watch: Watch) => {
-            watch.inverses.map((inverse: Inverse) => {
+        this.watches.forEach((watch: Watch) => {
+            watch.inverses.forEach((inverse: Inverse) => {
                 this.messages.executeQuery(fact, inverse.affected, this.userFact, (error2: string, affected: Array<Object>) => {
                     if (!error2) {
                         if (_some(affected, (obj: Object) => _isEqual(obj, watch.start))) {
@@ -199,6 +209,10 @@ class JinagaCoordinator implements Coordinator {
         this.messages.save(fact, source);
     }
 
+    onDelivered(token:number, destination:any) {
+        this.messages.dequeue(token, destination);
+    }
+
     onDone(token: number) {
         var index: number = -1;
         for(var i = 0; i < this.queries.length; i++) {
@@ -213,8 +227,12 @@ class JinagaCoordinator implements Coordinator {
         }
     }
 
+    onProgress(queueCount:number) {
+        this.progressHandlers.forEach(handler => handler(queueCount));
+    }
+
     onError(err: string) {
-        debug(err);
+        this.errorHandlers.forEach(h => h(err));
     }
 
     send(fact: Object, source: any) {
@@ -230,6 +248,10 @@ class JinagaCoordinator implements Coordinator {
             callback(userFact, profile);
         });
         this.loginCallbacks = [];
+    }
+
+    resendMessages() {
+        this.messages.sendAllFacts();
     }
 }
 
@@ -253,6 +275,12 @@ class Jinaga {
         this.coordinator.save(new MemoryProvider());
     }
 
+    public onError(handler: (message: string) => void) {
+        this.coordinator.addErrorHandler(handler);
+    }
+    public onProgress(handler: (queueCount: number) => void) {
+        this.coordinator.addProgressHandler(handler);
+    }
     public save(storage: StorageProvider) {
         this.coordinator.save(storage);
     }
