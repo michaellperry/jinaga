@@ -125,4 +125,9 @@ describe("QueryParser", function() {
     var query = parse([completedTasksInListAlt]);
     query.toDescriptiveString().should.equal("S.list F.type=\"Task\" E(S.task F.type=\"Completion\")");
   });
+
+  it("should chain to find siblings", function () {
+    var query = parse([listOfTask, uncompletedTasksInList]);
+    query.toDescriptiveString().should.equal("F.type=\"Task\" P.list S.list F.type=\"Task\" N(S.task F.type=\"Completion\")");
+  })
 });
