@@ -1,7 +1,7 @@
 # Jinaga
 Real-time client-to-server-to-client messaging with persistence. Replace your REST API, document database, and web sockets code with this one simple, universal back end.
 
-See an example application: [Yaca](http://jinaga.cloudapp.net) - Yet Another Chat App.
+See an example application: [ImprovingU](https://jinagademo.azurewebsites.net) - Course idea voting site.
 
 Get a quick [video introduction](https://vimeo.com/channels/jinaga) to Jinaga.
 
@@ -23,7 +23,7 @@ Install the Jinaga NPM package.
 npm install jinaga
 ```
 
-Create an app.js.
+Create a server.js.
 
 ``` JavaScript
 var JinagaDistributor = require("jinaga/jinaga.distributor.server");
@@ -32,7 +32,7 @@ var url = 'mongodb://localhost:27017/dev';
 var port = 8888;
 
 var mongo = new MongoProvider(url);
-JinagaDistributor.listen(mongo, port);
+JinagaDistributor.listen(mongo, mongo, port);
 ```
 
 Start Mongo.
@@ -44,7 +44,7 @@ mongod.exe
 Run the application.
 
 ```
-node app.js
+node server
 ```
 
 Your back end is now running. Spend the rest of your time on the front end.
@@ -145,11 +145,11 @@ A callback is only executed once per fact. If you happen to add the same fact ag
 The watch is in effect for the current session. It is destroyed implicitly with the Jinaga instance when no longer in use. If you wish to explicitly stop watching, capture the return value.
 
 ```JavaScript
-var deregisterWatchChores = j.watch(chores, [tasksInList], taskAdded);
+var watch = j.watch(chores, [tasksInList], taskAdded);
 
 // Some time later...
 
-deregisterWatchChores();
+watch.stop();
 ``` 
 
 ## Conditions
