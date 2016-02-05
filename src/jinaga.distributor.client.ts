@@ -11,6 +11,7 @@ class JinagaDistributor implements NetworkProvider {
     coordinator: Coordinator;
     isOpen: boolean = false;
     pending: Array<string> = [];
+    watches = [];
 
     private maxTimeout: number = 1 * 1000;
 
@@ -25,11 +26,31 @@ class JinagaDistributor implements NetworkProvider {
     }
 
     public watch(start: Object, query: Query) {
-        this.send(JSON.stringify({
+        var watch = {
             type: "watch",
             start: start,
             query: query.toDescriptiveString()
-        }));
+        };
+        this.watches.push(watch);
+        this.send(JSON.stringify(watch));
+    }
+
+    public stopWatch(start: Object, query: Query) {
+        var descriptiveString = query.toDescriptiveString();
+        var watch = {
+            type: "watch",
+            start: start,
+            query: descriptiveString
+        };
+        var index = this.watches.indexOf(watch);
+        if (index >= 0) {
+            this.watches.splice(index, 1);
+            this.send(JSON.stringify({
+                type: "stop",
+                start: start,
+                query: descriptiveString
+            }));
+        }
     }
 
     public query(start: Object, query: Query, token: number) {
@@ -114,6 +135,9 @@ class JinagaDistributor implements NetworkProvider {
         this.createSocket();
         if (this.pending.length === 0)
             this.coordinator.resendMessages();
+        this.watches.forEach(w => {
+            this.socket.send(w);
+        });
     }
 }
 

@@ -15,6 +15,7 @@ var debug = Debug("jinaga.distributor.server");
 class Watch {
     constructor(
         public start: Object,
+        public query: string,
         public affected: Query,
         public userFact: Object
     ) {}
@@ -58,6 +59,9 @@ class JinagaConnection {
         if (messageObj.type === "watch") {
             this.watch(messageObj);
         }
+        else if (messageObj.type === "stop") {
+            this.stop(messageObj);
+        }
         else if (messageObj.type === "query") {
             this.query(messageObj);
         }
@@ -89,8 +93,26 @@ class JinagaConnection {
             });
             var inverses = QueryInverter.invertQuery(query);
             inverses.forEach((inverse: Inverse) => {
-                this.watches.push(new Watch(message.start, inverse.affected, this.userFact));
+                this.watches.push(new Watch(message.start, message.query, inverse.affected, this.userFact));
             });
+        }
+        catch (x) {
+            debug(x.message);
+        }
+    }
+
+    private stop(message) {
+        if (!message.start || !message.query)
+            return;
+
+        try {
+            for(var index = this.watches.length-1; index >= 0; index--) {
+                if (_isEqual(this.watches[index].start, message.start) &&
+                    this.watches[index].query === message.query
+                ) {
+                    this.watches.splice(index, 1);
+                }
+            }
         }
         catch (x) {
             debug(x.message);

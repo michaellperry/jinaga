@@ -154,6 +154,9 @@ class JinagaCoordinator implements Coordinator {
                 return;
             }
         }
+        if (this.network) {
+            this.network.stopWatch(watch.start, watch.joins);
+        }
     }
 
     login(callback: (userFact: Object, profile: Object) => void) {
