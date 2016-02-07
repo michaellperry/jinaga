@@ -1,5 +1,7 @@
 # Jinaga
-Real-time client-to-server-to-client messaging with persistence. Replace your REST API, document database, and web sockets code with this one simple, universal back end.
+JavaScript data synchronization, front-end and back-end, persistent and real-time.
+
+Make a change in the browser and it is automatically sent to the server, saved to the database, and shared with other users. Jinaga is journaled isolated nodes approaching global agreement. 
 
 See an example application: [ImprovingU](https://jinagademo.azurewebsites.net) - Course idea voting site.
 
@@ -12,6 +14,7 @@ Get a quick [video introduction](https://vimeo.com/channels/jinaga) to Jinaga.
 - Migrations (coming soon)
 - Checkpoints (coming soon)
 - [Comparison with alternatives](https://github.com/michaellperry/jinaga/blob/master/alternatives.md)
+- [Roadmap](https://github.com/michaellperry/jinaga/blob/master/roadmap.md)
 
 [Contributing](https://github.com/michaellperry/jinaga/blob/master/contributing.md)
 
@@ -103,9 +106,9 @@ var trash = {
 
 The second fact knows about the first. That makes the first fact (**chores**) a predecessor to the second (**trash**). The order between these two is known. **Chores** will always come before **trash**. But facts with no such relationship can occur in any order.
 
-## Queries
+## Watches
 
-Now that you can express that **chores** is a predecessor of **trash**, you might want to query for all facts with that same predecessor. These are called successors. For example, you might want to find all of the tasks on the **chores** list. You write this as a query. Provide a template that all desired facts will fit. For example, for a given list, this template will match all tasks on that list:
+Now that you can express that **chores** is a predecessor of **trash**, you might want to watch for all facts with that same predecessor. These are called successors. For example, you might want to find all of the tasks on the **chores** list. Provide a template that all desired facts will fit. For example, for a given list, this template will match all tasks on that list:
 
 ```JavaScript
 function tasksInList(l) {
@@ -116,7 +119,7 @@ function tasksInList(l) {
 }
 ```
 
-When a fact matching the template is found, we want to call a function. We'll watch the query, and call a function when the results change.
+When a fact matching the template is found, we want to call a function. We'll watch the template, and call a function when the results change.
 
 ```JavaScript
 function taskAdded(task) {
