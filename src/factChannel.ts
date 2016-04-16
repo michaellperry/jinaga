@@ -58,6 +58,7 @@ class FactChannel {
         }
         this.output({
             type: 'fact',
+            hash: hash,
             id: this.nextId,
             fact: memento
         });
