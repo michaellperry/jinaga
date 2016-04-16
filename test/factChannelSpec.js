@@ -101,5 +101,49 @@ describe('FactChannel', function () {
                 }]
             }
         });
-    })
+    });
+    
+    it('should reuse predecessors', function () {
+        channel.sendFact({
+            value: "first",
+            parent: {
+                value: "top"
+            }
+        });
+        channel.sendFact({
+            value: "second",
+            parent: {
+                value: "top"
+            }
+        });
+        
+        expect(messages.length).to.equal(3);
+        expect(messages[0]).to.eql({
+            type: "fact",
+            id: 1,
+            fact: {
+                value: "top"
+            }
+        });
+        expect(messages[1]).to.eql({
+            type: "fact",
+            id: 3,
+            fact: {
+                value: "first",
+                parent: {
+                    id: 1
+                }
+            }
+        });
+        expect(messages[2]).to.eql({
+            type: "fact",
+            id: 5,
+            fact: {
+                value: "second",
+                parent: {
+                    id: 1
+                }
+            }
+        });
+    });
 });
