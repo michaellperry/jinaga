@@ -63,4 +63,43 @@ describe('FactChannel', function () {
             }
         });
     });
+    
+    it('should serialize a set of predecessors', function () {
+        channel.sendFact({
+            value: "a",
+            prior: [{
+                value: "b"
+            }, {
+                value: "c"
+            }]
+        });
+        
+        expect(messages.length).to.equal(3);
+        expect(messages[0]).to.eql({
+            type: "fact",
+            id: 1,
+            fact: {
+                value: "b"
+            }
+        });
+        expect(messages[1]).to.eql({
+            type: "fact",
+            id: 3,
+            fact: {
+                value: "c"
+            }
+        });
+        expect(messages[2]).to.eql({
+            type: "fact",
+            id: 5,
+            fact: {
+                value: "a",
+                prior: [{
+                    id: 1
+                }, {
+                    id: 3
+                }]
+            }
+        });
+    })
 });

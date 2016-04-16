@@ -24,6 +24,9 @@ class FactChannel {
             if (isPredecessor(value)) {
                 memento[field] = this.sendFact(value);
             }
+            else if (Array.isArray(value)) {
+                memento[field] = value.map(v => this.sendFact(v));
+            }
             else {
                 memento[field] = value;
             }
