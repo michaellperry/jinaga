@@ -12,7 +12,7 @@ class FactChannel {
     private nextId: number;
     
     constructor(
-        private output: (string) => void
+        private output: (Object) => void
     ) {
         this.nextId = 1;
     }
@@ -28,11 +28,11 @@ class FactChannel {
                 memento[field] = value;
             }
         }
-        this.output(JSON.stringify({
+        this.output({
             type: 'fact',
             id: this.nextId,
             fact: memento
-        }));
+        });
         var reference = new FactReference(this.nextId);
         this.nextId += 2;
         return reference;
