@@ -65,6 +65,7 @@ describe("DistributorServer", function() {
 
   before(function (done) {
     mongo = new MongoProvider(url);
+    // mongo.fix();
     mongo.getUserFact(thisUserCredential, function (thisUserFact) {
       thisUser = thisUserFact;
       mongo.getUserFact(otherUserCredential, function (otherUserFact) {

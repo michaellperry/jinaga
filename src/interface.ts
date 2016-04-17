@@ -198,8 +198,8 @@ export function computeHash(fact: Object): number {
 
     var hash = _pairs(fact).map(computeMemberHash, this)
         .reduce(function(agg, current){
-      return agg + current;
-    }, 0);
+            return agg + current;
+        }, 0) | 0;
     return hash;
 }
 
@@ -213,7 +213,7 @@ function computeMemberHash(pair: [any]): number {
             valueHash = computeStringHash(value);
             break;
         case "number":
-            valueHash = value;
+            valueHash = computeNumberHash(value);
             break;
         case "object":
             if (value instanceof Date) {
@@ -234,7 +234,7 @@ function computeMemberHash(pair: [any]): number {
     }
 
     var nameHash = computeStringHash(name);
-    return (nameHash << 5) - nameHash + valueHash;
+    return ((nameHash << 5) - nameHash + valueHash) | 0;
 }
 
 function computeStringHash(str: string): number {
@@ -246,6 +246,10 @@ function computeStringHash(str: string): number {
         hash = (hash << 5) - hash + str.charCodeAt(index);
     }
     return hash;
+}
+
+function computeNumberHash(val: number): number {
+    return val | 0;
 }
 
 export interface UserIdentity {

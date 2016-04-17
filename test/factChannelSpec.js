@@ -59,7 +59,7 @@ describe('FactChannel', function () {
                 name: "Chores",
                 from: {
                     id: 1,
-                    hash: 10982172839
+                    hash: -1902729049
                 }
             }
         });

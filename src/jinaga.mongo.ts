@@ -613,6 +613,34 @@ class MongoProvider implements Interface.StorageProvider, Interface.KeystoreProv
             }
         }
     }
+    
+    public fix(): void {
+        MongoClient.connect(this.url, (err, db) => {
+            if (err) {
+                this.coordinator.onError(err.message);
+            }
+            else {
+                if (db.facts)
+                    db.facts.renameCollection("old_facts");
+            }
+        });
+        
+        this.withCollection("old_facts", (facts, done) => {
+            facts.find().forEach(node => {
+                this.save(node.fact, null);
+            });
+            done();
+        });
+        
+        MongoClient.connect(this.url, (err, db) => {
+            if (err) {
+                this.coordinator.onError(err.message);
+            }
+            else {
+                db.old_facts.drop();
+            }
+        });
+    }
 }
 
 export = MongoProvider;
