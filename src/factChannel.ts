@@ -5,7 +5,8 @@ import _isEqual = Collections._isEqual;
 
 class FactReference {
     constructor(
-        public id: number
+        public id: number,
+        public hash: number
     ) {
     }
 }
@@ -36,7 +37,7 @@ class FactChannel {
                 .filter(n => _isEqual(n.fact, fact))
                 .map(n => n.id);
             if (matches.length > 0) {
-                return new FactReference(matches[0]);
+                return new FactReference(matches[0], hash);
             }
         }
         return null;
@@ -58,12 +59,11 @@ class FactChannel {
         }
         this.output({
             type: 'fact',
-            hash: hash,
             id: this.nextId,
             fact: memento
         });
         this.addNewFact(hash, this.nextId, fact);
-        var reference = new FactReference(this.nextId);
+        var reference = new FactReference(this.nextId, hash);
         this.nextId += 2;
         return reference;
     }

@@ -24,7 +24,6 @@ describe('FactChannel', function () {
         expect(messages.length).to.equal(1);
         expect(messages[0]).to.eql({
             type: "fact",
-            hash: 10982172839,
             id: 1,
             fact:{
                 type: "Jinaga.User",
@@ -46,7 +45,6 @@ describe('FactChannel', function () {
         expect(messages.length).to.equal(2);
         expect(messages[0]).to.eql({
             type: "fact",
-            hash: 10982172839,
             id: 1,
             fact:{
                 type: "Jinaga.User",
@@ -55,13 +53,13 @@ describe('FactChannel', function () {
         });
         expect(messages[1]).to.eql({
             type: "fact",
-            hash: 13315294636,
             id: 3,
             fact:{
                 type: "List",
                 name: "Chores",
                 from: {
-                    id: 1
+                    id: 1,
+                    hash: 10982172839
                 }
             }
         });
@@ -80,7 +78,6 @@ describe('FactChannel', function () {
         expect(messages.length).to.equal(3);
         expect(messages[0]).to.eql({
             type: "fact",
-            hash: -823812847,
             id: 1,
             fact: {
                 value: "b"
@@ -88,7 +85,6 @@ describe('FactChannel', function () {
         });
         expect(messages[1]).to.eql({
             type: "fact",
-            hash: -823812846,
             id: 3,
             fact: {
                 value: "c"
@@ -96,14 +92,15 @@ describe('FactChannel', function () {
         });
         expect(messages[2]).to.eql({
             type: "fact",
-            hash: -3451421271,
             id: 5,
             fact: {
                 value: "a",
                 prior: [{
-                    id: 1
+                    id: 1,
+                    hash: -823812847
                 }, {
-                    id: 3
+                    id: 3,
+                    hash: -823812846
                 }]
             }
         });
@@ -126,7 +123,6 @@ describe('FactChannel', function () {
         expect(messages.length).to.equal(3);
         expect(messages[0]).to.eql({
             type: "fact",
-            hash: -823697916,
             id: 1,
             fact: {
                 value: "top"
@@ -134,23 +130,23 @@ describe('FactChannel', function () {
         });
         expect(messages[1]).to.eql({
             type: "fact",
-            hash: -2343446023,
             id: 3,
             fact: {
                 value: "first",
                 parent: {
-                    id: 1
+                    id: 1,
+                    hash: -823697916
                 }
             }
         });
         expect(messages[2]).to.eql({
             type: "fact",
-            hash: -3347166275,
             id: 5,
             fact: {
                 value: "second",
                 parent: {
-                    id: 1
+                    id: 1,
+                    hash: -823697916
                 }
             }
         });
