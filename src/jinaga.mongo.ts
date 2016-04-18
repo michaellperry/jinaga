@@ -40,7 +40,7 @@ class MongoSave {
     }
 
     private onFound(document) {
-        if (_isEqual(this.fact, document.fact)) {
+        if (computeHash(document.fact) === document.hash && _isEqual(this.fact, document.fact)) {
             this.isDone = true;
             this.id = document._id;
             this.done(this);
@@ -147,7 +147,8 @@ class StartStep {
     }
 
     private onFound(document) {
-        this.next.join(new Point(document._id, document.fact, document.predecessors), null);
+        if (computeHash(document.fact) === document.hash)
+            this.next.join(new Point(document._id, document.fact, document.predecessors), null);
     }
 
     private onFinished(err) {
@@ -231,7 +232,8 @@ class SuccessorStep implements PipelineStep {
     }
 
     private onFound(document, context) {
-        if (this.authorizeRead(document.fact, this.readerFact))
+        if (computeHash(document.fact) === document.hash &&
+            this.authorizeRead(document.fact, this.readerFact))
             this.next.join(new Point(document._id, document.fact, document.predecessors), context);
     }
 
@@ -296,7 +298,8 @@ class LoadStep implements PipelineStep {
 
     private onFound(document, context) {
         debug("Loaded: " + JSON.stringify(document));
-        this.next.join(new Point(document._id, document.fact, document.predecessors), context);
+        if (computeHash(document.fact) === document.hash)
+            this.next.join(new Point(document._id, document.fact, document.predecessors), context);
     }
 
     private onFinished(err) {
