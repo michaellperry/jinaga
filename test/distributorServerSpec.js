@@ -79,7 +79,7 @@ describe("DistributorServer", function() {
     topic.from = thisUser;
   });
 
-  it("should send fact to endpoint", function (done) {
+  it.only("should send fact to endpoint", function (done) {
     var distributor = new JinagaDistributor(mongo, mongo, authenticateFor(thisUserCredential));
 
     var proxy = new SocketProxy();
