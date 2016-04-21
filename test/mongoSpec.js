@@ -12,22 +12,8 @@ describe("Mongo", function() {
 
   beforeEach(function () {
     coordinator = new function() {
-      this.continuations = [];
-
       this.onSaved = function(fact) {
-        if (this.continuations.length > 0) {
-          var predicate = function (c) {
-            return c.match.type === fact.type;
-          };
-          var matches = this.continuations.filter(predicate);
-          while (matches.length > 0)
-            matches.shift().next();
-        }
-      }.bind(this);
-
-      this.afterSave = function(match, next) {
-        this.continuations.push({ match: match, next: next });
-      }.bind(this);
+      };
 
       this.onError = function(err) {
         should.equal("", err);
@@ -91,11 +77,11 @@ describe("Mongo", function() {
       list: chores,
       description: "Take out the trash"
     };
-    coordinator.afterSave(chores, function () {
+    mongo.whenQuiet(function () {
       mongo.save(task, null);
     });
 
-    coordinator.afterSave(task, function() {
+    mongo.whenQuiet(function() {
       mongo.executeQuery(chores, query, null, function (error, messages) {
         should.equal(null, error);
         messages.length.should.equal(1);
@@ -113,7 +99,7 @@ describe("Mongo", function() {
     };
     mongo.save(task, null);
 
-    coordinator.afterSave(task, function() {
+    mongo.whenQuiet(function() {
       mongo.executeQuery(chores, query, null, function (error, messages) {
         should.equal(null, error);
         messages.length.should.equal(1);
@@ -131,7 +117,7 @@ describe("Mongo", function() {
     };
     mongo.save(task, null);
 
-    coordinator.afterSave(task, function() {
+    mongo.whenQuiet(function() {
       mongo.executeQuery(chores, query, null, function (error, messages) {
         should.equal(null, error);
         messages.length.should.equal(1);
@@ -149,7 +135,7 @@ describe("Mongo", function() {
     };
     mongo.save(task, null);
 
-    coordinator.afterSave(task, function() {
+    mongo.whenQuiet(function() {
       mongo.executeQuery(chores, query, null, function (error, messages) {
         should.equal(null, error);
         messages.length.should.equal(0);
@@ -161,7 +147,7 @@ describe("Mongo", function() {
   it("should find grandchildren", function(done) {
     mongo.save(completion, null);
 
-    coordinator.afterSave(completion, function() {
+    mongo.whenQuiet(function() {
       mongo.executeQuery(chores, Interface.fromDescriptiveString("S.list S.task"), null, function (error2, messages) {
         should.equal(null, error2);
         messages.length.should.equal(1);
@@ -174,7 +160,7 @@ describe("Mongo", function() {
   it("should find grandchildren with array", function(done) {
     mongo.save(completionWithArray, null);
 
-    coordinator.afterSave(completionWithArray, function () {
+    mongo.whenQuiet(function () {
       mongo.executeQuery(chores, Interface.fromDescriptiveString("S.list S.task"), null, function (error2, messages) {
         should.equal(null, error2);
         messages.length.should.equal(1);
@@ -187,7 +173,7 @@ describe("Mongo", function() {
   it("should find grandparents", function(done) {
     mongo.save(completion, null);
 
-    coordinator.afterSave(completion, function() {
+    mongo.whenQuiet(function() {
       mongo.executeQuery(completion, Interface.fromDescriptiveString("P.task P.list"), null, function (error2, messages) {
         should.equal(null, error2);
         messages.length.should.equal(1);
@@ -200,7 +186,7 @@ describe("Mongo", function() {
   it("should match based on field values", function(done) {
     mongo.save(completion, null);
 
-    coordinator.afterSave(completion, function() {
+    mongo.whenQuiet(function() {
       mongo.executeQuery(completion, Interface.fromDescriptiveString("P.task F.type=\"Task\" P.list F.type=\"List\""), null, function (error2, messages) {
         should.equal(null, error2);
         messages.length.should.equal(1);
@@ -213,7 +199,7 @@ describe("Mongo", function() {
   it("should not match if final field values are different", function(done) {
     mongo.save(completion, null);
 
-    coordinator.afterSave(completion, function() {
+    mongo.whenQuiet(function() {
       mongo.executeQuery(completion, Interface.fromDescriptiveString("P.task F.type=\"Task\" P.list F.type=\"No Match\""), null, function (error2, messages) {
         should.equal(null, error2);
         messages.length.should.equal(0);
@@ -225,7 +211,7 @@ describe("Mongo", function() {
   it("should not match if interior field values are different", function(done) {
     mongo.save(completion, null);
 
-    coordinator.afterSave(completion, function() {
+    mongo.whenQuiet(function() {
       mongo.executeQuery(completion, Interface.fromDescriptiveString("P.task F.type=\"No Match\" P.list F.type=\"List\""), null, function (error2, messages) {
         should.equal(null, error2);
         messages.length.should.equal(0);
@@ -237,7 +223,7 @@ describe("Mongo", function() {
   it("should not match not exists if completion exists", function(done) {
     mongo.save(completion, null);
 
-    coordinator.afterSave(completion, function() {
+    mongo.whenQuiet(function() {
       mongo.executeQuery(chores, Interface.fromDescriptiveString("S.list N(S.task)"), null, function (error, messages) {
         should.equal(null, error);
         messages.length.should.equal(0);
@@ -249,7 +235,7 @@ describe("Mongo", function() {
   it("should match not exists if completion does not exist", function(done) {
     mongo.save(task, null);
 
-    coordinator.afterSave(task, function() {
+    mongo.whenQuiet(function() {
       mongo.executeQuery(chores, Interface.fromDescriptiveString("S.list N(S.task)"), null, function (error, messages) {
         should.equal(null, error);
         messages.length.should.equal(1);
@@ -261,7 +247,7 @@ describe("Mongo", function() {
   it("should match exists if completion exists", function(done) {
     mongo.save(completion, null);
 
-    coordinator.afterSave(completion, function() {
+    mongo.whenQuiet(function() {
       mongo.executeQuery(chores, Interface.fromDescriptiveString("S.list E(S.task)"), null, function (error, messages) {
         should.equal(null, error);
         messages.length.should.equal(1);
@@ -273,7 +259,7 @@ describe("Mongo", function() {
   it("should not match exists if completion does not exist", function(done) {
     mongo.save(task, null);
 
-    coordinator.afterSave(task, function() {
+    mongo.whenQuiet(function() {
       mongo.executeQuery(chores, Interface.fromDescriptiveString("S.list E(S.task)"), null, function (error, messages) {
         should.equal(null, error);
         messages.length.should.equal(0);
@@ -285,7 +271,7 @@ describe("Mongo", function() {
   it("existential condition works with field conditions negative", function(done) {
     mongo.save(task, null);
 
-    coordinator.afterSave(task, function() {
+    mongo.whenQuiet(function() {
       mongo.executeQuery(chores, Interface.fromDescriptiveString("F.type=\"List\" S.list F.type=\"Task\" N(S.task F.type=\"TaskComplete\")"), null, function (error, messages) {
         should.equal(null, error);
         messages.length.should.equal(1);
@@ -297,7 +283,7 @@ describe("Mongo", function() {
   it("existential condition works with field conditions positive", function(done) {
     mongo.save(completion, null);
 
-    coordinator.afterSave(completion, function() {
+    mongo.whenQuiet(function() {
       mongo.executeQuery(chores, Interface.fromDescriptiveString("F.type=\"List\" S.list F.type=\"Task\" N(S.task F.type=\"TaskComplete\")"), null, function (error, messages) {
         should.equal(null, error);
         messages.length.should.equal(0);
@@ -309,7 +295,7 @@ describe("Mongo", function() {
   it("should find successor based on array with multiple entries", function(done) {
     mongo.save(completionForward, null);
 
-    coordinator.afterSave(completionForward, function() {
+    mongo.whenQuiet(function() {
       mongo.executeQuery(task, Interface.fromDescriptiveString("F.type=\"Task\" S.task F.type=\"TaskComplete\""), null, function (error, messages) {
         should.equal(null, error);
         messages.length.should.equal(1);

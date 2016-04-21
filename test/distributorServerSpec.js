@@ -65,7 +65,6 @@ describe("DistributorServer", function() {
 
   before(function (done) {
     mongo = new MongoProvider(url);
-    // mongo.fix();
     mongo.getUserFact(thisUserCredential, function (thisUserFact) {
       thisUser = thisUserFact;
       mongo.getUserFact(otherUserCredential, function (otherUserFact) {
@@ -85,20 +84,19 @@ describe("DistributorServer", function() {
 
     var proxy = new SocketProxy();
     distributor.onConnection(proxy);
-    mongo.whenDone(function () {
+    mongo.whenQuiet(function () {
       proxy.watch({
         name: "Chores"
       }, "S.list");
-      mongo.whenDone(function () {
-        distributor.onReceived({ list: { name: "Chores" }, description: "Take out the trash" }, null);
-
-        mongo.whenDone(function () {
-          expect(proxy.messages.length).to.equal(2);
-          expect(JSON.parse(proxy.messages[0]).type).to.equal("loggedIn");
-          expect(proxy.messages[1]).to.equal("{\"type\":\"fact\",\"fact\":{\"list\":{\"name\":\"Chores\"},\"description\":\"Take out the trash\"}}");
-          done();
-        });
-      });
+    });
+    mongo.whenQuiet(function () {
+      distributor.onReceived({ list: { name: "Chores" }, description: "Take out the trash" }, null);
+    });
+    mongo.whenQuiet(function () {
+      expect(proxy.messages.length).to.equal(2);
+      expect(JSON.parse(proxy.messages[0]).type).to.equal("loggedIn");
+      expect(proxy.messages[1]).to.equal("{\"type\":\"fact\",\"fact\":{\"list\":{\"name\":\"Chores\"},\"description\":\"Take out the trash\"}}");
+      done();
     });
   });
 
@@ -107,21 +105,20 @@ describe("DistributorServer", function() {
 
     var proxy = new SocketProxy();
     distributor.onConnection(proxy);
-    mongo.whenDone(function () {
+    mongo.whenQuiet(function () {
       proxy.watch(topic, "S.in F.type=\"Yaca.Post\"");
-      mongo.whenDone(function () {
-        distributor.onReceived({
-          type: "Yaca.Post",
-          from: thisUser,
-          in: topic
-        }, thisUser, null);
-
-        mongo.whenDone(function () {
-          expect(proxy.messages.length).to.equal(2);
-          expect(JSON.parse(proxy.messages[0]).type).to.equal("loggedIn");
-          done();
-        });
-      });
+    });
+    mongo.whenQuiet(function () {
+      distributor.onReceived({
+        type: "Yaca.Post",
+        from: thisUser,
+        in: topic
+      }, thisUser, null);
+    });
+    mongo.whenQuiet(function () {
+      expect(proxy.messages.length).to.equal(2);
+      expect(JSON.parse(proxy.messages[0]).type).to.equal("loggedIn");
+      done();
     });
   });
 
@@ -130,21 +127,20 @@ describe("DistributorServer", function() {
 
     var proxy = new SocketProxy();
     distributor.onConnection(proxy);
-    mongo.whenDone(function () {
+    mongo.whenQuiet(function () {
       proxy.watch(topic, "S.in F.type=\"Yaca.Post\"");
-      mongo.whenDone(function () {
-        distributor.onReceived({
-          type: "Yaca.Post",
-          from: thisUser,
-          in: topic
-        }, otherUser, null);
-
-        mongo.whenDone(function () {
-          expect(proxy.messages.length).to.equal(1);
-          expect(JSON.parse(proxy.messages[0]).type).to.equal("loggedIn");
-          done();
-        });
-      });
+    });
+    mongo.whenQuiet(function () {
+      distributor.onReceived({
+        type: "Yaca.Post",
+        from: thisUser,
+        in: topic
+      }, otherUser, null);
+    });
+    mongo.whenQuiet(function () {
+      expect(proxy.messages.length).to.equal(1);
+      expect(JSON.parse(proxy.messages[0]).type).to.equal("loggedIn");
+      done();
     });
   });
 
@@ -153,21 +149,20 @@ describe("DistributorServer", function() {
 
     var proxy = new SocketProxy();
     distributor.onConnection(proxy);
-    mongo.whenDone(function () {
+    mongo.whenQuiet(function () {
       proxy.watch(topic, "S.in F.type=\"Yaca.Post\"");
-      mongo.whenDone(function () {
-        distributor.onReceived({
-          type: "Yaca.Post",
-          from: otherUser,
-          in: topic
-        }, thisUser, null);
-
-        mongo.whenDone(function () {
-          expect(proxy.messages.length).to.equal(1);
-          expect(JSON.parse(proxy.messages[0]).type).to.equal("loggedIn");
-          done();
-        });
-      });
+    });
+    mongo.whenQuiet(function () {
+      distributor.onReceived({
+        type: "Yaca.Post",
+        from: otherUser,
+        in: topic
+      }, thisUser, null);
+    });
+    mongo.whenQuiet(function () {
+      expect(proxy.messages.length).to.equal(1);
+      expect(JSON.parse(proxy.messages[0]).type).to.equal("loggedIn");
+      done();
     });
   });
 
@@ -176,21 +171,20 @@ describe("DistributorServer", function() {
 
     var proxy = new SocketProxy();
     distributor.onConnection(proxy);
-    mongo.whenDone(function () {
+    mongo.whenQuiet(function () {
       proxy.watch(topic, "S.in F.type=\"Yaca.Post\"");
-      mongo.whenDone(function () {
-        distributor.onReceived({
-          type: "Yaca.Post",
-          from: otherUser,
-          in: topic
-        }, otherUser, null);
-
-        mongo.whenDone(function () {
-          expect(proxy.messages.length).to.equal(1);
-          expect(JSON.parse(proxy.messages[0]).type).to.equal("loggedIn");
-          done();
-        });
-      });
+    });
+    mongo.whenQuiet(function () {
+      distributor.onReceived({
+        type: "Yaca.Post",
+        from: otherUser,
+        in: topic
+      }, otherUser, null);
+    });
+    mongo.whenQuiet(function () {
+      expect(proxy.messages.length).to.equal(1);
+      expect(JSON.parse(proxy.messages[0]).type).to.equal("loggedIn");
+      done();
     });
   });
 
@@ -199,21 +193,20 @@ describe("DistributorServer", function() {
 
     var proxy = new SocketProxy();
     distributor.onConnection(proxy);
-    mongo.whenDone(function () {
+    mongo.whenQuiet(function () {
       distributor.onReceived({
         type: "Yaca.Post",
         from: thisUser,
         in: topic
       }, thisUser, null);
-      mongo.whenDone(function () {
-        proxy.watch(topic, "S.in F.type=\"Yaca.Post\"");
-
-        mongo.whenDone(function () {
-          expect(proxy.messages.length).to.equal(1);
-          expect(JSON.parse(proxy.messages[0]).type).to.equal("loggedIn");
-          done();
-        });
-      });
+    });
+    mongo.whenQuiet(function () {
+      proxy.watch(topic, "S.in F.type=\"Yaca.Post\"");
+    });
+    mongo.whenQuiet(function () {
+      expect(proxy.messages.length).to.equal(1);
+      expect(JSON.parse(proxy.messages[0]).type).to.equal("loggedIn");
+      done();
     });
   });
 
@@ -222,21 +215,20 @@ describe("DistributorServer", function() {
 
     var proxy = new SocketProxy();
     distributor.onConnection(proxy);
-    mongo.whenDone(function () {
+    mongo.whenQuiet(function () {
       distributor.onReceived({
         type: "Yaca.Post",
         from: thisUser,
         in: topic
       }, thisUser, null);
-      mongo.whenDone(function () {
-        proxy.watch(topic, "S.in F.type=\"Yaca.Post\"");
-
-        mongo.whenDone(function () {
-          expect(proxy.messages.length).to.equal(2);
-          expect(JSON.parse(proxy.messages[0]).type).to.equal("loggedIn");
-          done();
-        });
-      });
+    });
+    mongo.whenQuiet(function () {
+      proxy.watch(topic, "S.in F.type=\"Yaca.Post\"");
+    });
+    mongo.whenQuiet(function () {
+      expect(proxy.messages.length).to.equal(2);
+      expect(JSON.parse(proxy.messages[0]).type).to.equal("loggedIn");
+      done();
     });
   });
 
@@ -245,23 +237,22 @@ describe("DistributorServer", function() {
 
     var proxy = new SocketProxy();
     distributor.onConnection(proxy);
-    mongo.whenDone(function () {
+    mongo.whenQuiet(function () {
       distributor.onReceived({
         type: "Yaca.Post",
         from: thisUser,
         in: topic
       }, thisUser, null);
-      mongo.whenDone(function () {
-        proxy.query(topic, "S.in F.type=\"Yaca.Post\"", 1);
-
-        mongo.whenDone(function () {
-          expect(proxy.messages.length).to.equal(3);
-          expect(JSON.parse(proxy.messages[0]).type).to.equal("loggedIn");
-          expect(JSON.parse(proxy.messages[1]).type).to.equal("fact");
-          expect(proxy.messages[2]).to.equal(JSON.stringify({ "type": "done", "token": 1 }));
-          done();
-        });
-      });
+    });
+    mongo.whenQuiet(function () {
+      proxy.query(topic, "S.in F.type=\"Yaca.Post\"", 1);
+    });
+    mongo.whenQuiet(function () {
+      expect(proxy.messages.length).to.equal(3);
+      expect(JSON.parse(proxy.messages[0]).type).to.equal("loggedIn");
+      expect(JSON.parse(proxy.messages[1]).type).to.equal("fact");
+      expect(proxy.messages[2]).to.equal(JSON.stringify({ "type": "done", "token": 1 }));
+      done();
     });
   });
 
@@ -270,22 +261,21 @@ describe("DistributorServer", function() {
 
     var proxy = new SocketProxy();
     distributor.onConnection(proxy);
-    mongo.whenDone(function () {
+    mongo.whenQuiet(function () {
       proxy.query(topic, "S.in F.type=\"Yaca.Post\"", 1);
-      mongo.whenDone(function () {
-        distributor.onReceived({
-          type: "Yaca.Post",
-          from: thisUser,
-          in: topic
-        }, thisUser, null);
-
-        mongo.whenDone(function () {
-          expect(proxy.messages.length).to.equal(2);
-          expect(JSON.parse(proxy.messages[0]).type).to.equal("loggedIn");
-          expect(proxy.messages[1]).to.equal(JSON.stringify({ "type": "done", "token": 1 }));
-          done();
-        });
-      });
+    });
+    mongo.whenQuiet(function () {
+      distributor.onReceived({
+        type: "Yaca.Post",
+        from: thisUser,
+        in: topic
+      }, thisUser, null);
+    });
+    mongo.whenQuiet(function () {
+      expect(proxy.messages.length).to.equal(2);
+      expect(JSON.parse(proxy.messages[0]).type).to.equal("loggedIn");
+      expect(proxy.messages[1]).to.equal(JSON.stringify({ "type": "done", "token": 1 }));
+      done();
     });
   });
 });
