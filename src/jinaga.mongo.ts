@@ -58,7 +58,11 @@ class MongoProvider implements Interface.StorageProvider, Interface.KeystoreProv
                     successor: fact
                 };
                 this.withCollection("successors", (collection, done) => {
-                    collection.insertOne(document, done);
+                    collection.insertOne(document, (err) => {
+                        if (err && err.code != 11000)
+                            this.coordinator.onError(err.message);
+                        done();
+                    });
                 });
             }
         }
