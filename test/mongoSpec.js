@@ -16,13 +16,14 @@ describe("Mongo", function() {
       };
 
       this.onError = function(err) {
+        console.log(JSON.stringify(err));
         should.equal("", err);
       };
     }();
     mongo = new MongoProvider(url);
     mongo.init(coordinator);
 
-    chores.time = new Date();
+    //chores.time = new Date();
   });
 
   var chores = {
@@ -70,7 +71,7 @@ describe("Mongo", function() {
     });
   });
 
-  it("should return one result when has a matching fact", function(done) {
+  it.only("should return one result when has a matching fact", function(done) {
     mongo.save(chores, null);
     var task = {
       type: "Task",

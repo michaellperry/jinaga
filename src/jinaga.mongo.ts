@@ -1,4 +1,6 @@
 import Interface = require('./interface');
+import computeHash = Interface.computeHash;
+import isPredecessor = Interface.isPredecessor;
 import Coordinator = Interface.Coordinator;
 import Query = Interface.Query;
 import UserIdentity = Interface.UserIdentity;
@@ -31,8 +33,7 @@ class MongoProvider implements Interface.StorageProvider, Interface.KeystoreProv
             collection.createIndex({
                 'hash': 1,
                 'role': 1,
-                'successorHash': 1,
-                'type': 1
+                'successorHash': 1
             }, {
                 unique: true
             }, function (err) {
@@ -45,7 +46,22 @@ class MongoProvider implements Interface.StorageProvider, Interface.KeystoreProv
     }
     
     public save(fact: Object, source: any) {
-        
+        var successorHash = computeHash(fact);
+        for (var field in fact) {
+            var predecessor = fact[field];
+            var predecessorHash = computeHash(predecessor);
+            if (isPredecessor(predecessor)) {
+                var document = {
+                    hash: predecessorHash,
+                    role: field,
+                    successorHash: successorHash,
+                    successor: fact
+                };
+                this.withCollection("successors", (collection, done) => {
+                    collection.insertOne(document, done);
+                });
+            }
+        }
     }
     
     public executeQuery(
@@ -134,9 +150,12 @@ class MongoProvider implements Interface.StorageProvider, Interface.KeystoreProv
         else {
             var prior = this.quiet;
             this.quiet = () => {
-                if (prior)
+                if (prior) {
                     prior();
-                quiet();
+                    this.whenQuiet(quiet);
+                }
+                else
+                    quiet();
             }
         }
     }
