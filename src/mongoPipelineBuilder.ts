@@ -19,17 +19,25 @@ function appendStep(pipeline: Array<Object>, startHash: number, step: Step) {
 }
 
 function appendJoin(pipeline: Array<Object>, startHash: number, join: Join) {
-    if (join.direction === Direction.Successor) {
+    if (join.direction === Direction.Predecessor) {
+        appendPredecessor(pipeline, startHash, join);
+    }
+    else {
         appendSuccessor(pipeline, startHash, join);
     }
 }
 
-function appendSuccessor(pipeline: Array<Object>, startHash: number, join: Join) {
+function appendPredecessor(pipeline: Array<Object>, startHash: number, join: Join) {
     if (pipeline.length === 0) {
         pipeline.push({
             "$match": {
-                hash: startHash,
+                successorHash: startHash,
                 role: join.role
+            }
+        }, {
+            "$project": {
+                hash: "$predecessorHash",
+                fact: "$predecessor"
             }
         });
     }
@@ -37,8 +45,47 @@ function appendSuccessor(pipeline: Array<Object>, startHash: number, join: Join)
         pipeline.push({
             "$lookup": {
                 from: "successors",
-                localField: "successorHash",
-                foreignField: "hash",
+                localField: "hash",
+                foreignField: "successorHash",
+                as: "predecessors"
+            }
+        }, {
+            "$unwind": {
+                path: "$predecessors"
+            }
+        }, {
+            "$match": {
+                "predecessors.role": join.role
+            }
+        }, {
+            "$project": {
+                hash: "$predecessors.predecessorHash",
+                fact: "$predecessors.predecessor"
+            }
+        });
+    }
+}
+
+function appendSuccessor(pipeline: Array<Object>, startHash: number, join: Join) {
+    if (pipeline.length === 0) {
+        pipeline.push({
+            "$match": {
+                predecessorHash: startHash,
+                role: join.role
+            }
+        }, {
+            "$project": {
+                hash: "$successorHash",
+                fact: "$successor"
+            }
+        });
+    }
+    else {
+        pipeline.push({
+            "$lookup": {
+                from: "successors",
+                localField: "hash",
+                foreignField: "predecessorHash",
                 as: "successors"
             }
         }, {
@@ -46,15 +93,13 @@ function appendSuccessor(pipeline: Array<Object>, startHash: number, join: Join)
                 path: "$successors"
             }
         }, {
-            "$project": {
-                hash: "$successors.hash",
-                role: "$successors.role",
-                successorHash: "$successors.successorHash",
-                successor: "$successors.successor"
+            "$match": {
+                "successors.role": join.role
             }
         }, {
-            "$match": {
-                role: join.role
+            "$project": {
+                hash: "$successors.successorHash",
+                fact: "$successors.successor"
             }
         });
     }

@@ -33,7 +33,7 @@ class MongoProvider implements Interface.StorageProvider, Interface.KeystoreProv
         this.coordinator = coordinator;
         this.withCollection('successors', (collection, done) => {
             collection.createIndex({
-                'hash': 1,
+                'predecessorHash': 1,
                 'role': 1,
                 'successorHash': 1
             }, {
@@ -77,7 +77,7 @@ class MongoProvider implements Interface.StorageProvider, Interface.KeystoreProv
                 //console.log(JSON.stringify(documents));
                 result(
                     err ? err.message : null,
-                    documents ? documents.map(d => d.successor) : null);
+                    documents ? documents.map(d => d.fact) : null);
             });
         });
     }
@@ -210,9 +210,10 @@ class MongoProvider implements Interface.StorageProvider, Interface.KeystoreProv
         successor: Object,
         source: any) {
         var document = {
-            hash: computeHash(predecessor),
+            predecessorHash: computeHash(predecessor),
             role: role,
             successorHash: computeHash(successor),
+            predecessor: predecessor,
             successor: successor
         };
         this.withCollection("successors", (collection, done) => {
