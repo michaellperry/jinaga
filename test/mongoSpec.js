@@ -158,7 +158,7 @@ describe.only("Mongo", function() {
     });
   });
 
-  it.only("should find grandchildren with array", function(done) {
+  it("should find grandchildren with array", function(done) {
     mongo.save(completionWithArray, null);
 
     mongo.whenQuiet(function () {

@@ -48,29 +48,14 @@ class MongoProvider implements Interface.StorageProvider, Interface.KeystoreProv
     }
     
     public save(fact: Object, source: any) {
-        var successorHash = computeHash(fact);
         for (var field in fact) {
-            var predecessor = fact[field];
-            var predecessorHash = computeHash(predecessor);
-            if (isPredecessor(predecessor)) {
-                var document = {
-                    hash: predecessorHash,
-                    role: field,
-                    successorHash: successorHash,
-                    successor: fact
-                };
-                this.withCollection("successors", (collection, done) => {
-                    collection.insertOne(document, (err) => {
-                        if (err) {
-                            if (err.code != 11000) {
-                                this.coordinator.onError(err.message);
-                            }
-                        }
-                        else {
-                            this.save(predecessor, source);
-                        }
-                        done();
-                    });
+            var value = fact[field];
+            if (isPredecessor(value)) {
+                this.saveSuccessor(value, field, fact, source);
+            }
+            else if (Array.isArray(value) && value.every(v => isPredecessor(v))) {
+                value.forEach(v => {
+                    this.saveSuccessor(v, field, fact, source);
                 });
             }
         }
@@ -215,6 +200,32 @@ class MongoProvider implements Interface.StorageProvider, Interface.KeystoreProv
                     this.quiet = null;
                     quiet();
                 }
+            });
+        });
+    }
+    
+    private saveSuccessor(
+        predecessor: Object,
+        role: string,
+        successor: Object,
+        source: any) {
+        var document = {
+            hash: computeHash(predecessor),
+            role: role,
+            successorHash: computeHash(successor),
+            successor: successor
+        };
+        this.withCollection("successors", (collection, done) => {
+            collection.insertOne(document, (err) => {
+                if (err) {
+                    if (err.code != 11000) {
+                        this.coordinator.onError(err.message);
+                    }
+                }
+                else {
+                    this.save(predecessor, source);
+                }
+                done();
             });
         });
     }
