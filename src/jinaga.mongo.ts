@@ -6,6 +6,7 @@ import Query = Interface.Query;
 import UserIdentity = Interface.UserIdentity;
 import Join = Interface.Join;
 import Pool = require("./pool");
+import buildPipeline = require('./mongoPipelineBuilder');
 import Keypair = require("keypair");
 
 var MongoDb = require('mongodb');
@@ -60,8 +61,14 @@ class MongoProvider implements Interface.StorageProvider, Interface.KeystoreProv
                 };
                 this.withCollection("successors", (collection, done) => {
                     collection.insertOne(document, (err) => {
-                        if (err && err.code != 11000)
-                            this.coordinator.onError(err.message);
+                        if (err) {
+                            if (err.code != 11000) {
+                                this.coordinator.onError(err.message);
+                            }
+                        }
+                        else {
+                            this.save(predecessor, source);
+                        }
                         done();
                     });
                 });
@@ -75,12 +82,14 @@ class MongoProvider implements Interface.StorageProvider, Interface.KeystoreProv
         readerFact: Object,
         result: (error: string, facts: Array<Object>) => void
     ) {
-        console.log(query.toDescriptiveString());
+        //console.log(query.toDescriptiveString());
+        var startHash = computeHash(start);
+        //console.log("startHash: " + startHash);
         this.withCollection("successors", (collection, done) => {
-            collection.find({
-                hash: computeHash(start),
-                role: (<Join>query.steps[0]).role
-            }).toArray((err, documents) => {
+            collection
+                .aggregate(buildPipeline(startHash, query))
+                .toArray((err, documents) => {
+                //console.log(JSON.stringify(documents));
                 result(
                     err ? err.message : null,
                     documents ? documents.map(d => d.successor) : null);

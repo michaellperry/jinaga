@@ -6,7 +6,7 @@ var url = 'mongodb://localhost:27017/test';
 
 var should = chai.should();
 
-describe("Mongo", function() {
+describe.only("Mongo", function() {
   var coordinator;
   var mongo;
 
@@ -145,7 +145,7 @@ describe("Mongo", function() {
     });
   });
 
-  it.only("should find grandchildren", function(done) {
+  it("should find grandchildren", function(done) {
     mongo.save(completion, null);
 
     mongo.whenQuiet(function() {
@@ -158,7 +158,7 @@ describe("Mongo", function() {
     });
   });
 
-  it("should find grandchildren with array", function(done) {
+  it.only("should find grandchildren with array", function(done) {
     mongo.save(completionWithArray, null);
 
     mongo.whenQuiet(function () {
