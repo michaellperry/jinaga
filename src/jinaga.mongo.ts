@@ -4,6 +4,7 @@ import isPredecessor = Interface.isPredecessor;
 import Coordinator = Interface.Coordinator;
 import Query = Interface.Query;
 import UserIdentity = Interface.UserIdentity;
+import Join = Interface.Join;
 import Pool = require("./pool");
 import Keypair = require("keypair");
 
@@ -74,7 +75,17 @@ class MongoProvider implements Interface.StorageProvider, Interface.KeystoreProv
         readerFact: Object,
         result: (error: string, facts: Array<Object>) => void
     ) {
-        result('Not implemented', []);
+        //console.log(query.toDescriptiveString());
+        this.withCollection("successors", (collection, done) => {
+            collection.find({
+                hash: computeHash(start),
+                role: (<Join>query.steps[0]).role
+            }).toArray((err, documents) => {
+                result(
+                    err ? err.message : null,
+                    documents ? documents.map(d => d.successor) : null);
+            });
+        });
     }
     
     public sendAllFacts() {
