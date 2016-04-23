@@ -75,7 +75,7 @@ class MongoProvider implements Interface.StorageProvider, Interface.KeystoreProv
         readerFact: Object,
         result: (error: string, facts: Array<Object>) => void
     ) {
-        //console.log(query.toDescriptiveString());
+        console.log(query.toDescriptiveString());
         this.withCollection("successors", (collection, done) => {
             collection.find({
                 hash: computeHash(start),

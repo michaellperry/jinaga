@@ -23,7 +23,7 @@ describe("Mongo", function() {
     mongo = new MongoProvider(url);
     mongo.init(coordinator);
 
-    //chores.time = new Date();
+    chores.time = new Date();
   });
 
   var chores = {
@@ -71,7 +71,7 @@ describe("Mongo", function() {
     });
   });
 
-  it.only("should return one result when has a matching fact", function(done) {
+  it("should return one result when has a matching fact", function(done) {
     mongo.save(chores, null);
     var task = {
       type: "Task",
@@ -145,7 +145,7 @@ describe("Mongo", function() {
     });
   });
 
-  it("should find grandchildren", function(done) {
+  it.only("should find grandchildren", function(done) {
     mongo.save(completion, null);
 
     mongo.whenQuiet(function() {
