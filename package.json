@@ -27,7 +27,7 @@
     "grunt-mocha-test": "^0.12.7",
     "grunt-typescript": "^0.7.0",
     "mocha": "^2.2.5",
-    "typescript": "^1.5.3"
+    "typescript": "^1.8.10"
   },
   "dependencies": {
     "debug": "^2.2.0",
