@@ -3,6 +3,7 @@ import Query = Interface.Query;
 import Step = Interface.Step;
 import Join = Interface.Join;
 import Direction = Interface.Direction;
+import PropertyCondition = Interface.PropertyCondition;
 
 function buildPipeline(startHash: number, query: Query) {
     var pipeline = [];
@@ -15,6 +16,9 @@ function buildPipeline(startHash: number, query: Query) {
 function appendStep(pipeline: Array<Object>, startHash: number, step: Step) {
     if (step instanceof Join) {
         appendJoin(pipeline, startHash, <Join>step);
+    }
+    else if (step instanceof PropertyCondition) {
+        appendPropertyCondition(pipeline, <PropertyCondition>step);
     }
 }
 
@@ -101,6 +105,16 @@ function appendSuccessor(pipeline: Array<Object>, startHash: number, join: Join)
                 hash: "$successors.successorHash",
                 fact: "$successors.successor"
             }
+        });
+    }
+}
+
+function appendPropertyCondition(pipeline: Array<Object>, propertyCondition: PropertyCondition) {
+    if (pipeline.length > 0) {
+        var match = {};
+        match["fact." + propertyCondition.name] = propertyCondition.value;
+        pipeline.push({
+            "$match": match
         });
     }
 }
