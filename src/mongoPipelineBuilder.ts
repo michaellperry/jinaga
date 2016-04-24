@@ -5,9 +5,9 @@ import Join = Interface.Join;
 import Direction = Interface.Direction;
 import PropertyCondition = Interface.PropertyCondition;
 
-function buildPipeline(startHash: number, query: Query) {
+function buildPipeline(startHash: number, steps: Array<Step>) {
     var pipeline = [];
-    query.steps.forEach(step => {
+    steps.forEach(step => {
         appendStep(pipeline, startHash, step);
     });
     return pipeline;

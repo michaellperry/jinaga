@@ -6,7 +6,7 @@ import Query = Interface.Query;
 import UserIdentity = Interface.UserIdentity;
 import Join = Interface.Join;
 import Pool = require("./pool");
-import buildPipeline = require('./mongoPipelineBuilder');
+import MongoGraph = require("./mongoGraph");
 import Keypair = require("keypair");
 
 var MongoDb = require('mongodb');
@@ -67,17 +67,13 @@ class MongoProvider implements Interface.StorageProvider, Interface.KeystoreProv
         readerFact: Object,
         result: (error: string, facts: Array<Object>) => void
     ) {
-        //console.log(query.toDescriptiveString());
-        var startHash = computeHash(start);
-        //console.log("startHash: " + startHash);
         this.withCollection("successors", (collection, done) => {
-            collection
-                .aggregate(buildPipeline(startHash, query))
-                .toArray((err, documents) => {
-                //console.log(JSON.stringify(documents));
-                result(
-                    err ? err.message : null,
-                    documents ? documents.map(d => d.fact) : null);
+            const processor = MongoGraph.parseSteps(collection, query.steps);
+            processor(new MongoGraph.Point(start, computeHash(start)), (error, facts) => {
+                if (error)
+                    result(error, null);
+                else
+                    result(null, facts.map(f => f.fact));
             });
         });
     }
