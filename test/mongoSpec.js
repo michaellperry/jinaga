@@ -6,7 +6,7 @@ var url = 'mongodb://localhost:27017/test';
 
 var should = chai.should();
 
-describe.only("Mongo", function() {
+describe("Mongo", function() {
   var coordinator;
   var mongo;
 

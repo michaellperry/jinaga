@@ -22,7 +22,7 @@ class MongoConnection {
 class MongoProvider implements Interface.StorageProvider, Interface.KeystoreProvider {
     private coordinator: Coordinator;
     private count: number = 0;
-    private pool: Pool<MongoConnection> = null;
+    private pools: { [collectionName: string]: Pool<MongoConnection> } = {};
     private quiet: () => void;
     
     public constructor(
@@ -79,15 +79,15 @@ class MongoProvider implements Interface.StorageProvider, Interface.KeystoreProv
     }
     
     public sendAllFacts() {
-        
+        console.log('sendAllFacts');
     }
     
     public push(fact: Object) {
-        
+        console.log('push');
     }
     
     public dequeue(token: number, destination: any) {
-        
+        console.log('dequeue');
     }
     
     public getUserFact(userIdentity: UserIdentity, done: (userFact: Object) => void) {
@@ -125,9 +125,9 @@ class MongoProvider implements Interface.StorageProvider, Interface.KeystoreProv
                                 userId: userIdentity.id,
                                 privateKey: privateKey,
                                 publicKey: publicKey
-                            }, (error: string, result) => {
+                            }, (error, result) => {
                                 if (error) {
-                                    this.coordinator.onError(error);
+                                    this.coordinator.onError(error.message);
                                     done(null);
                                     close();
                                 }
@@ -168,9 +168,10 @@ class MongoProvider implements Interface.StorageProvider, Interface.KeystoreProv
     ///////////////////////////
 
     private withCollection(collectionName:string, action:(collection:any, done:()=>void)=>void) {
+        console.log('Opening ' + collectionName + ': ' + this.count);
         this.count++;
-        if (!this.pool) {
-            this.pool = new Pool<MongoConnection>(
+        if (!this.pools[collectionName]) {
+            this.pools[collectionName] = new Pool<MongoConnection>(
                 (done: (connection: MongoConnection) => void) => {
                     MongoClient.connect(this.url, (err, db) => {
                         if (err) {
@@ -187,10 +188,11 @@ class MongoProvider implements Interface.StorageProvider, Interface.KeystoreProv
                 }
             );
         }
-        this.pool.begin((connection: MongoConnection, done: () => void) => {
+        this.pools[collectionName].begin((connection: MongoConnection, done: () => void) => {
             action(connection.collection, () => {
                 done();
                 this.count--;
+                console.log('Closing ' + collectionName + ': ' + this.count);
                 if (this.count === 0 && this.quiet) {
                     var quiet = this.quiet;
                     this.quiet = null;
