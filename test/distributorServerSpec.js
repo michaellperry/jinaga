@@ -88,24 +88,20 @@ describe("DistributorServer", function() {
   beforeEach(function () {
     topic.createdAt = new Date().toJSON();
     topic.from = thisUser;
-    list.createdAt = new Date().toJSON();
   });
 
-  it.only("should send fact to endpoint", function (done) {
+  it("should send fact to endpoint", function (done) {
     var distributor = new JinagaDistributor(mongo, mongo, authenticateFor(thisUserCredential));
 
     var proxy = new SocketProxy();
     distributor.onConnection(proxy);
     mongo.whenQuiet(function () {
-      console.log('Check 1');
-      proxy.watch(list, "S.list");
+      proxy.watch({ name: "Chores" }, "S.list");
     });
     mongo.whenQuiet(function () {
-      console.log('Check 2');
-      distributor.onReceived({ list: list, description: "Take out the trash" }, null);
+      distributor.onReceived({ list: { name: "Chores" }, description: "Take out the trash" }, null);
     });
     mongo.whenQuiet(function () {
-      console.log('Check 3');
       expect(proxy.messages.length).to.equal(2);
       expect(JSON.parse(proxy.messages[0]).type).to.equal("loggedIn");
       expect(proxy.messages[1]).to.equal("{\"type\":\"fact\",\"fact\":{\"list\":{\"name\":\"Chores\"},\"description\":\"Take out the trash\"}}");

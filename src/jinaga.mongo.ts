@@ -74,20 +74,18 @@ class MongoProvider implements Interface.StorageProvider, Interface.KeystoreProv
                     result(error, null);
                 else
                     result(null, facts.map(f => f.fact));
+                done();
             });
         });
     }
     
     public sendAllFacts() {
-        console.log('sendAllFacts');
     }
     
     public push(fact: Object) {
-        console.log('push');
     }
     
     public dequeue(token: number, destination: any) {
-        console.log('dequeue');
     }
     
     public getUserFact(userIdentity: UserIdentity, done: (userFact: Object) => void) {
@@ -168,7 +166,6 @@ class MongoProvider implements Interface.StorageProvider, Interface.KeystoreProv
     ///////////////////////////
 
     private withCollection(collectionName:string, action:(collection:any, done:()=>void)=>void) {
-        console.log('Opening ' + collectionName + ': ' + this.count);
         this.count++;
         if (!this.pools[collectionName]) {
             this.pools[collectionName] = new Pool<MongoConnection>(
@@ -192,7 +189,6 @@ class MongoProvider implements Interface.StorageProvider, Interface.KeystoreProv
             action(connection.collection, () => {
                 done();
                 this.count--;
-                console.log('Closing ' + collectionName + ': ' + this.count);
                 if (this.count === 0 && this.quiet) {
                     var quiet = this.quiet;
                     this.quiet = null;
@@ -223,6 +219,7 @@ class MongoProvider implements Interface.StorageProvider, Interface.KeystoreProv
                 }
                 else {
                     this.save(predecessor, source);
+                    this.coordinator.onSaved(successor, source);
                 }
                 done();
             });
