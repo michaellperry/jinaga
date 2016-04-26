@@ -9,6 +9,8 @@ import Pool = require("./pool");
 import MongoGraph = require("./mongoGraph");
 import MongoSave = require("./mongoSave");
 import Keypair = require("keypair");
+import Collections = require("./collections");
+import _isEqual = Collections._isEqual;
 
 var MongoDb = require('mongodb');
 var MongoClient = MongoDb.MongoClient;
@@ -76,7 +78,9 @@ class MongoProvider implements Interface.StorageProvider, Interface.KeystoreProv
                 if (error)
                     result(error, null);
                 else
-                    result(null, facts.map(f => f.fact));
+                    result(null, facts
+                        .map(f => f.fact)
+                        .filter(f => this.authorizeRead(f, readerFact)));
                 done();
             });
         });
@@ -199,6 +203,24 @@ class MongoProvider implements Interface.StorageProvider, Interface.KeystoreProv
                 }
             });
         });
+    }
+
+    private authorizeRead(fact: Object, readerFact: Object) {
+        if (!fact.hasOwnProperty("in")) {
+            // Not in a locked fact
+            return true;
+        }
+        var locked = fact["in"];
+        if (!locked.hasOwnProperty("from")) {
+            // Locked fact is not from a user, so no one has access
+            return false;
+        }
+        var owner = locked["from"];
+        if (_isEqual(owner, readerFact)) {
+            // The owner has access.
+            return true;
+        }
+        return false;
     }
 }
 

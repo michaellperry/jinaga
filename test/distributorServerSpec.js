@@ -197,7 +197,7 @@ describe("DistributorServer", function() {
     });
   });
 
-  it ("should not return existing facts in a predecessor to an unauthorized user", function (done) {
+  it("should not return existing facts in a predecessor to an unauthorized user", function (done) {
     var distributor = new JinagaDistributor(mongo, mongo, authenticateFor(otherUserCredential));
 
     var proxy = new SocketProxy();
