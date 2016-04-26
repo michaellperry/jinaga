@@ -7,6 +7,7 @@ import UserIdentity = Interface.UserIdentity;
 import Join = Interface.Join;
 import Pool = require("./pool");
 import MongoGraph = require("./mongoGraph");
+import MongoSave = require("./mongoSave");
 import Keypair = require("keypair");
 
 var MongoDb = require('mongodb');
@@ -48,17 +49,19 @@ class MongoProvider implements Interface.StorageProvider, Interface.KeystoreProv
     }
     
     public save(fact: Object, source: any) {
-        for (var field in fact) {
-            var value = fact[field];
-            if (isPredecessor(value)) {
-                this.saveSuccessor(value, field, fact, source);
-            }
-            else if (Array.isArray(value) && value.every(v => isPredecessor(v))) {
-                value.forEach(v => {
-                    this.saveSuccessor(v, field, fact, source);
-                });
-            }
-        }
+        this.withCollection("successors", (collection, done) => {
+            MongoSave.saveFact(collection, fact, (error, saved) => {
+                if (error) {
+                    this.coordinator.onError(error);
+                }
+                else {
+                    saved.forEach(f => {
+                        this.coordinator.onSaved(f, source);
+                    });
+                }
+                done();
+            });
+        });
     }
     
     public executeQuery(
@@ -194,34 +197,6 @@ class MongoProvider implements Interface.StorageProvider, Interface.KeystoreProv
                     this.quiet = null;
                     quiet();
                 }
-            });
-        });
-    }
-    
-    private saveSuccessor(
-        predecessor: Object,
-        role: string,
-        successor: Object,
-        source: any) {
-        var document = {
-            predecessorHash: computeHash(predecessor),
-            role: role,
-            successorHash: computeHash(successor),
-            predecessor: predecessor,
-            successor: successor
-        };
-        this.withCollection("successors", (collection, done) => {
-            collection.insertOne(document, (err) => {
-                if (err) {
-                    if (err.code != 11000) {
-                        this.coordinator.onError(err.message);
-                    }
-                }
-                else {
-                    this.save(predecessor, source);
-                    this.coordinator.onSaved(successor, source);
-                }
-                done();
             });
         });
     }

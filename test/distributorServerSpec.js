@@ -82,7 +82,7 @@ describe("DistributorServer", function() {
         otherUser = otherUserFact;
         done();
       });
-    })
+    });
   });
 
   beforeEach(function () {
@@ -109,7 +109,7 @@ describe("DistributorServer", function() {
     });
   });
 
-  it ("should allow facts in topics from this user", function (done) {
+  it("should allow facts in topics from this user", function (done) {
     var distributor = new JinagaDistributor(mongo, mongo, authenticateFor(thisUserCredential));
 
     var proxy = new SocketProxy();
