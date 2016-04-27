@@ -1,7 +1,12 @@
 import Interface = require('./interface');
 import Step = Interface.Step;
+import Join = Interface.Join;
+import Direction = Interface.Direction;
+import PropertyCondition = Interface.PropertyCondition;
 import ExistentialCondition = Interface.ExistentialCondition;
 import Quantifier = Interface.Quantifier;
+import isPredecessor = Interface.isPredecessor;
+import computeHash = Interface.computeHash;
 import buildPipeline = require('./mongoPipelineBuilder');
 
 export class Point {
@@ -14,25 +19,60 @@ export type Processor = (start: Point, result: (error: string, facts: Array<Poin
 
 export function parseSteps(collection: any, steps: Array<Step>): Processor {
     if (steps[0] instanceof ExistentialCondition) {
-        const head = <ExistentialCondition>steps[0];
+        const condition = <ExistentialCondition>steps[0];
         const tail = steps.slice(1);
         const processor = existentialProcessor(
-            parseSteps(collection, head.steps),
-            head.quantifier);
+            parseSteps(collection, condition.steps),
+            condition.quantifier);
         return parseTail(collection, processor, tail);
     }
-    else {
-        let index = 0;
-        while (index < steps.length) {
-            if (steps[index] instanceof ExistentialCondition)
-                break;
-            index++;
+    else if (steps[0] instanceof Join) {
+        const join = <Join>steps[0];
+        if (join.direction === Direction.Successor) {
+            let index = 1;
+            while (index < steps.length) {
+                if (!(steps[index] instanceof PropertyCondition))
+                    break;
+                index++;
+            }
+            const head = steps.slice(0, index);
+            const tail = steps.slice(index);
+            const processor = pipelineProcessor(collection, head);
+            return parseTail(collection, processor, tail);
         }
-        const head = steps.slice(0, index);
-        const tail = steps.slice(index);
-        const processor = pipelineProcessor(collection, head);
-        return parseTail(collection, processor, tail);
+        else {
+            const tail = steps.slice(1);
+            return parseTail(collection, predecessorProcessor(join.role), tail);
+        }
     }
+    else if (steps[0] instanceof PropertyCondition) {
+        const condition = <PropertyCondition>steps[0];
+        const tail = steps.slice(1);
+        return parseTail(collection, propertyConditionProcessor(condition.name, condition.value), tail);
+    }
+}
+
+function predecessorProcessor(role: string): Processor {
+    return function (start, result) {
+        const value = start.fact[role];
+        if (isPredecessor(value)) {
+            result(null, [new Point(value, computeHash(value))]);
+        }
+        else if (Array.isArray(value) && value.every(v => isPredecessor(v))) {
+            result(null, value.map(v => new Point(v, computeHash(v))));
+        }
+    };
+}
+
+function propertyConditionProcessor(name: string, value: any): Processor {
+    return function (start, result) {
+        if (start.fact.hasOwnProperty(name) && start.fact[name] === value) {
+            result(null, [start]);
+        }
+        else {
+            result(null, []);
+        }
+    };
 }
 
 function parseTail(collection: any, processor: Processor, tail: Array<Step>) {
