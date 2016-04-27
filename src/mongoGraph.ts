@@ -7,6 +7,8 @@ import ExistentialCondition = Interface.ExistentialCondition;
 import Quantifier = Interface.Quantifier;
 import isPredecessor = Interface.isPredecessor;
 import computeHash = Interface.computeHash;
+import Collections = require('./collections');
+import _isEqual = Collections._isEqual;
 import buildPipeline = require('./mongoPipelineBuilder');
 
 export class Point {
@@ -17,14 +19,14 @@ export class Point {
 
 export type Processor = (start: Point, result: (error: string, facts: Array<Point>) => void) => void;
 
-export function parseSteps(collection: any, steps: Array<Step>): Processor {
+export function parseSteps(collection: any, readerFact: Object, steps: Array<Step>): Processor {
     if (steps[0] instanceof ExistentialCondition) {
         const condition = <ExistentialCondition>steps[0];
         const tail = steps.slice(1);
         const processor = existentialProcessor(
-            parseSteps(collection, condition.steps),
+            parseSteps(collection, readerFact, condition.steps),
             condition.quantifier);
-        return parseTail(collection, processor, tail);
+        return parseTail(collection, readerFact, processor, tail);
     }
     else if (steps[0] instanceof Join) {
         const join = <Join>steps[0];
@@ -37,18 +39,18 @@ export function parseSteps(collection: any, steps: Array<Step>): Processor {
             }
             const head = steps.slice(0, index);
             const tail = steps.slice(index);
-            const processor = pipelineProcessor(collection, head);
-            return parseTail(collection, processor, tail);
+            const processor = pipelineProcessor(collection, readerFact, head);
+            return parseTail(collection, readerFact, processor, tail);
         }
         else {
             const tail = steps.slice(1);
-            return parseTail(collection, predecessorProcessor(join.role), tail);
+            return parseTail(collection, readerFact, predecessorProcessor(join.role), tail);
         }
     }
     else if (steps[0] instanceof PropertyCondition) {
         const condition = <PropertyCondition>steps[0];
         const tail = steps.slice(1);
-        return parseTail(collection, propertyConditionProcessor(condition.name, condition.value), tail);
+        return parseTail(collection, readerFact, propertyConditionProcessor(condition.name, condition.value), tail);
     }
 }
 
@@ -75,23 +77,43 @@ function propertyConditionProcessor(name: string, value: any): Processor {
     };
 }
 
-function parseTail(collection: any, processor: Processor, tail: Array<Step>) {
+function parseTail(collection: any, readerFact: Object, processor: Processor, tail: Array<Step>) {
     if (tail.length === 0)
         return processor;
     else
-        return bind(processor, parseSteps(collection, tail));
+        return bind(processor, parseSteps(collection, readerFact, tail));
 }
 
-function pipelineProcessor(collection: any, steps: Array<Step>): Processor {
+function pipelineProcessor(collection: any, readerFact: Object, steps: Array<Step>): Processor {
     return function(start, result) {
         collection
             .aggregate(buildPipeline(start.hash, steps))
             .toArray((err, documents) => {
                 result(
                     err ? err.message : null,
-                    documents ? documents.map(d => new Point(d.fact, d.hash)) : null);
+                    documents ? documents
+                        .filter(d => authorizeRead(d.fact, readerFact))
+                        .map(d => new Point(d.fact, d.hash)) : null);
             });
     }
+}
+
+function authorizeRead(fact: Object, readerFact: Object) {
+    if (!fact.hasOwnProperty("in")) {
+        // Not in a locked fact
+        return true;
+    }
+    var locked = fact["in"];
+    if (!locked.hasOwnProperty("from")) {
+        // Locked fact is not from a user, so no one has access
+        return false;
+    }
+    var owner = locked["from"];
+    if (_isEqual(owner, readerFact)) {
+        // The owner has access.
+        return true;
+    }
+    return false;
 }
 
 function existentialProcessor(
