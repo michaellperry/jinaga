@@ -10,61 +10,58 @@ class Relation {
 
 export function saveFact(collection: any, fact: Object, done: (error: string, saved: Array<Object>) => void) {
     let relations = getRelations(fact);
-    let count = relations.length;
-    let error: string = null;
-    let any: boolean = false;
-    let saved: Array<Object> = [];
-    if (count === 0)
-        done(error, saved);
-    else {
-        relations.forEach(r => {
-            saveSuccessor(collection, r.predecessor, r.role, fact, (e, a, s) => {
-                error = error || e;
-                any = any || a;
-                Array.prototype.push.apply(saved, s);
-                count--;
-                if (count === 0) {
-                    if (any)
-                        done(error, saved.concat(fact));
-                    else
-                        done(error, saved);
-                }
-            });
-        });
-    }
-}
-
-function saveSuccessor(
-    collection: any,
-    predecessor: Object,
-    role: string,
-    successor: Object,
-    done: (error: string, any: boolean, saved: Array<Object>) => void) {
-    var document = {
-        predecessorHash: computeHash(predecessor),
-        role: role,
-        successorHash: computeHash(successor),
-        predecessor: predecessor,
-        successor: successor
+    let predecessors = relations
+        .map(r => ({
+            role: r.role,
+            hash: computeHash(r.predecessor)
+        }));
+    predecessors.sort((a, b) => {
+        if (a.role < b.role)
+            return -1;
+        else if (a.role > b.role)
+            return 1;
+        else if (a.hash < b.hash)
+            return -1;
+        else if (a.hash > b.hash)
+            return 1;
+        else
+            return 0;
+    });
+    let document = {
+        hash: computeHash(fact),
+        predecessors: predecessors,
+        fact: fact
     };
-    collection.insertOne(document, (err) => {
-        if (err) {
-            if (err.code != 11000) {
-                done(err.message, false, []);
+    
+    let count = relations.length;
+    if (count === 0)
+        done(null, []);
+    else {
+        collection.insertOne(document, (e) => {
+            if (e) {
+                if (e.code != 11000) {
+                    done(e.message, null);
+                }
+                else {
+                    done(null, []);
+                }
             }
             else {
-                done(null, false, []);
+                let error: string = null;
+                let saved: Array<Object> = [];
+                relations.forEach(r => {
+                    saveFact(collection, r.predecessor, (e,s) => {
+                        error = error || e;
+                        saved = saved.concat(s);
+                        count--;
+                        if (count === 0) {
+                            done(error, saved.concat(fact));
+                        }
+                    });
+                });
             }
-        }
-        else {
-            saveFact(collection, predecessor, (e, s) => {
-                if (e)
-                    done(e, false, []);
-                else
-                    done(null, true, s);
-            });
-        }
-    });
+        });
+    }
 }
 
 function getRelations(fact: Object): Array<Relation> {

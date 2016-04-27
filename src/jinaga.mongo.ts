@@ -36,9 +36,8 @@ class MongoProvider implements Interface.StorageProvider, Interface.KeystoreProv
         this.coordinator = coordinator;
         this.withCollection('successors', (collection, done) => {
             collection.createIndex({
-                'predecessorHash': 1,
-                'role': 1,
-                'successorHash': 1
+                'hash': 1,
+                'predecessors': 1
             }, {
                 unique: true
             }, function (err) {

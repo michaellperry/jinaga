@@ -71,7 +71,7 @@ describe("Mongo", function() {
     });
   });
 
-  it("should return one result when has a matching fact", function(done) {
+  it.only("should return one result when has a matching fact", function(done) {
     mongo.save(chores, null);
     var task = {
       type: "Task",
