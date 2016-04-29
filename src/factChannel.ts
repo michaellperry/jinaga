@@ -16,9 +16,11 @@ class FactChannel {
     private nodes: { [hash: number]: Array<{id: number, fact: Object}> } = {};
     
     constructor(
-        private output: (Object) => void
+        nextId: number,
+        private output: (Object) => void,
+        private onFactReceived: (Object) => void
     ) {
-        this.nextId = 1;
+        this.nextId = nextId;
     }
     
     public sendFact(fact: Object): FactReference {
@@ -28,6 +30,23 @@ class FactChannel {
             return existing;
         else
             return this.sendNewFact(hash, fact);
+    }
+    
+    public messageReceived(message: any) {
+        if (message.type === 'fact' && message.id && message.fact) {
+            let fact = {};
+            for (let field in message.fact) {
+                let value = message.fact[field]
+                if (Array.isArray(value)) {
+                    fact[field] = value.map(v => this.parseMessageValue(v));
+                }
+                else {
+                    fact[field] = this.parseMessageValue(value);
+                }
+            }
+            this.addNewFact(Interface.computeHash(fact), message.id, fact);
+            this.onFactReceived(fact);
+        }
     }
     
     private findExistingFact(hash: number, fact: Object): FactReference {
@@ -73,6 +92,28 @@ class FactChannel {
             this.nodes[hash] = [];
         }
         this.nodes[hash].push({ id: id, fact: fact });
+    }
+    
+    private parseMessageValue(value: any) {
+        if (typeof(value) === 'object' && value.hash && value.id) {
+            return this.lookupFact(value.hash, value.id);
+        }
+        else {
+            return value;
+        }
+    }
+    
+    private lookupFact(hash: number, id: number): Object {
+        let array = this.nodes[hash];
+        if (array) {
+            let matches = array
+                .filter(n => n.id === id)
+                .map(n => n.fact);
+            if (matches.length > 0) {
+                return matches[0];
+            }
+        }
+        return null;
     }
 }
 
