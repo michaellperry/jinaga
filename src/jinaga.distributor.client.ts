@@ -5,11 +5,13 @@ import NetworkProvider = Interface.NetworkProvider;
 import Query = Interface.Query;
 import Coordinator = Interface.Coordinator;
 import {computeHash} from "./interface";
+import FactChannel = require("./factChannel");
 
 class JinagaDistributor implements NetworkProvider {
     socket: Socket;
     coordinator: Coordinator;
     isOpen: boolean = false;
+    channel: FactChannel;
     pending: Array<string> = [];
     watches = [];
 
@@ -63,14 +65,13 @@ class JinagaDistributor implements NetworkProvider {
     }
 
     public fact(fact: Object) {
-        this.send(JSON.stringify({
-            type: "fact",
-            fact: fact,
-            token: computeHash(fact)
-        }));
+        this.channel.sendFact(fact);
     }
 
     private createSocket() {
+        this.channel = new FactChannel(1,
+            message => this.send(JSON.stringify(message)),
+            fact => this.coordinator.onReceived(fact, null, this));
         this.socket = new Socket(this.endpoint);
         this.socket.on("open", () => { this.onOpen(); });
         this.socket.on("error", error => { this.onError(error.message); });
@@ -106,7 +107,7 @@ class JinagaDistributor implements NetworkProvider {
     private onMessage(message) {
         var messageObj = JSON.parse(message);
         if (messageObj.type === "fact") {
-            this.coordinator.onReceived(messageObj.fact, null, this);
+            this.channel.messageReceived(messageObj);
         }
         if (messageObj.type === "received") {
             this.coordinator.onDelivered(messageObj.token, this);

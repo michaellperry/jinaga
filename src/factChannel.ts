@@ -79,7 +79,8 @@ class FactChannel {
         this.output({
             type: 'fact',
             id: this.nextId,
-            fact: memento
+            fact: memento,
+            token: hash
         });
         this.addNewFact(hash, this.nextId, fact);
         var reference = new FactReference(this.nextId, hash);

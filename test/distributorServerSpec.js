@@ -102,9 +102,28 @@ describe("DistributorServer", function() {
       distributor.onReceived({ list: { name: "Chores" }, description: "Take out the trash" }, null);
     });
     mongo.whenQuiet(function () {
-      expect(proxy.messages.length).to.equal(2);
+      expect(proxy.messages.length).to.equal(3);
       expect(JSON.parse(proxy.messages[0]).type).to.equal("loggedIn");
-      expect(proxy.messages[1]).to.equal("{\"type\":\"fact\",\"fact\":{\"list\":{\"name\":\"Chores\"},\"description\":\"Take out the trash\"}}");
+      expect(JSON.parse(proxy.messages[1])).to.eql({
+        type: "fact",
+        id: 2,
+        fact: {
+          name: "Chores"
+        },
+        token: 2122203819
+      });
+      expect(JSON.parse(proxy.messages[2])).to.eql({
+        type: "fact",
+        id: 4,
+        fact: {
+          list: {
+            id: 2,
+            hash: 2122203819
+          },
+          description: "Take out the trash"
+        },
+        token: -2014427633
+      });
       done();
     });
   });
@@ -254,9 +273,11 @@ describe("DistributorServer", function() {
       }, thisUser, null);
     });
     mongo.whenQuiet(function () {
+      expect(proxy.messages).to.eql([]);
       proxy.query(topic, "S.in F.type=\"Yaca.Post\"", 1);
     });
     mongo.whenQuiet(function () {
+      expect(proxy.messages).to.eql([]);
       expect(proxy.messages.length).to.equal(3);
       expect(JSON.parse(proxy.messages[0]).type).to.equal("loggedIn");
       expect(JSON.parse(proxy.messages[1]).type).to.equal("fact");

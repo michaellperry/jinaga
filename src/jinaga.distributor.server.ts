@@ -9,6 +9,7 @@ import Inverse = QueryInverter.Inverse;
 import Collections = require("./collections");
 import _isEqual = Collections._isEqual;
 import _some = Collections._some;
+import FactChannel = require("./factChannel");
 
 var debug = Debug("jinaga.distributor.server");
 
@@ -25,11 +26,15 @@ class JinagaConnection {
     watches: Array<Watch> = [];
     private userFact: Object;
     private identicon: string;
+    private channel: FactChannel;
 
     constructor(
         private socket,
         private distributor: JinagaDistributor)
     {
+        this.channel = new FactChannel(2,
+            message => this.socket.send(JSON.stringify(message)),
+            fact => this.distributor.onReceived(fact, this.userFact, this));
         socket.on("message", this.onMessage.bind(this));
         socket.on("close", this.onClose.bind(this));
 
@@ -85,10 +90,7 @@ class JinagaConnection {
             this.distributor.storage.executeQuery(message.start, query, this.userFact, (error: string, results: Array<Object>) => {
                 results.forEach((result: Object) => {
                     debug("[" + this.identicon + "] Sending " + JSON.stringify(result));
-                    this.socket.send(JSON.stringify({
-                        type: "fact",
-                        fact: result
-                    }));
+                    this.channel.sendFact(result);
                 });
             });
             var inverses = QueryInverter.invertQuery(query);
@@ -129,10 +131,7 @@ class JinagaConnection {
             this.distributor.storage.executeQuery(message.start, query, this.userFact, (error: string, results: Array<Object>) => {
                 results.forEach((result: Object) => {
                     debug("[" + this.identicon + "] Sending " + JSON.stringify(result));
-                    this.socket.send(JSON.stringify({
-                        type: "fact",
-                        fact: result
-                    }));
+                    this.channel.sendFact(result);
                 });
                 this.socket.send(JSON.stringify({
                     type: "done",
@@ -150,7 +149,7 @@ class JinagaConnection {
             return;
 
         debug("[" + this.identicon + "] Received " + JSON.stringify(message.fact));
-        this.distributor.onReceived(message.fact, this.userFact, this);
+        this.channel.messageReceived(message);
         this.socket.send(JSON.stringify({
             type: "received",
             token: message.token
@@ -167,10 +166,7 @@ class JinagaConnection {
                 var some: any = _some;
                 if (some(affected, (obj: Object) => _isEqual(obj, watch.start))) {
                     debug("[" + this.identicon + "] Sending " + JSON.stringify(fact));
-                    this.socket.send(JSON.stringify({
-                        type: "fact",
-                        fact: fact
-                    }));
+                    this.channel.sendFact(fact);
                 }
             });
         });

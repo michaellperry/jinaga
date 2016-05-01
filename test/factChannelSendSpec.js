@@ -30,7 +30,8 @@ describe('FactChannel send', function () {
             fact:{
                 type: "Jinaga.User",
                 publicKey: "----BEGIN PUBLIC KEY---XXXXX"
-            }
+            },
+            token: -1902729049
         });
     });
     
@@ -51,7 +52,8 @@ describe('FactChannel send', function () {
             fact:{
                 type: "Jinaga.User",
                 publicKey: "----BEGIN PUBLIC KEY---XXXXX"
-            }
+            },
+            token: -1902729049
         });
         expect(messages[1]).to.eql({
             type: "fact",
@@ -63,7 +65,8 @@ describe('FactChannel send', function () {
                     id: 1,
                     hash: -1902729049
                 }
-            }
+            },
+            token: 430392748
         });
     });
     
@@ -83,14 +86,16 @@ describe('FactChannel send', function () {
             id: 1,
             fact: {
                 value: "b"
-            }
+            },
+            token: -823812847
         });
         expect(messages[1]).to.eql({
             type: "fact",
             id: 3,
             fact: {
                 value: "c"
-            }
+            },
+            token: -823812846
         });
         expect(messages[2]).to.eql({
             type: "fact",
@@ -104,7 +109,8 @@ describe('FactChannel send', function () {
                     id: 3,
                     hash: -823812846
                 }]
-            }
+            },
+            token: 843546025
         });
     });
     
@@ -128,7 +134,8 @@ describe('FactChannel send', function () {
             id: 1,
             fact: {
                 value: "top"
-            }
+            },
+            token: -823697916
         });
         expect(messages[1]).to.eql({
             type: "fact",
@@ -139,7 +146,8 @@ describe('FactChannel send', function () {
                     id: 1,
                     hash: -823697916
                 }
-            }
+            },
+            token: 1951521273
         });
         expect(messages[2]).to.eql({
             type: "fact",
@@ -150,7 +158,8 @@ describe('FactChannel send', function () {
                     id: 1,
                     hash: -823697916
                 }
-            }
+            },
+            token: 947801021
         });
     });
     
@@ -183,7 +192,8 @@ describe('FactChannel send', function () {
                     id: 2,
                     hash: -1902729049
                 }
-            }
+            },
+            token: 430392748
         });
     });
     
@@ -220,7 +230,8 @@ describe('FactChannel send', function () {
                     id: 1,
                     hash: -1902729049
                 }
-            }
+            },
+            token: 430392748
         });
     });
 });
