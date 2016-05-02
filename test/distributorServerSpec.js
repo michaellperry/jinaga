@@ -144,8 +144,14 @@ describe("DistributorServer", function() {
       }, thisUser, null);
     });
     mongo.whenQuiet(function () {
-      expect(proxy.messages.length).to.equal(2);
+      expect(proxy.messages.length).to.equal(4);
       expect(JSON.parse(proxy.messages[0]).type).to.equal("loggedIn");
+      expect(JSON.parse(proxy.messages[1]).type).to.equal("fact");
+      expect(JSON.parse(proxy.messages[1]).fact.type).to.equal("Jinaga.User");
+      expect(JSON.parse(proxy.messages[2]).type).to.equal("fact");
+      expect(JSON.parse(proxy.messages[2]).fact.type).to.equal("Yaca.Topic");
+      expect(JSON.parse(proxy.messages[3]).type).to.equal("fact");
+      expect(JSON.parse(proxy.messages[3]).fact.type).to.equal("Yaca.Post");
       done();
     });
   });
@@ -254,8 +260,14 @@ describe("DistributorServer", function() {
       proxy.watch(topic, "S.in F.type=\"Yaca.Post\"");
     });
     mongo.whenQuiet(function () {
-      expect(proxy.messages.length).to.equal(2);
+      expect(proxy.messages.length).to.equal(4);
       expect(JSON.parse(proxy.messages[0]).type).to.equal("loggedIn");
+      expect(JSON.parse(proxy.messages[1]).type).to.equal("fact");
+      expect(JSON.parse(proxy.messages[1]).fact.type).to.equal("Jinaga.User");
+      expect(JSON.parse(proxy.messages[2]).type).to.equal("fact");
+      expect(JSON.parse(proxy.messages[2]).fact.type).to.equal("Yaca.Topic");
+      expect(JSON.parse(proxy.messages[3]).type).to.equal("fact");
+      expect(JSON.parse(proxy.messages[3]).fact.type).to.equal("Yaca.Post");
       done();
     });
   });
@@ -273,15 +285,18 @@ describe("DistributorServer", function() {
       }, thisUser, null);
     });
     mongo.whenQuiet(function () {
-      expect(proxy.messages).to.eql([]);
       proxy.query(topic, "S.in F.type=\"Yaca.Post\"", 1);
     });
     mongo.whenQuiet(function () {
-      expect(proxy.messages).to.eql([]);
-      expect(proxy.messages.length).to.equal(3);
+      expect(proxy.messages.length).to.equal(5);
       expect(JSON.parse(proxy.messages[0]).type).to.equal("loggedIn");
       expect(JSON.parse(proxy.messages[1]).type).to.equal("fact");
-      expect(proxy.messages[2]).to.equal(JSON.stringify({ "type": "done", "token": 1 }));
+      expect(JSON.parse(proxy.messages[1]).fact.type).to.equal("Jinaga.User");
+      expect(JSON.parse(proxy.messages[2]).type).to.equal("fact");
+      expect(JSON.parse(proxy.messages[2]).fact.type).to.equal("Yaca.Topic");
+      expect(JSON.parse(proxy.messages[3]).type).to.equal("fact");
+      expect(JSON.parse(proxy.messages[3]).fact.type).to.equal("Yaca.Post");
+      expect(proxy.messages[4]).to.equal(JSON.stringify({ "type": "done", "token": 1 }));
       done();
     });
   });
