@@ -9,6 +9,7 @@ class Pool<Connection> {
     ) { }
 
     begin(action: (connection: Connection, done: () => void) => void) {
+        this.running++;
         if (this.connection) {
             this.callAction(action);
         }
@@ -29,7 +30,6 @@ class Pool<Connection> {
     }
 
     private callAction(action: (connection: Connection, done: () => void) => void) {
-        this.running++;
         action(this.connection, () => {
             this.running--;
             if (this.running === 0) {
