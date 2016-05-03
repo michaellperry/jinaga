@@ -5,12 +5,13 @@ import Coordinator = Interface.Coordinator;
 import Query = Interface.Query;
 import UserIdentity = Interface.UserIdentity;
 import Join = Interface.Join;
-import Pool = require("./pool");
 import MongoGraph = require("./mongoGraph");
 import MongoSave = require("./mongoSave");
 import Keypair = require("keypair");
 import Collections = require("./collections");
 import _isEqual = Collections._isEqual;
+
+import Pool from "./pool";
 
 var MongoDb = require('mongodb');
 var MongoClient = MongoDb.MongoClient;

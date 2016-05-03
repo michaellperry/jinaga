@@ -41,4 +41,4 @@ class Pool<Connection> {
     }
 }
 
-export = Pool;
+export default Pool;
