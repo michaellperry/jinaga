@@ -14,6 +14,7 @@ Get a quick [video introduction](https://vimeo.com/channels/jinaga) to Jinaga.
 - Migrations (coming soon)
 - Checkpoints (coming soon)
 - [Comparison with alternatives](https://github.com/michaellperry/jinaga/blob/master/alternatives.md)
+- [Protocol](https://github.com/michaellperry/jinaga/blob/master/protocol.md)
 - [Roadmap](https://github.com/michaellperry/jinaga/blob/master/roadmap.md)
 
 [Contributing](https://github.com/michaellperry/jinaga/blob/master/contributing.md)
