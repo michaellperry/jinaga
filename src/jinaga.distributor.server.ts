@@ -60,18 +60,23 @@ class JinagaConnection {
     }
 
     private onMessage(message) {
-        var messageObj = JSON.parse(message);
-        if (messageObj.type === "watch") {
-            this.watch(messageObj);
+        try {
+            var messageObj = JSON.parse(message);
+            if (messageObj.type === "watch") {
+                this.watch(messageObj);
+            }
+            else if (messageObj.type === "stop") {
+                this.stop(messageObj);
+            }
+            else if (messageObj.type === "query") {
+                this.query(messageObj);
+            }
+            else if (messageObj.type === "fact") {
+                this.fact(messageObj);
+            }
         }
-        else if (messageObj.type === "stop") {
-            this.stop(messageObj);
-        }
-        else if (messageObj.type === "query") {
-            this.query(messageObj);
-        }
-        else if (messageObj.type === "fact") {
-            this.fact(messageObj);
+        catch (x) {
+            debug("[" + this.identicon + "] Error " + x.message + ' -- Parsing "' + message + '"');
         }
     }
 
