@@ -1,7 +1,7 @@
 {
   "name": "jinaga",
-  "version": "1.4.0",
-  "description": "JSON Messaging Platform",
+  "version": "1.5.0",
+  "description": "Universal Web Backend",
   "main": "jinaga.js",
   "repository": {
     "type": "git",
