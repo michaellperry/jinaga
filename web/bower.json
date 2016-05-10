@@ -1,6 +1,6 @@
 {
   "name": "jinaga",
-  "version": "1.5.0",
+  "version": "1.5.1",
   "homepage": "https://github.com/michaellperry/jinaga",
   "authors": [
     "Michael L Perry <michael@qedcode.com>"
@@ -20,8 +20,6 @@
     "bower_components",
     "test",
     "tests"
-  ],
-  "ignore": [
   ],
   "dependencies": {
   }
