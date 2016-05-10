@@ -13,7 +13,7 @@ class JinagaDistributor implements NetworkProvider {
     isOpen: boolean = false;
     channel: FactChannel;
     pending: Array<string> = [];
-    watches = [];
+    watches: Array<string> = [];
 
     private maxTimeout: number = 1 * 1000;
 
@@ -33,7 +33,7 @@ class JinagaDistributor implements NetworkProvider {
             start: start,
             query: query.toDescriptiveString()
         };
-        this.watches.push(watch);
+        this.watches.push(JSON.stringify(watch));
         this.send(JSON.stringify(watch));
     }
 
@@ -44,7 +44,7 @@ class JinagaDistributor implements NetworkProvider {
             start: start,
             query: descriptiveString
         };
-        var index = this.watches.indexOf(watch);
+        var index = this.watches.indexOf(JSON.stringify(watch));
         if (index >= 0) {
             this.watches.splice(index, 1);
             this.send(JSON.stringify({

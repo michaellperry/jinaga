@@ -74,6 +74,9 @@ class JinagaConnection {
             else if (messageObj.type === "fact") {
                 this.fact(messageObj);
             }
+            else {
+                throw new Error("Unexpected message type");
+            }
         }
         catch (x) {
             debug("[" + this.identicon + "] Error " + x.message + ' -- Parsing "' + message + '"');

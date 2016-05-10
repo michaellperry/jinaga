@@ -27,7 +27,6 @@ describe('Pool', function () {
             expect(c.opened).to.equal(true);
             expect(c.closed).to.equal(false);
             close();
-            expect(c.closed).to.equal(true);
             done();
         });
     });
@@ -44,7 +43,6 @@ describe('Pool', function () {
             expect(c.opened).to.equal(true);
             expect(c.closed).to.equal(false);
             close();
-            expect(c.closed).to.equal(true);
             done();
         });
     });

@@ -31,12 +31,14 @@ class Pool<Connection> {
 
     private callAction(action: (connection: Connection, done: () => void) => void) {
         action(this.connection, () => {
-            this.running--;
-            if (this.running === 0) {
-                var connection = this.connection;
-                this.connection = null;
-                this.closeConnection(connection);
-            }
+            setTimeout(() => {
+                this.running--;
+                if (this.running === 0) {
+                    var connection = this.connection;
+                    this.connection = null;
+                    this.closeConnection(connection);
+                }
+            }, 500);
         });
     }
 }
