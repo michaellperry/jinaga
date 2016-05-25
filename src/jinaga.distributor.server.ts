@@ -22,7 +22,7 @@ class Watch {
     ) {}
 }
 
-class JinagaConnection {
+class JinagaConnection implements Interface.Spoke {
     watches: Array<Watch> = [];
     private userFact: Object;
     private identicon: string;
@@ -183,7 +183,7 @@ class JinagaConnection {
 
 class JinagaDistributor implements Coordinator {
     server: Engine;
-    connections: Array<JinagaConnection> = [];
+    connections: Array<Interface.Spoke> = [];
 
     constructor(
         public storage: StorageProvider,
@@ -219,6 +219,10 @@ class JinagaDistributor implements Coordinator {
     private start() {
         this.server.on("connection", this.onConnection.bind(this));
     }
+    
+    connect(spoke: Interface.Spoke) {
+        this.connections.push(spoke);
+    }
 
     onConnection(socket) {
         var connection = new JinagaConnection(socket, this);
@@ -243,7 +247,7 @@ class JinagaDistributor implements Coordinator {
     }
 
     send(fact: Object, sender: any) {
-        this.connections.forEach((connection: JinagaConnection) => {
+        this.connections.forEach((connection: Interface.Spoke) => {
             if (connection !== sender)
                 connection.distribute(fact);
         });

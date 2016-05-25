@@ -296,6 +296,9 @@ export interface NetworkProvider {
     fact(fact: Object);
 }
 
+export interface Spoke {
+    distribute(fact: Object);
+}
 
 export interface Proxy {
     has(name: string): Proxy;
