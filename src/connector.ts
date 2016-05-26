@@ -76,6 +76,7 @@ class JinagaConnector implements NetworkProvider {
                 debug("Sending " + JSON.stringify(result));
                 this.coordinator.onReceived(result, null, this);
             });
+            this.coordinator.onDone(token);
         });
     }
     
@@ -100,3 +101,5 @@ class JinagaConnector implements NetworkProvider {
         });
     }
 }
+
+export = JinagaConnector;

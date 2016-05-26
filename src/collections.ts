@@ -106,7 +106,7 @@ export function _isEqual(o1:any, o2:any) {
                 for (key in o2) {
                     if (!keySet.hasOwnProperty(key) &&
                         key.charAt(0) !== '$' &&
-                        o2[key] === undefined &&
+                        o2[key] !== undefined &&
                         !isFunction(o2[key])) return false;
                 }
                 return true;
