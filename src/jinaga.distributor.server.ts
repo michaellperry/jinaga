@@ -17,13 +17,12 @@ class Watch {
     constructor(
         public start: Object,
         public query: string,
-        public affected: Query,
-        public userFact: Object
+        public affected: Query
     ) {}
 }
 
 class JinagaConnection implements Interface.Spoke {
-    watches: Array<Watch> = [];
+    private watches: Array<Watch> = [];
     private userFact: Object;
     private identicon: string;
     private channel: FactChannel;
@@ -95,7 +94,7 @@ class JinagaConnection implements Interface.Spoke {
         try {
             var query = Interface.fromDescriptiveString(message.query);
             // TODO: This is incorrect. Each segment of the query should be executed.
-            this.distributor.storage.executeQuery(message.start, query, this.userFact, (error: string, results: Array<Object>) => {
+            this.distributor.executeQuery(message.start, query, this.userFact, (error: string, results: Array<Object>) => {
                 results.forEach((result: Object) => {
                     debug("[" + this.identicon + "] Sending " + JSON.stringify(result));
                     this.channel.sendFact(result);
@@ -103,7 +102,7 @@ class JinagaConnection implements Interface.Spoke {
             });
             var inverses = QueryInverter.invertQuery(query);
             inverses.forEach((inverse: Inverse) => {
-                this.watches.push(new Watch(message.start, message.query, inverse.affected, this.userFact));
+                this.watches.push(new Watch(message.start, message.query, inverse.affected));
             });
         }
         catch (x) {
@@ -136,7 +135,7 @@ class JinagaConnection implements Interface.Spoke {
         try {
             var query = Interface.fromDescriptiveString(message.query);
             // TODO: This is incorrect. Each segment of the query should be executed.
-            this.distributor.storage.executeQuery(message.start, query, this.userFact, (error: string, results: Array<Object>) => {
+            this.distributor.executeQuery(message.start, query, this.userFact, (error: string, results: Array<Object>) => {
                 results.forEach((result: Object) => {
                     debug("[" + this.identicon + "] Sending " + JSON.stringify(result));
                     this.channel.sendFact(result);
@@ -166,7 +165,7 @@ class JinagaConnection implements Interface.Spoke {
 
     distribute(fact: Object) {
         this.watches.forEach((watch) => {
-            this.distributor.storage.executeQuery(fact, watch.affected, watch.userFact, (error: string, affected: Array<Object>) => {
+            this.distributor.executeQuery(fact, watch.affected, this.userFact, (error: string, affected: Array<Object>) => {
                 if (error) {
                     debug(error);
                     return;
@@ -186,7 +185,7 @@ class JinagaDistributor implements Coordinator {
     connections: Array<Interface.Spoke> = [];
 
     constructor(
-        public storage: StorageProvider,
+        private storage: StorageProvider,
         private keystore: Interface.KeystoreProvider,
         private authenticate: (socket: any, done: (user: Object) => void) => void)
     {
@@ -244,6 +243,15 @@ class JinagaDistributor implements Coordinator {
         if (index > -1) {
             this.connections.splice(index, 1);
         }
+    }
+    
+    executeQuery(
+        start: Object,
+        query: Query,
+        readerFact: Object,
+        result: (error: string, facts: Array<Object>) => void
+    ) {
+        this.storage.executeQuery(start, query, readerFact, result);
     }
 
     send(fact: Object, sender: any) {
