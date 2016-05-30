@@ -33,7 +33,7 @@ class FactChannel {
     }
     
     public messageReceived(message: any) {
-        if (message.type === 'fact' && message.id && message.fact) {
+        if (message.type === 'fact' && message.hasOwnProperty("id") && message.hasOwnProperty("fact")) {
             let fact = {};
             for (let field in message.fact) {
                 let value = message.fact[field]
@@ -96,7 +96,7 @@ class FactChannel {
     }
     
     private parseMessageValue(value: any) {
-        if (typeof(value) === 'object' && value.hash && value.id) {
+        if (typeof(value) === 'object' && value.hasOwnProperty("hash") && value.hasOwnProperty("id")) {
             return this.lookupFact(value.hash, value.id);
         }
         else {

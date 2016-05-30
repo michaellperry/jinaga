@@ -33,8 +33,8 @@ class JinagaConnection implements Interface.Spoke {
         private distributor: JinagaDistributor)
     {
         this.channel = new FactChannel(2,
-            message => this.socket.send(JSON.stringify(message)),
-            fact => this.distributor.onReceived(fact, this.userFact, this));
+            message => { this.socket.send(JSON.stringify(message)); },
+            fact => { this.distributor.onReceived(fact, this.userFact, this); });
         socket.on("message", this.onMessage.bind(this));
         socket.on("close", this.onClose.bind(this));
 
