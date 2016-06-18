@@ -126,6 +126,17 @@ class JinagaCoordinator implements Coordinator {
         return watch;
     }
 
+    watchContinue(
+        start: Watch,
+        templates: Array<(target: Proxy) => Object>,
+        resultAdded: (result: Object) => void,
+        resultRemoved: (result: Object) => void) : Watch {
+            
+        var watch: Watch = null;
+
+        return watch;
+    }
+
     query(
         start: Object,
         templates: Array<(target: Proxy) => Object>,
@@ -260,13 +271,21 @@ class JinagaCoordinator implements Coordinator {
 
 class WatchProxy {
     constructor(
-        private coordinator: JinagaCoordinator,
-        private watch: Watch
+        private _coordinator: JinagaCoordinator,
+        private _watch: Watch
     ) { }
 
+    public watch(
+        templates: Array<(target: Proxy) => Object>,
+        resultAdded: (result: Object) => void,
+        resultRemoved: (result: Object) => void) : WatchProxy {
+        var nextWatch = this._coordinator.watchContinue(this._watch, templates, resultAdded, resultRemoved);
+        return new WatchProxy(this._coordinator, nextWatch);
+    }
+
     public stop() {
-        if (this.watch)
-            this.coordinator.removeWatch(this.watch);
+        if (this._watch)
+            this._coordinator.removeWatch(this._watch);
     }
 }
 
