@@ -18,6 +18,7 @@ var debug: (string) => void = Debug ? Debug("jinaga") : function() {};
 
 class Watch {
     private mappings: { [hash: number]: Array<{ fact: Object, mapping: any }>; } = {};
+    private children: Array<Watch> = [];
 
     constructor(
         public start: Object,
@@ -26,7 +27,8 @@ class Watch {
         public resultRemoved: (mapping: any) => void,
         public inverses: Array<Inverse>,
         public outer: Watch,
-        public backtrack: Query) {
+        public backtrack: Query
+    ) {
     }
 
     public push(fact: Object, mapping: any) {
@@ -47,6 +49,17 @@ class Watch {
 
     public pop(fact: Object): any {
         return this.lookup(fact, false);
+    }
+
+    public addChild(child: Watch) {
+        this.children.push(child);
+    }
+
+    public depthFirst(action: (Watch) => void) {
+        action(this);
+        this.children.forEach((watch) => {
+            watch.depthFirst(action);
+        });
     }
 
     private lookup(fact: Object, remove: boolean): any {
@@ -123,7 +136,12 @@ class JinagaCoordinator implements Coordinator {
             inverses,
             outer,
             backtrack);
-        this.watches.push(watch);
+        if (!outer) {
+            this.watches.push(watch);
+        }
+        else {
+            outer.addChild(watch);
+        }
 
         this.messages.executeQuery(start, full, this.userFact, (_, results) => {
             results.forEach((fact) => {
@@ -201,42 +219,44 @@ class JinagaCoordinator implements Coordinator {
         if (source === null) {
             this.messages.push(fact);
         }
-        this.watches.forEach((watch: Watch) => {
-            watch.inverses.forEach((inverse: Inverse) => {
-                this.messages.executeQuery(fact, inverse.affected, this.userFact, (_, affected) => {
-                    if (_some(affected, (obj: Object) => _isEqual(obj, watch.start))) {
-                        if (inverse.added && watch.resultAdded) {
-                            this.messages.executeQuery(fact, inverse.added, this.userFact, (_, added) => {
-                                added.forEach((fact) => {
-                                    if (watch.backtrack) {
-                                        this.messages.executeQuery(fact, watch.backtrack, this.userFact, (_, intermediates) => {
-                                            intermediates.forEach((intermediate) => {
-                                                var outerMapping = watch.outer.get(intermediate);
-                                                if (outerMapping) {
-                                                    this.output(
-                                                        outerMapping,
-                                                        fact,
-                                                        watch);
-                                                }
+        this.watches.forEach((root) => {
+            root.depthFirst((watch) => {
+                watch.inverses.forEach((inverse: Inverse) => {
+                    this.messages.executeQuery(fact, inverse.affected, this.userFact, (_, affected) => {
+                        if (_some(affected, (obj: Object) => _isEqual(obj, watch.start))) {
+                            if (inverse.added && watch.resultAdded) {
+                                this.messages.executeQuery(fact, inverse.added, this.userFact, (_, added) => {
+                                    added.forEach((fact) => {
+                                        if (watch.backtrack) {
+                                            this.messages.executeQuery(fact, watch.backtrack, this.userFact, (_, intermediates) => {
+                                                intermediates.forEach((intermediate) => {
+                                                    var outerMapping = watch.outer.get(intermediate);
+                                                    if (outerMapping) {
+                                                        this.output(
+                                                            outerMapping,
+                                                            fact,
+                                                            watch);
+                                                    }
+                                                });
                                             });
-                                        });
-                                    }
-                                    else {
-                                        this.output(null, fact, watch);
-                                    }
+                                        }
+                                        else {
+                                            this.output(null, fact, watch);
+                                        }
+                                    });
                                 });
-                            });
-                        }
-                        if (inverse.removed && watch.resultRemoved) {
-                            this.messages.executeQuery(fact, inverse.removed, this.userFact, (_, added) => {
-                                added.forEach((fact) => {
-                                    var mapping = watch.pop(fact);
-                                    if (mapping)
-                                        watch.resultRemoved(mapping);
+                            }
+                            if (inverse.removed && watch.resultRemoved) {
+                                this.messages.executeQuery(fact, inverse.removed, this.userFact, (_, added) => {
+                                    added.forEach((fact) => {
+                                        var mapping = watch.pop(fact);
+                                        if (mapping)
+                                            watch.resultRemoved(mapping);
+                                    });
                                 });
-                            });
+                            }
                         }
-                    }
+                    });
                 });
             });
         });

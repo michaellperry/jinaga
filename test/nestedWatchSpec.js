@@ -55,7 +55,9 @@ describe("Nested watch", function () {
     });
 
     it("should find existing fact", function () {
-        addFacts();
+        var person = addPerson();
+        setName(person);
+        addMessage(person);
         var watch = startWatch();
         expectState();
 
@@ -64,22 +66,50 @@ describe("Nested watch", function () {
 
     it("should find new facts", function () {
         var watch = startWatch();
-        addFacts();
+        var person = addPerson();
+        setName(person);
+        addMessage(person);
         expectState();
 
         watch.stop();
     });
 
-    function addFacts() {
+    it("should find new facts in other order", function () {
+        var watch = startWatch();
+        var person = addPerson();
+        addMessage(person);
+        setName(person);
+        expectState();
+
+        watch.stop();
+    });
+
+    it("should not find facts after stopped", function () {
+        var watch = startWatch();
+        var person = addPerson();
+        addMessage(person);
+        watch.stop();
+        setName(person);
+        expectOriginalState();
+    });
+
+    function addPerson() {
         var person = {
             type: 'Person'
         };
         j.fact(person);
+        return person;
+    }
+
+    function setName(person) {
         j.fact({
             type: 'Name',
             person: person,
             value: 'George'
         });
+    }
+
+    function addMessage(person) {
         j.fact({
             type: 'Message',
             room: room,
@@ -88,12 +118,18 @@ describe("Nested watch", function () {
     }
 
     function startWatch() {
-        return j.watch(room, [messagesInRoom], makeMessageViewModel)
-            .watch([namesOfSender], setMessageFrom);
+        var messages = j.watch(room, [messagesInRoom], makeMessageViewModel);
+        messages.watch([namesOfSender], setMessageFrom);
+        return messages;
     }
 
     function expectState() {
         expect(messageViewModels.length).to.equal(1);
         expect(messageViewModels[0].from).to.equal('George');
+    }
+
+    function expectOriginalState() {
+        expect(messageViewModels.length).to.equal(1);
+        expect(messageViewModels[0].from).to.equal(undefined);
     }
 });
