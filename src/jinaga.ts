@@ -377,8 +377,10 @@ class Jinaga {
     public sync(network: NetworkProvider) {
         this.coordinator.sync(network);
     }
-    public fact(message: Object) {
-        this.coordinator.fact(JSON.parse(JSON.stringify(message)));
+    public fact(message: Object): Object {
+        var fact = JSON.parse(JSON.stringify(message));
+        this.coordinator.fact(fact);
+        return fact;
     }
     public watch(
         start: Object,

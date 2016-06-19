@@ -20,32 +20,40 @@ describe("Nested watch", function () {
         messageViewModels = [];
     });
 
-    function messageExists(m) {
-        return j.not({
+    function messageRemoved(m) {
+        return {
             type: 'Removed',
             message: m
-        });
+        };
     }
 
     function messagesInRoom(r) {
         return j.where({
             type: 'Message',
             room: r
-        }, [messageExists]);
+        }, [j.not(messageRemoved)]);
+    }
+
+    function nameIsCurrent(n) {
+        return j.not({
+            type: 'Name',
+            prior: n
+        });
     }
 
     function namesOfSender(m) {
         m.has('sender');
         m.sender.type = 'Person';
-        return {
+        return j.where({
             type: 'Name',
             person: m.sender
-        };
+        }, [nameIsCurrent]);
     }
 
     function makeMessageViewModel(message) {
         var vm = {
-            message: message
+            message: message,
+            from: []
         };
         messageViewModels.push(vm);
         //console.log('-- Received message: ' + JSON.stringify(message));
@@ -62,7 +70,17 @@ describe("Nested watch", function () {
 
     function setMessageFrom(vm, name) {
         //console.log('-- Set name for ' + JSON.stringify(vm) + ': ' + JSON.stringify(name));
-        vm.from = name.value;
+        vm.from.push(name.value);
+        return {
+            vm: vm,
+            prior: name.value
+        };
+    }
+
+    function removeMessageFrom(setting) {
+        var index = setting.vm.from.indexOf(setting.prior);
+        if (index >= 0)
+            setting.vm.from.splice(index, 1);
     }
 
     it("can be expressed", function () {
@@ -75,7 +93,7 @@ describe("Nested watch", function () {
         setName(person, 'George');
         addMessage(person);
         var watch = startWatch();
-        expectState('George');
+        expectName('George');
 
         watch.stop();
     });
@@ -85,7 +103,7 @@ describe("Nested watch", function () {
         var person = addPerson();
         setName(person, 'George');
         addMessage(person);
-        expectState('George');
+        expectName('George');
 
         watch.stop();
     });
@@ -95,7 +113,7 @@ describe("Nested watch", function () {
         var person = addPerson();
         addMessage(person);
         setName(person, 'George');
-        expectState('George');
+        expectName('George');
 
         watch.stop();
     });
@@ -106,18 +124,18 @@ describe("Nested watch", function () {
         addMessage(person);
         watch.stop();
         setName(person, 'George');
-        expectState(undefined);
+        expectName(undefined);
     });
 
     it("should stop child", function () {
         var messages = j.watch(room, [messagesInRoom], makeMessageViewModel);
-        var names = messages.watch([namesOfSender], setMessageFrom);
+        var names = messages.watch([namesOfSender], setMessageFrom, removeMessageFrom);
         names.stop();
 
         var person = addPerson();
         addMessage(person);
         setName(person, 'George');
-        expectState(undefined);
+        expectName(undefined);
 
         messages.stop();
     });
@@ -133,36 +151,44 @@ describe("Nested watch", function () {
         watch.stop();
     });
 
+    it("should replace names", function () {
+        var person = addPerson();
+        var name = setName(person, 'George');
+        addMessage(person);
+        var watch = startWatch();
+        setName(person, 'John', [name]);
+        expectName('John');
+
+        watch.stop();
+    })
+
     function addPerson() {
-        var person = {
+        return j.fact({
             type: 'Person',
             identifier: Math.random()
-        };
-        j.fact(person);
-        return person;
+        });
     }
 
-    function setName(person, value) {
-        j.fact({
+    function setName(person, value, prior) {
+        return j.fact({
             type: 'Name',
             person: person,
-            value: value
+            value: value,
+            prior: prior || []
         });
     }
 
     function addMessage(person) {
-        var message = {
+        return j.fact({
             type: 'Message',
             room: room,
             sender: person,
             identifier: Math.random()
-        };
-        j.fact(message);
-        return message;
+        });
     }
 
     function removeMessage(message) {
-        j.fact({
+        return j.fact({
             type: 'Removed',
             message: message
         });
@@ -170,13 +196,19 @@ describe("Nested watch", function () {
 
     function startWatch() {
         var messages = j.watch(room, [messagesInRoom], makeMessageViewModel, removeMessageViewModel);
-        messages.watch([namesOfSender], setMessageFrom);
+        messages.watch([namesOfSender], setMessageFrom, removeMessageFrom);
         return messages;
     }
 
-    function expectState(name) {
+    function expectName(name) {
         expect(messageViewModels.length).to.equal(1);
-        expect(messageViewModels[0].from).to.equal(name);
+        if (name) {
+            expect(messageViewModels[0].from.length).to.equal(1);
+            expect(messageViewModels[0].from[0]).to.equal(name);
+        }
+        else {
+            expect(messageViewModels[0].from.length).to.equal(0);
+        }
     }
 
     function expectNoMessages() {
