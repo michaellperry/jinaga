@@ -76,7 +76,7 @@ class MongoProvider implements Interface.StorageProvider, Interface.KeystoreProv
             const processor = MongoGraph.parseSteps(collection, readerFact, query.steps);
             processor(new MongoGraph.Point(start, computeHash(start)), (error, facts) => {
                 if (error)
-                    result(error, null);
+                    result(error, []);
                 else
                     result(null, facts
                         .map(f => f.fact));

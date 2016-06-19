@@ -111,41 +111,37 @@ class JinagaCoordinator implements Coordinator {
         resultAdded: (mapping: any, result: Object) => void,
         resultRemoved: (result: Object) => void) : Watch {
 
-        var watch: Watch = null;
         var query = parse(templates);
         var full = outer === null ? query : outer.joins.concat(query);
         var inverses = QueryInverter.invertQuery(full);
-        var backtrack = outer ? QueryInverter.completeInvertQuery(query) : null;
-        if (inverses.length > 0) {
-            watch = new Watch(
-                start,
-                full,
-                resultAdded,
-                resultRemoved,
-                inverses,
-                outer,
-                backtrack);
-            this.watches.push(watch);
-        }
+        var backtrack = outer === null ? null : QueryInverter.completeInvertQuery(query);
+        var watch = new Watch(
+            start,
+            full,
+            resultAdded,
+            resultRemoved,
+            inverses,
+            outer,
+            backtrack);
+        this.watches.push(watch);
 
-        this.messages.executeQuery(start, full, this.userFact, (error, results) => {
+        this.messages.executeQuery(start, full, this.userFact, (_, results) => {
             results.forEach((fact) => {
                 if (outer) {
-                    this.messages.executeQuery(fact, backtrack, this.userFact, (e2, intermediates) => {
+                    this.messages.executeQuery(fact, backtrack, this.userFact, (_, intermediates) => {
                         intermediates.forEach((intermediate) => {
                             var intermediateMapping = outer.get(intermediate);
                             if (intermediateMapping) {
                                 this.output(
                                     intermediateMapping,
                                     fact,
-                                    resultAdded,
                                     watch);
                             }
                         });
                     });
                 }
                 else {
-                    this.output(null, fact, resultAdded, watch);
+                    this.output(null, fact, watch);
                 }
             });
         });
@@ -156,18 +152,6 @@ class JinagaCoordinator implements Coordinator {
         return watch;
     }
 
-    private output(
-        parentMapping: any,
-        fact: Object,
-        resultAdded: (mapping: any, result: Object) => void,
-        watch: Watch
-    ) {
-        var mapping = resultAdded(parentMapping, fact);
-        if (watch) {
-            watch.push(fact, mapping);
-        }
-    }
-
     query(
         start: Object,
         templates: Array<(target: Proxy) => Object>,
@@ -175,7 +159,7 @@ class JinagaCoordinator implements Coordinator {
     ) {
         var query = parse(templates);
         var executeQueryLocal = () => {
-            this.messages.executeQuery(start, query, this.userFact, (error, results) => {
+            this.messages.executeQuery(start, query, this.userFact, (_, results) => {
                 done(results);
             });
         };
@@ -219,45 +203,38 @@ class JinagaCoordinator implements Coordinator {
         }
         this.watches.forEach((watch: Watch) => {
             watch.inverses.forEach((inverse: Inverse) => {
-                this.messages.executeQuery(fact, inverse.affected, this.userFact, (error: string, affected: Array<Object>) => {
-                    if (!error) {
-                        if (_some(affected, (obj: Object) => _isEqual(obj, watch.start))) {
-                            if (inverse.added && watch.resultAdded) {
-                                this.messages.executeQuery(fact, inverse.added, this.userFact, (error: string, added: Array<Object>) => {
-                                    if (!error) {
-                                        added.forEach((fact) => {
-                                            if (watch.backtrack) {
-                                                this.messages.executeQuery(fact, watch.backtrack, this.userFact, (error, intermediates) => {
-                                                    if (!error) {
-                                                        intermediates.forEach((intermediate) => {
-                                                            var outerMapping = watch.outer.get(intermediate);
-                                                            if (outerMapping) {
-                                                                var mapping = watch.resultAdded(outerMapping, fact) || fact;
-                                                                watch.push(fact, mapping);
-                                                            }
-                                                        });
-                                                    }
-                                                });
-                                            }
-                                            else {
-                                                var mapping = watch.resultAdded(null, fact) || fact;
-                                                watch.push(fact, mapping);
-                                            }
+                this.messages.executeQuery(fact, inverse.affected, this.userFact, (_, affected) => {
+                    if (_some(affected, (obj: Object) => _isEqual(obj, watch.start))) {
+                        if (inverse.added && watch.resultAdded) {
+                            this.messages.executeQuery(fact, inverse.added, this.userFact, (_, added) => {
+                                added.forEach((fact) => {
+                                    if (watch.backtrack) {
+                                        this.messages.executeQuery(fact, watch.backtrack, this.userFact, (_, intermediates) => {
+                                            intermediates.forEach((intermediate) => {
+                                                var outerMapping = watch.outer.get(intermediate);
+                                                if (outerMapping) {
+                                                    this.output(
+                                                        outerMapping,
+                                                        fact,
+                                                        watch);
+                                                }
+                                            });
                                         });
                                     }
-                                });
-                            }
-                            if (inverse.removed && watch.resultRemoved) {
-                                this.messages.executeQuery(fact, inverse.removed, this.userFact, (error: string, added: Array<Object>) => {
-                                    if (!error) {
-                                        added.forEach((fact) => {
-                                            var mapping = watch.pop(fact);
-                                            if (mapping)
-                                                watch.resultRemoved(mapping);
-                                        });
+                                    else {
+                                        this.output(null, fact, watch);
                                     }
                                 });
-                            }
+                            });
+                        }
+                        if (inverse.removed && watch.resultRemoved) {
+                            this.messages.executeQuery(fact, inverse.removed, this.userFact, (_, added) => {
+                                added.forEach((fact) => {
+                                    var mapping = watch.pop(fact);
+                                    if (mapping)
+                                        watch.resultRemoved(mapping);
+                                });
+                            });
                         }
                     }
                 });
@@ -312,6 +289,15 @@ class JinagaCoordinator implements Coordinator {
 
     resendMessages() {
         this.messages.sendAllFacts();
+    }
+
+    private output(
+        parentMapping: any,
+        fact: Object,
+        watch: Watch
+    ) {
+        var mapping = watch.resultAdded(parentMapping, fact) || fact;
+        watch.push(fact, mapping);
     }
 }
 
