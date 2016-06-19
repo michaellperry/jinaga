@@ -40,12 +40,12 @@ describe("Nested watch", function () {
             message: message
         };
         messageViewModels.push(vm);
-        //console.log('Received message: ' + JSON.stringify(message));
+        //console.log('-- Received message: ' + JSON.stringify(message));
         return vm;
     }
 
     function setMessageFrom(vm, name) {
-        //console.log('Set name for ' + JSON.stringify(vm) + ': ' + JSON.stringify(name));
+        //console.log('-- Set name for ' + JSON.stringify(vm) + ': ' + JSON.stringify(name));
         vm.from = name.value;
     }
 
@@ -57,6 +57,14 @@ describe("Nested watch", function () {
     it("should find existing fact", function () {
         addFacts();
         var watch = startWatch();
+        expectState();
+
+        watch.stop();
+    });
+
+    it("should find new facts", function () {
+        var watch = startWatch();
+        addFacts();
         expectState();
 
         watch.stop();

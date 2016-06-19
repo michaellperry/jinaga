@@ -48,7 +48,7 @@ function optimize(steps: Array<Step>) : Array<Step> {
     }
 }
 
-function invertSteps(steps) {
+function invertSteps(steps: Array<Step>): { inverses: Array<Inverse>, oppositeSteps: Array<Step> } {
     var inverses:Array<Inverse> = [];
 
     var oppositeSteps:Array<Step> = [];
@@ -90,7 +90,7 @@ function invertSteps(steps) {
         }
         else if (step instanceof ExistentialCondition) {
             var existential = <ExistentialCondition>step;
-            var subInverses = invertSteps(existential.steps);
+            var subInverses = invertSteps(existential.steps).inverses;
             subInverses.forEach(function(subInverse: Inverse) {
                 var added = existential.quantifier === Quantifier.Exists ?
                     subInverse.added != null : subInverse.removed != null;
@@ -103,9 +103,13 @@ function invertSteps(steps) {
             });
         }
     }
-    return inverses;
+    return { inverses, oppositeSteps };
 }
 
 export function invertQuery(query: Query): Array<Inverse> {
-    return invertSteps(query.steps);
+    return invertSteps(query.steps).inverses;
+}
+
+export function completeInvertQuery(query: Query): Query {
+    return new Query(invertSteps(query.steps).oppositeSteps);
 }
