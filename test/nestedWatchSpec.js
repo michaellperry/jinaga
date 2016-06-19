@@ -54,7 +54,7 @@ describe("Nested watch", function () {
         watch.stop();
     });
 
-    it.only("should find existing fact", function () {
+    it("should find existing fact", function () {
         addFacts();
         var watch = startWatch();
         expectState();

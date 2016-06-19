@@ -40,20 +40,14 @@ class Watch {
     }
 
     public get(fact: Object): any {
-        var hash = computeHash(fact);
-        var array = this.mappings[hash];
-        if (!array)
-            return null;
-        for(var index = 0; index < array.length; index++) {
-            if (_isEqual(array[index].fact, fact)) {
-                var mapping = array[index].mapping;
-                return mapping;
-            }
-        }
-        return null;
+        return this.lookup(fact, true);
     }
 
     public pop(fact: Object): any {
+        return this.lookup(fact, false);
+    }
+
+    private lookup(fact: Object, remove: boolean): any {
         var hash = computeHash(fact);
         var array = this.mappings[hash];
         if (!array)
@@ -61,7 +55,8 @@ class Watch {
         for(var index = 0; index < array.length; index++) {
             if (_isEqual(array[index].fact, fact)) {
                 var mapping = array[index].mapping;
-                array.splice(index, 1);
+                if (remove)
+                    array.splice(index, 1);
                 return mapping;
             }
         }
@@ -138,19 +133,18 @@ class JinagaCoordinator implements Coordinator {
                                 intermediates.forEach((intermediate) => {
                                     var intermediateMapping = outer.get(intermediate);
                                     if (intermediateMapping) {
-                                        var mapping = resultAdded(intermediateMapping, fact);
-                                        if (watch) {
-                                            watch.push(fact, mapping);
-                                        }
+                                        this.output(
+                                            intermediateMapping,
+                                            fact,
+                                            resultAdded,
+                                            watch);
                                     }
                                 });
                             });
                         });
                 }
                 else {
-                    var mapping = resultAdded(null, fact);
-                    if (watch)
-                        watch.push(fact, mapping);
+                    this.output(null, fact, resultAdded, watch);
                 }
             });
         });
@@ -159,6 +153,18 @@ class JinagaCoordinator implements Coordinator {
             this.network.watch(start, full);
         }
         return watch;
+    }
+
+    private output(
+        parentMapping: any,
+        fact: Object,
+        resultAdded: (mapping: any, result: Object) => void,
+        watch: Watch
+    ) {
+        var mapping = resultAdded(parentMapping, fact);
+        if (watch) {
+            watch.push(fact, mapping);
+        }
     }
 
     query(
