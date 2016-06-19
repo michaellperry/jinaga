@@ -93,6 +93,19 @@ describe("Nested watch", function () {
         expectOriginalState();
     });
 
+    it("should stop child", function () {
+        var messages = j.watch(room, [messagesInRoom], makeMessageViewModel);
+        var names = messages.watch([namesOfSender], setMessageFrom);
+        names.stop();
+
+        var person = addPerson();
+        addMessage(person);
+        setName(person);
+        expectOriginalState();
+
+        messages.stop();
+    })
+
     function addPerson() {
         var person = {
             type: 'Person'

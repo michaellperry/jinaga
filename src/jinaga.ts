@@ -55,6 +55,13 @@ class Watch {
         this.children.push(child);
     }
 
+    public removeChild(child: Watch) {
+        var index = this.children.indexOf(child);
+        if (index >= 0) {
+            this.children.splice(index, 1);
+        }
+    }
+
     public depthFirst(action: (Watch) => void) {
         action(this);
         this.children.forEach((watch) => {
@@ -192,10 +199,13 @@ class JinagaCoordinator implements Coordinator {
     }
 
     removeWatch(watch: Watch) {
-        for (var index = 0; index < this.watches.length; ++index) {
-            if (this.watches[index] === watch) {
+        if (watch.outer) {
+            watch.outer.removeChild(watch);
+        }
+        else {
+            var index = this.watches.indexOf(watch);
+            if (index >= 0) {
                 this.watches.splice(index, 1);
-                return;
             }
         }
         if (this.network) {
@@ -341,8 +351,9 @@ class WatchProxy {
     }
 
     public stop() {
-        if (this._watch)
+        if (this._watch) {
             this._coordinator.removeWatch(this._watch);
+        }
     }
 }
 
