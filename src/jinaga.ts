@@ -44,11 +44,11 @@ class Watch {
     }
 
     public get(fact: Object): any {
-        return this.lookup(fact, true);
+        return this.lookup(fact, false);
     }
 
     public pop(fact: Object): any {
-        return this.lookup(fact, false);
+        return this.lookup(fact, true);
     }
 
     public addChild(child: Watch) {
