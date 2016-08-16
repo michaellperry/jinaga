@@ -58,15 +58,15 @@ class MongoProvider implements Interface.StorageProvider, Interface.KeystoreProv
                     this.coordinator.onError(error);
                 }
                 else {
-                    let predecessors = this.getPredecessors(fact);
-                    predecessors.forEach(predecessor => {
-                        var start = new MongoGraph.Point(predecessor, computeHash(predecessor));
-                        var cacheHits = this.cache.filter(MongoGraph.cacheMatches(start));
-                        if (cacheHits.length > 0) {
-                            saved.forEach(f => {
+                    saved.forEach(f => {
+                        let predecessors = this.getPredecessors(f);
+                        predecessors.forEach(predecessor => {
+                            var start = new MongoGraph.Point(predecessor, computeHash(predecessor));
+                            var cacheHits = this.cache.filter(MongoGraph.cacheMatches(start));
+                            if (cacheHits.length > 0) {
                                 cacheHits[0].results.push(new MongoGraph.Point(f, computeHash(f)));
-                            });
-                        }
+                            }
+                        });
                     });
                     saved.forEach(f => {
                         this.coordinator.onSaved(f, source);
