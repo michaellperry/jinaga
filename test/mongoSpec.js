@@ -92,6 +92,35 @@ describe("Mongo", function() {
     });
   });
 
+  it("should return cached results", function(done) {
+    mongo.save(chores, null);
+    var task = {
+      type: "Task",
+      list: chores,
+      description: "Take out the trash"
+    };
+    mongo.whenQuiet(function () {
+      mongo.save(task, null);
+    });
+
+    mongo.whenQuiet(function() {
+      mongo.executeQuery(chores, query, null, function (error, messages) {
+        should.equal(null, error);
+        messages.length.should.equal(1);
+        messages[0].description.should.equal("Take out the trash");
+      });
+    });
+
+    mongo.whenQuiet(function() {
+      mongo.executeQuery(chores, query, null, function (error, messages) {
+        should.equal(null, error);
+        messages.length.should.equal(1);
+        messages[0].description.should.equal("Take out the trash");
+        done();
+      });
+    });
+  });
+
   it("should add nested messages", function(done) {
     var task = {
       type: "Task",

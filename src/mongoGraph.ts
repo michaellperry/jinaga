@@ -19,14 +19,16 @@ export class Point {
 
 export type Processor = (start: Point, result: (error: string, facts: Array<Point>) => void) => void;
 
-export function parseSteps(collection: any, readerFact: Object, steps: Array<Step>): Processor {
+export type Cache = Array<{ start: Point, results: Array<Point> }>;
+
+export function parseSteps(cache: Cache, collection: any, readerFact: Object, steps: Array<Step>): Processor {
     if (steps[0] instanceof ExistentialCondition) {
         const condition = <ExistentialCondition>steps[0];
         const tail = steps.slice(1);
         const processor = existentialProcessor(
-            parseSteps(collection, readerFact, condition.steps),
+            parseSteps(cache, collection, readerFact, condition.steps),
             condition.quantifier);
-        return parseTail(collection, readerFact, processor, tail);
+        return parseTail(cache, collection, readerFact, processor, tail);
     }
     else if (steps[0] instanceof Join) {
         const join = <Join>steps[0];
@@ -39,18 +41,18 @@ export function parseSteps(collection: any, readerFact: Object, steps: Array<Ste
             }
             const head = steps.slice(0, index);
             const tail = steps.slice(index);
-            const processor = pipelineProcessor(collection, readerFact, head);
-            return parseTail(collection, readerFact, processor, tail);
+            const processor = pipelineProcessor(cache, collection, readerFact, head);
+            return parseTail(cache, collection, readerFact, processor, tail);
         }
         else {
             const tail = steps.slice(1);
-            return parseTail(collection, readerFact, predecessorProcessor(join.role), tail);
+            return parseTail(cache, collection, readerFact, predecessorProcessor(join.role), tail);
         }
     }
     else if (steps[0] instanceof PropertyCondition) {
         const condition = <PropertyCondition>steps[0];
         const tail = steps.slice(1);
-        return parseTail(collection, readerFact, propertyConditionProcessor(condition.name, condition.value), tail);
+        return parseTail(cache, collection, readerFact, propertyConditionProcessor(condition.name, condition.value), tail);
     }
 }
 
@@ -77,25 +79,55 @@ function propertyConditionProcessor(name: string, value: any): Processor {
     };
 }
 
-function parseTail(collection: any, readerFact: Object, processor: Processor, tail: Array<Step>) {
+function parseTail(cache: Cache, collection: any, readerFact: Object, processor: Processor, tail: Array<Step>) {
     if (tail.length === 0)
         return processor;
     else
-        return bind(processor, parseSteps(collection, readerFact, tail));
+        return bind(processor, parseSteps(cache, collection, readerFact, tail));
 }
 
-function pipelineProcessor(collection: any, readerFact: Object, steps: Array<Step>): Processor {
+function pipelineProcessor(cache: Cache, collection: any, readerFact: Object, steps: Array<Step>): Processor {
     return function(start, result) {
-        collection
-            .aggregate(buildPipeline(start.hash, steps))
-            .toArray((err, documents) => {
-                result(
-                    err ? err.message : null,
-                    documents ? documents
-                        .filter(d => authorizeRead(d.fact, readerFact))
-                        .map(d => new Point(d.fact, d.hash)) : null);
-            });
+        // Check for cached start point.
+        var cacheHits = cache.filter(cacheMatches(start));
+        if (cacheHits.length > 0) {
+            result(null, cacheHits[0].results);
+        }
+        else {
+            // if (cache.length > 0) {
+            //     console.log('Cache miss: ' + JSON.stringify(start) + '\n' + JSON.stringify(cache))
+            // }
+            collection
+                .aggregate(buildPipeline(start.hash, steps))
+                .toArray((err, documents) => {
+                    var cacheHits = cache.filter(cacheMatches(start));
+                    var results = documents
+                        .map(d => new Point(d.fact, d.hash));
+                    if (cacheHits.length > 0) {
+                        cacheHits[0].results = results;
+                    }
+                    else {
+                        cache.push({
+                            start: start,
+                            results: results
+                        });
+                        //console.log('Items in cache ' + cache.length);
+                    }
+                    result(
+                        err ? err.message : null,
+                        documents ? documents
+                            .filter(d => authorizeRead(d.fact, readerFact))
+                            .map(d => new Point(d.fact, d.hash)) : null);
+                });
+        }
     }
+}
+
+function cacheMatches(start: Point) : (c: {start: Point, results: Array<Point>}) => boolean {
+    return function (c) {
+        return c.start.hash === start.hash &&
+            _isEqual(c.start.fact, start.fact);
+    };
 }
 
 function authorizeRead(fact: Object, readerFact: Object) {

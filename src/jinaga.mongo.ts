@@ -28,6 +28,7 @@ class MongoProvider implements Interface.StorageProvider, Interface.KeystoreProv
     private count: number = 0;
     private pools: { [collectionName: string]: Pool<MongoConnection> } = {};
     private quiet: () => void;
+    private cache: MongoGraph.Cache = [];
     
     public constructor(
         public url: string
@@ -73,7 +74,7 @@ class MongoProvider implements Interface.StorageProvider, Interface.KeystoreProv
         result: (error: string, facts: Array<Object>) => void
     ) {
         this.withCollection("successors", (collection, done) => {
-            const processor = MongoGraph.parseSteps(collection, readerFact, query.steps);
+            const processor = MongoGraph.parseSteps(this.cache, collection, readerFact, query.steps);
             processor(new MongoGraph.Point(start, computeHash(start)), (error, facts) => {
                 if (error)
                     result(error, []);
