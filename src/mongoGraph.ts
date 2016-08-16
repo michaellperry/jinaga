@@ -88,15 +88,11 @@ function parseTail(cache: Cache, collection: any, readerFact: Object, processor:
 
 function pipelineProcessor(cache: Cache, collection: any, readerFact: Object, steps: Array<Step>): Processor {
     return function(start, result) {
-        // Check for cached start point.
         var cacheHits = cache.filter(cacheMatches(start));
         if (cacheHits.length > 0) {
             result(null, cacheHits[0].results);
         }
         else {
-            // if (cache.length > 0) {
-            //     console.log('Cache miss: ' + JSON.stringify(start) + '\n' + JSON.stringify(cache))
-            // }
             collection
                 .aggregate(buildPipeline(start.hash, steps))
                 .toArray((err, documents) => {
@@ -111,7 +107,6 @@ function pipelineProcessor(cache: Cache, collection: any, readerFact: Object, st
                             start: start,
                             results: results
                         });
-                        //console.log('Items in cache ' + cache.length);
                     }
                     result(
                         err ? err.message : null,
@@ -123,7 +118,7 @@ function pipelineProcessor(cache: Cache, collection: any, readerFact: Object, st
     }
 }
 
-function cacheMatches(start: Point) : (c: {start: Point, results: Array<Point>}) => boolean {
+export function cacheMatches(start: Point) : (c: {start: Point, results: Array<Point>}) => boolean {
     return function (c) {
         return c.start.hash === start.hash &&
             _isEqual(c.start.fact, start.fact);

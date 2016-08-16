@@ -58,6 +58,16 @@ class MongoProvider implements Interface.StorageProvider, Interface.KeystoreProv
                     this.coordinator.onError(error);
                 }
                 else {
+                    let predecessors = this.getPredecessors(fact);
+                    predecessors.forEach(predecessor => {
+                        var start = new MongoGraph.Point(predecessor, computeHash(predecessor));
+                        var cacheHits = this.cache.filter(MongoGraph.cacheMatches(start));
+                        if (cacheHits.length > 0) {
+                            saved.forEach(f => {
+                                cacheHits[0].results.push(new MongoGraph.Point(f, computeHash(f)));
+                            });
+                        }
+                    });
                     saved.forEach(f => {
                         this.coordinator.onSaved(f, source);
                     });
@@ -65,6 +75,22 @@ class MongoProvider implements Interface.StorageProvider, Interface.KeystoreProv
                 done();
             });
         });
+    }
+
+    private getPredecessors(fact: Object): Array<Object> {
+        let predecessors: Array<Object> = [];
+        for (var field in fact) {
+            var value = fact[field];
+            if (isPredecessor(value)) {
+                predecessors.push(value);
+            }
+            else if (Array.isArray(value) && value.every(v => isPredecessor(v))) {
+                value.forEach(v => {
+                    predecessors.push(v);
+                });
+            }
+        }
+        return predecessors;
     }
     
     public executeQuery(
