@@ -88,7 +88,7 @@ function parseTail(cache: Cache, collection: any, readerFact: Object, processor:
 
 function pipelineProcessor(cache: Cache, collection: any, readerFact: Object, steps: Array<Step>): Processor {
     return function(start, result) {
-        var cacheHits = cache.filter(cacheMatches(start));
+        const cacheHits = cache.filter(cacheMatches(start));
         if (cacheHits.length > 0) {
             result(null, cacheHits[0].results);
         }
@@ -96,11 +96,11 @@ function pipelineProcessor(cache: Cache, collection: any, readerFact: Object, st
             collection
                 .aggregate(buildPipeline(start.hash, steps))
                 .toArray((err, documents) => {
-                    var cacheHits = cache.filter(cacheMatches(start));
-                    var results = documents
+                    const newCacheHits = cache.filter(cacheMatches(start));
+                    const results = documents
                         .map(d => new Point(d.fact, d.hash));
-                    if (cacheHits.length > 0) {
-                        cacheHits[0].results = results;
+                    if (newCacheHits.length > 0) {
+                        newCacheHits[0].results = results;
                     }
                     else {
                         cache.push({
