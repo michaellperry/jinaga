@@ -18,12 +18,18 @@ export class Point {
 }
 
 export class Cache {
-    private resultsByStart: Array<{ start: Point, query: string, results: Array<Point> }> = [];
+    private resultsByStart: { [hash: number]: Array<{ fact: Object, query: string, results: Array<Point> }> } = {};
 
     public load(start: Point, query: string): Array<Point> {
-        const cacheHits = this.resultsByStart.filter(this.cacheMatches(start, query));
-        if (cacheHits.length === 1) {
-            return cacheHits[0].results;
+        const hashHit = this.resultsByStart[start.hash];
+        if (hashHit) {
+            const cacheHits = hashHit.filter(this.cacheMatches(start.fact, query));
+            if (cacheHits.length === 1) {
+                return cacheHits[0].results;
+            }
+            else {
+                return null;
+            }
         }
         else {
             return null;
@@ -31,40 +37,39 @@ export class Cache {
     }
 
     public save(start: Point, query: string, results: Array<Point>) {
-        const cacheHits = this.resultsByStart.filter(this.cacheMatches(start, query));
-        if (cacheHits.length === 1) {
-            cacheHits[0].results = results;
+        const hashHit = this.resultsByStart[start.hash];
+        if (hashHit) {
+            const cacheHits = hashHit.filter(this.cacheMatches(start.fact, query));
+            if (cacheHits.length === 1) {
+                cacheHits[0].results = results;
+            }
+            else {
+                hashHit.push({
+                    fact: start.fact,
+                    query: query,
+                    results: results
+                });
+            }
         }
         else {
-            this.resultsByStart.push({
-                start: new Point(start.fact, start.hash),
-                query: query,
-                results: results
-            });
+            this.resultsByStart[start.hash] = [
+                {
+                    fact: start.fact,
+                    query: query,
+                    results: results
+                }
+            ];
         }
     }
 
     public invalidate(start: Point) {
-        const predicate = this.cacheMatchesPoint(start);
-        for (var i = this.resultsByStart.length-1; i >= 0; i--) {
-            if (predicate(this.resultsByStart[i])) {
-                this.resultsByStart.splice(i, 1);
-            }
-        }
+        this.resultsByStart[start.hash] = null;
     }
 
-    private cacheMatches(start: Point, query: string) : (c: {start: Point, query: string, results: Array<Point>}) => boolean {
+    private cacheMatches(fact: Object, query: string) : (c: {fact: Object, query: string, results: Array<Point>}) => boolean {
         return function (c) {
-            return c.start.hash === start.hash &&
-                c.query === query &&
-                _isEqual(c.start.fact, start.fact);
-        };
-    }
-
-    private cacheMatchesPoint(start: Point) : (c: {start: Point, query: string, results: Array<Point>}) => boolean {
-        return function (c) {
-            return c.start.hash === start.hash &&
-                _isEqual(c.start.fact, start.fact);
+            return c.query === query &&
+                _isEqual(c.fact, fact);
         };
     }
 }
