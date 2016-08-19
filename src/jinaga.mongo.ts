@@ -28,7 +28,7 @@ class MongoProvider implements Interface.StorageProvider, Interface.KeystoreProv
     private count: number = 0;
     private pools: { [collectionName: string]: Pool<MongoConnection> } = {};
     private quiet: () => void;
-    private cache: MongoGraph.Cache = [];
+    private cache: MongoGraph.Cache = new MongoGraph.Cache;
     
     public constructor(
         public url: string
@@ -62,10 +62,7 @@ class MongoProvider implements Interface.StorageProvider, Interface.KeystoreProv
                         let predecessors = this.getPredecessors(f);
                         predecessors.forEach(predecessor => {
                             var start = new MongoGraph.Point(predecessor, computeHash(predecessor));
-                            var cacheHits = this.cache.filter(MongoGraph.cacheMatches(start));
-                            if (cacheHits.length > 0) {
-                                cacheHits[0].results.push(new MongoGraph.Point(f, computeHash(f)));
-                            }
+                            var cacheHits = this.cache.invalidate(start);
                         });
                     });
                     saved.forEach(f => {

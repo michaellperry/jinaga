@@ -17,9 +17,65 @@ export class Point {
         public hash: number) {} 
 }
 
-export type Processor = (start: Point, result: (error: string, facts: Array<Point>) => void) => void;
+export class Cache {
+    private resultsByStart: Array<{ start: Point, query: string, results: Array<Point> }> = [];
 
-export type Cache = Array<{ start: Point, results: Array<Point> }>;
+    public load(start: Point, query: string): Array<Point> {
+        const cacheHits = this.resultsByStart.filter(this.cacheMatches(start, query));
+        if (start.hash === 97355026) {
+            console.log('\n--Loading: ' + JSON.stringify(cacheHits));
+        }
+        if (cacheHits.length === 1) {
+            return cacheHits[0].results;
+        }
+        else {
+            return null;
+        }
+    }
+
+    public save(start: Point, query: string, results: Array<Point>) {
+        const cacheHits = this.resultsByStart.filter(this.cacheMatches(start, query));
+        if (start.hash === 97355026) {
+            console.log('\n--Saving: ' + JSON.stringify(cacheHits) + '\n\n' + JSON.stringify(results));
+        }
+        if (cacheHits.length === 1) {
+            cacheHits[0].results = results;
+        }
+        else {
+            this.resultsByStart.push({
+                start: new Point(start.fact, start.hash),
+                query: query,
+                results: results
+            });
+        }
+    }
+
+    public invalidate(start: Point) {
+        const predicate = this.cacheMatchesPoint(start);
+        for (var i = this.resultsByStart.length-1; i >= 0; i--) {
+            if (predicate(this.resultsByStart[i])) {
+                this.resultsByStart.splice(i, 1);
+            }
+        }
+    }
+
+    private cacheMatches(start: Point, query: string) : (c: {start: Point, query: string, results: Array<Point>}) => boolean {
+        return function (c) {
+            return c.start.hash === start.hash &&
+                c.query === query &&
+                _isEqual(c.start.fact, start.fact);
+        };
+    }
+
+    private cacheMatchesPoint(start: Point) : (c: {start: Point, query: string, results: Array<Point>}) => boolean {
+        return function (c) {
+            return c.start.hash === start.hash &&
+                _isEqual(c.start.fact, start.fact);
+        };
+    }
+}
+
+export type Processor = (start: Point, result: (error: string, facts: Array<Point>) => void) => void;
 
 export function parseSteps(cache: Cache, collection: any, readerFact: Object, steps: Array<Step>): Processor {
     if (steps[0] instanceof ExistentialCondition) {
@@ -87,27 +143,23 @@ function parseTail(cache: Cache, collection: any, readerFact: Object, processor:
 }
 
 function pipelineProcessor(cache: Cache, collection: any, readerFact: Object, steps: Array<Step>): Processor {
+    const query = new Interface.Query(steps).toDescriptiveString();
     return function(start, result) {
-        const cacheHits = cache.filter(cacheMatches(start));
-        if (cacheHits.length > 0) {
-            result(null, cacheHits[0].results);
+        const cachedResults = cache.load(start, query);
+        if (cachedResults) {
+            result(null, cachedResults);
         }
         else {
             collection
                 .aggregate(buildPipeline(start.hash, steps))
                 .toArray((err, documents) => {
-                    const newCacheHits = cache.filter(cacheMatches(start));
                     const results = documents
                         .map(d => new Point(d.fact, d.hash));
-                    if (newCacheHits.length > 0) {
-                        newCacheHits[0].results = results;
+                    const cachedResults = cache.load(start, query);
+                    if (cachedResults && cachedResults.length != results.length) {
+                        console.log('Results differ: ' + start.hash);
                     }
-                    else {
-                        cache.push({
-                            start: start,
-                            results: results
-                        });
-                    }
+                    cache.save(start, query, results);
                     result(
                         err ? err.message : null,
                         documents ? documents
@@ -116,13 +168,6 @@ function pipelineProcessor(cache: Cache, collection: any, readerFact: Object, st
                 });
         }
     }
-}
-
-export function cacheMatches(start: Point) : (c: {start: Point, results: Array<Point>}) => boolean {
-    return function (c) {
-        return c.start.hash === start.hash &&
-            _isEqual(c.start.fact, start.fact);
-    };
 }
 
 function authorizeRead(fact: Object, readerFact: Object) {
