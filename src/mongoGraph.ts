@@ -22,9 +22,6 @@ export class Cache {
 
     public load(start: Point, query: string): Array<Point> {
         const cacheHits = this.resultsByStart.filter(this.cacheMatches(start, query));
-        if (start.hash === 97355026) {
-            console.log('\n--Loading: ' + JSON.stringify(cacheHits));
-        }
         if (cacheHits.length === 1) {
             return cacheHits[0].results;
         }
@@ -35,9 +32,6 @@ export class Cache {
 
     public save(start: Point, query: string, results: Array<Point>) {
         const cacheHits = this.resultsByStart.filter(this.cacheMatches(start, query));
-        if (start.hash === 97355026) {
-            console.log('\n--Saving: ' + JSON.stringify(cacheHits) + '\n\n' + JSON.stringify(results));
-        }
         if (cacheHits.length === 1) {
             cacheHits[0].results = results;
         }
@@ -155,10 +149,6 @@ function pipelineProcessor(cache: Cache, collection: any, readerFact: Object, st
                 .toArray((err, documents) => {
                     const results = documents
                         .map(d => new Point(d.fact, d.hash));
-                    const cachedResults = cache.load(start, query);
-                    if (cachedResults && cachedResults.length != results.length) {
-                        console.log('Results differ: ' + start.hash);
-                    }
                     cache.save(start, query, results);
                     result(
                         err ? err.message : null,
