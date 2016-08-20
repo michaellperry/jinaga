@@ -210,25 +210,22 @@ function bind(head: Processor, tail: Processor): Processor {
             if (error)
                 result(error, null);
             else {
-                let gather: Array<Point> = [];
-                let count = facts.length;
-                if (count === 0)
-                    result(null, gather);
-                else {
-                    facts.forEach(point => {
-                        tail(point, (subError, subFacts) => {
-                            count--;
-                            error = error || subError;
-                            Array.prototype.push.apply(gather, subFacts);
-                            if (count === 0) {
-                                if (error)
-                                    result(error, null);
-                                else
-                                    result(null, gather);
+                let next = (rest: Array<Point>, out: Array<Point>) => {
+                    if (rest.length === 0) {
+                        result(null, out);
+                    }
+                    else {
+                        tail(rest[0], (subError, subFacts) => {
+                            if (subError) {
+                                result(subError, null);
                             }
-                        });
-                    });
-                }
+                            else {
+                                next(rest.slice(1), out.concat(subFacts));
+                            }
+                        })
+                    }
+                };
+                next(facts, []);
             }
         });
     };

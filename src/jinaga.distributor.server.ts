@@ -32,7 +32,10 @@ class JinagaConnection implements Interface.Spoke {
         private distributor: JinagaDistributor)
     {
         this.channel = new FactChannel(2,
-            message => { this.socket.send(JSON.stringify(message)); },
+            message => {
+                debug("[" + this.identicon + "] Sending " + JSON.stringify(message.fact));
+                this.socket.send(JSON.stringify(message));
+            },
             fact => { this.distributor.onReceived(fact, this.userFact, this); });
         socket.on("message", this.onMessage.bind(this));
         socket.on("close", this.onClose.bind(this));
@@ -96,7 +99,6 @@ class JinagaConnection implements Interface.Spoke {
             // TODO: This is incorrect. Each segment of the query should be executed.
             this.distributor.executeQuery(message.start, query, this.userFact, (error: string, results: Array<Object>) => {
                 results.forEach((result: Object) => {
-                    debug("[" + this.identicon + "] Sending " + JSON.stringify(result));
                     this.channel.sendFact(result);
                 });
             });
@@ -137,7 +139,6 @@ class JinagaConnection implements Interface.Spoke {
             // TODO: This is incorrect. Each segment of the query should be executed.
             this.distributor.executeQuery(message.start, query, this.userFact, (error: string, results: Array<Object>) => {
                 results.forEach((result: Object) => {
-                    debug("[" + this.identicon + "] Sending " + JSON.stringify(result));
                     this.channel.sendFact(result);
                 });
                 this.socket.send(JSON.stringify({
@@ -172,7 +173,6 @@ class JinagaConnection implements Interface.Spoke {
                 }
                 var some: any = _some;
                 if (some(affected, (obj: Object) => _isEqual(obj, watch.start))) {
-                    debug("[" + this.identicon + "] Sending " + JSON.stringify(fact));
                     this.channel.sendFact(fact);
                 }
             });
