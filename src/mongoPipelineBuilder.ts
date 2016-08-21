@@ -24,32 +24,92 @@ function appendStep(pipeline: Array<Object>, startHash: number, step: Step) {
 
 function appendJoin(pipeline: Array<Object>, startHash: number, join: Join) {
     if (join.direction === Direction.Predecessor) {
-        throw new Error("Do predecessors in memory.");
+        appendPredecessor(pipeline, startHash, join);
     }
     else {
         appendSuccessor(pipeline, startHash, join);
     }
 }
 
-function appendSuccessor(pipeline: Array<Object>, startHash: number, join: Join) {
-    pipeline.push({
-        "$match": {
-            predecessors: {
-                "$elemMatch": {
-                    role: join.role,
-                    hash: startHash
-                }
+function appendPredecessor(pipeline: Array<Object>, startHash: number, join: Join) {
+    if (pipeline.length === 0) {
+        pipeline.push({
+            "$match": {
+                hash: startHash
             }
+        });
+    }
+    pipeline.push({
+        "$unwind": "$predecessors"
+    }, {
+        "$match": {
+            "predecessors.role": join.role
+        }
+    }, {
+        "$lookup": {
+            from: "successors",
+            localField: "predecessors.hash",
+            foreignField: "hash",
+            as: "lookup_predecessors"
+        }
+    }, {
+        "$unwind": "$lookup_predecessors"
+    }, {
+        "$project": {
+            hash: "$lookup_predecessors.hash",
+            predecessors: "$lookup_predecessors.predecessors",
+            fact: "$lookup_predecessors.fact"
         }
     });
 }
 
+function appendSuccessor(pipeline: Array<Object>, startHash: number, join: Join) {
+    if (pipeline.length === 0) {
+        pipeline.push({
+            "$match": {
+                predecessors: {
+                    "$elemMatch": {
+                        role: join.role,
+                        hash: startHash
+                    }
+                }
+            }
+        });
+    }
+    else {
+        pipeline.push({
+            "$lookup": {
+                from: "successors",
+                localField: "hash",
+                foreignField: "predecessors.hash",
+                as: "successors"
+            }
+        }, {
+            "$unwind": {
+                path: "$successors"
+            }
+        }, {
+            "$match": {
+                "successors.predecessors.role": join.role
+            }
+        }, {
+            "$project": {
+                hash: "$successors.hash",
+                predecessors: "$successors.predecessors",
+                fact: "$successors.fact"
+            }
+        });
+    }
+}
+
 function appendPropertyCondition(pipeline: Array<Object>, propertyCondition: PropertyCondition) {
-    var match = {};
-    match["fact." + propertyCondition.name] = propertyCondition.value;
-    pipeline.push({
-        "$match": match
-    });
+    if (pipeline.length > 0) {
+        var match = {};
+        match["fact." + propertyCondition.name] = propertyCondition.value;
+        pipeline.push({
+            "$match": match
+        });
+    }
 }
 
 export = buildPipeline;

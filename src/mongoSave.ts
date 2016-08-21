@@ -33,22 +33,23 @@ export function saveFact(collection: any, fact: Object, done: (error: string, sa
         fact: fact
     };
     
-    let count = relations.length;
-    if (count === 0)
-        done(null, []);
-    else {
-        collection.insertOne(document, (e) => {
-            if (e) {
-                if (e.code != 11000) {
-                    done(e.message, null);
-                }
-                else {
-                    done(null, []);
-                }
+    collection.insertOne(document, (e) => {
+        if (e) {
+            if (e.code != 11000) {
+                done(e.message, null);
             }
             else {
-                let error: string = null;
-                let saved: Array<Object> = [];
+                done(null, []);
+            }
+        }
+        else {
+            let error: string = null;
+            let saved: Array<Object> = [];
+            let count = relations.length;
+            if (count === 0) {
+                done(error, [fact]);
+            }
+            else {
                 relations.forEach(r => {
                     saveFact(collection, r.predecessor, (e,s) => {
                         error = error || e;
@@ -60,8 +61,8 @@ export function saveFact(collection: any, fact: Object, done: (error: string, sa
                     });
                 });
             }
-        });
-    }
+        }
+    });
 }
 
 function getRelations(fact: Object): Array<Relation> {

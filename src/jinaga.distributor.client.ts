@@ -27,11 +27,12 @@ class JinagaDistributor implements NetworkProvider {
         this.coordinator = coordinator;
     }
 
-    public watch(start: Object, query: Query) {
+    public watch(start: Object, query: Query, token: number) {
         var watch = {
             type: "watch",
             start: start,
-            query: query.toDescriptiveString()
+            query: query.toDescriptiveString(),
+            token: token
         };
         this.watches.push(JSON.stringify(watch));
         this.send(JSON.stringify(watch));

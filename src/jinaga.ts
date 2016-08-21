@@ -88,6 +88,7 @@ class Watch {
 
 class JinagaCoordinator implements Coordinator {
     private errorHandlers: Array<(message: string) => void> = [];
+    private loadingHandlers: Array<(loading: boolean) => void> = [];
     private progressHandlers: Array<(count: number) => void> = [];
     private watches: Array<Watch> = [];
     private messages: StorageProvider = null;
@@ -98,6 +99,7 @@ class JinagaCoordinator implements Coordinator {
     private loginCallbacks: Array<(userFact: Object, profile: Object) => void> = [];
     private nextToken: number = 1;
     private queries: Array<{ token: number, callback: () => void }> = [];
+    private watchCount: number = 0;
 
     save(storage: StorageProvider) {
         this.messages = storage;
@@ -114,6 +116,10 @@ class JinagaCoordinator implements Coordinator {
 
     addErrorHandler(callback: (message: string) => void) {
         this.errorHandlers.push(callback);
+    }
+
+    addLoadingHandler(callback: (loading: boolean) => void) {
+        this.loadingHandlers.push(callback);
     }
 
     addProgressHandler(callback: (count: number) => void) {
@@ -172,7 +178,20 @@ class JinagaCoordinator implements Coordinator {
         });
 
         if (this.network) {
-            this.network.watch(start, full);
+            let watchFinished = () => {
+                this.watchCount--;
+                if (this.watchCount === 0) {
+                    this.onLoading(false);
+                }
+            };
+
+            this.queries.push({ token: this.nextToken, callback: watchFinished });
+            this.network.watch(start, full, this.nextToken);
+            this.nextToken++;
+            this.watchCount++;
+            if (this.watchCount === 1) {
+                this.onLoading(true);
+            }
         }
         return watch;
     }
@@ -294,6 +313,10 @@ class JinagaCoordinator implements Coordinator {
         }
     }
 
+    onLoading(loading: boolean) {
+        this.loadingHandlers.forEach(handler => handler(loading));
+    }
+
     onProgress(queueCount:number) {
         this.progressHandlers.forEach(handler => handler(queueCount));
     }
@@ -367,6 +390,9 @@ class Jinaga {
 
     public onError(handler: (message: string) => void) {
         this.coordinator.addErrorHandler(handler);
+    }
+    public onLoading(handler: (loading: boolean) => void) {
+        this.coordinator.addLoadingHandler(handler);
     }
     public onProgress(handler: (queueCount: number) => void) {
         this.coordinator.addProgressHandler(handler);

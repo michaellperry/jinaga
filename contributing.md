@@ -22,11 +22,8 @@ Each time you pull:
 
 As you work:
 
-- Run "grunt typescript" to compile
-- Run "grunt mochaTest" to run the tests
-- Run "grunt" to start the watcher that will compile and run tests
-
-If you see test failures, that's exactly where I need some help!
+- Run "grunt" to compile and run the tests
+- Run "grunt watch" to start the watcher that will compile and run tests
 
 ## Testing
 

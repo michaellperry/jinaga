@@ -2,6 +2,7 @@
 
 import Interface = require("./interface");
 import StorageProvider = Interface.StorageProvider;
+import PersistenceProvider = Interface.PersistenceProvider;
 import NetworkProvider = Interface.NetworkProvider;
 import Query = Interface.Query;
 import Direction = Interface.Direction;
@@ -39,7 +40,7 @@ class Node {
     }
 }
 
-class MemoryProvider implements StorageProvider {
+class MemoryProvider implements StorageProvider, PersistenceProvider {
     nodes: { [hash: number]: Array<Node>; } = {};
     queue: Array<{hash: number, fact: Object}> = [];
     coordinator: Coordinator;
@@ -71,6 +72,14 @@ class MemoryProvider implements StorageProvider {
            facts.push(node.fact);
         });
         result(null, facts);
+    }
+
+    executePartialQuery(
+        start: Object,
+        query: Query,
+        result: (error: string, facts: Array<Object>) => void
+    ) {
+        this.executeQuery(start, query, null, result);
     }
 
     private queryNodes(startingNode, steps:Array<Interface.Step>): Array<Node> {

@@ -288,13 +288,23 @@ export interface StorageProvider {
     dequeue(token: number, destination: any);
 }
 
+export interface PersistenceProvider {
+    init(coordinator: Coordinator);
+    save(fact: Object, source: any);
+    executePartialQuery(
+        start: Object,
+        query: Query,
+        result: (error: string, facts: Array<Object>) => void
+    );
+}
+
 export interface KeystoreProvider {
     getUserFact(userIdentity: UserIdentity, done: (userFact: Object) => void);
 }
 
 export interface NetworkProvider {
     init(coordinator: Coordinator);
-    watch(start: Object, query: Query);
+    watch(start: Object, query: Query, token: number);
     stopWatch(start: Object, query: Query);
     query(start: Object, query: Query, token: number);
     fact(fact: Object);

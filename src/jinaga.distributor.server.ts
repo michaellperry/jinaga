@@ -2,14 +2,16 @@ import Engine = require("engine.io");
 import Debug = require("debug");
 import Interface = require("./interface");
 import Query = Interface.Query;
-import StorageProvider = Interface.StorageProvider;
+import PersistenceProvider = Interface.PersistenceProvider;
 import Coordinator = Interface.Coordinator;
+import computeHash = Interface.computeHash;
 import QueryInverter = require("./queryInverter");
 import Inverse = QueryInverter.Inverse;
 import Collections = require("./collections");
 import _isEqual = Collections._isEqual;
 import _some = Collections._some;
 import FactChannel = require("./factChannel");
+import splitSegments = require('./querySegmenter');
 
 var debug = Debug("jinaga.distributor.server");
 
@@ -21,11 +23,37 @@ class Watch {
     ) {}
 }
 
+class PartialQuery {
+    private tokens: any[] = [];
+    private isDone: boolean = false;
+
+    constructor(
+        private sendDone: (token: any) => void
+    ) {}
+
+    public done() {
+        this.isDone = true;
+        this.tokens.forEach(token => {
+            this.sendDone(token);
+        });
+    }
+
+    public whenDone(token: any) {
+        if (this.isDone) {
+            this.sendDone(token);
+        }
+        else {
+            this.tokens.push(token);
+        }
+    }
+}
+
 class JinagaConnection implements Interface.Spoke {
     private watches: Array<Watch> = [];
     private userFact: Object;
     private identicon: string;
     private channel: FactChannel;
+    private partialQueries: { [start: number]: { [query: string]: PartialQuery }} = {};
 
     constructor(
         private socket,
@@ -96,16 +124,11 @@ class JinagaConnection implements Interface.Spoke {
 
         try {
             var query = Interface.fromDescriptiveString(message.query);
-            // TODO: This is incorrect. Each segment of the query should be executed.
-            this.distributor.executeQuery(message.start, query, this.userFact, (error: string, results: Array<Object>) => {
-                results.forEach((result: Object) => {
-                    this.channel.sendFact(result);
-                });
-            });
             var inverses = QueryInverter.invertQuery(query);
             inverses.forEach((inverse: Inverse) => {
                 this.watches.push(new Watch(message.start, message.query, inverse.affected));
             });
+            this.executeQuerySegments(message.start, message.token, query);
         }
         catch (x) {
             debug(x.message);
@@ -136,16 +159,7 @@ class JinagaConnection implements Interface.Spoke {
 
         try {
             var query = Interface.fromDescriptiveString(message.query);
-            // TODO: This is incorrect. Each segment of the query should be executed.
-            this.distributor.executeQuery(message.start, query, this.userFact, (error: string, results: Array<Object>) => {
-                results.forEach((result: Object) => {
-                    this.channel.sendFact(result);
-                });
-                this.socket.send(JSON.stringify({
-                    type: "done",
-                    token: message.token
-                }));
-            });
+            this.executeQuerySegments(message.start, message.token, query);
         }
         catch (x) {
             debug(x.message);
@@ -166,7 +180,7 @@ class JinagaConnection implements Interface.Spoke {
 
     distribute(fact: Object) {
         this.watches.forEach((watch) => {
-            this.distributor.executeQuery(fact, watch.affected, this.userFact, (error: string, affected: Array<Object>) => {
+            this.distributor.executeParialQuery(fact, watch.affected, this.userFact, (error: string, affected: Array<Object>) => {
                 if (error) {
                     debug(error);
                     return;
@@ -178,6 +192,50 @@ class JinagaConnection implements Interface.Spoke {
             });
         });
     }
+
+    private executeQuerySegments(start: Object, token: any, query: Query) {
+        const segments: Query[] = splitSegments(query);
+        segments.forEach(segment => {
+            const partialQuery: PartialQuery = this.getPartialQuery(start, segment);
+            partialQuery.whenDone(token);
+        });
+    }
+
+    private getPartialQuery(start: Object, query: Query): PartialQuery {
+        const hash = computeHash(start);
+        let queries = this.partialQueries[hash];
+        if (!queries) {
+            queries = {};
+            this.partialQueries[hash] = queries;
+        }
+        const descriptiveString = query.toDescriptiveString();
+        let partialQuery = queries[descriptiveString];
+        if (!partialQuery) {
+            partialQuery = new PartialQuery((token: any) => {
+                this.socket.send(JSON.stringify({
+                    type: "done",
+                    token: token
+                }));
+            });
+            queries[descriptiveString] = partialQuery;
+
+            this.distributor.executeParialQuery(start, query, this.userFact, (error: string, results: Array<Object>) => {
+                if (error) {
+                    debug("[" + this.identicon + "] Error " + error);
+                    this.socket.close();
+                    this.distributor.onClose(this);
+                }
+                else {
+                    results.forEach((result: Object) => {
+                        this.channel.sendFact(result);
+                    });
+                }
+                partialQuery.done();
+            });
+        }
+
+        return partialQuery;
+    }
 }
 
 class JinagaDistributor implements Coordinator {
@@ -185,7 +243,7 @@ class JinagaDistributor implements Coordinator {
     connections: Array<Interface.Spoke> = [];
 
     constructor(
-        private storage: StorageProvider,
+        private storage: PersistenceProvider,
         private keystore: Interface.KeystoreProvider,
         private authenticate: (socket: any, done: (user: Object) => void) => void)
     {
@@ -197,7 +255,7 @@ class JinagaDistributor implements Coordinator {
         storage.init(this);
     }
 
-    static listen(storage: StorageProvider, keystore: Interface.KeystoreProvider, port: number, authenticate: (socket: any, done: (user: Object) => void) => void): JinagaDistributor {
+    static listen(storage: PersistenceProvider, keystore: Interface.KeystoreProvider, port: number, authenticate: (socket: any, done: (user: Object) => void) => void): JinagaDistributor {
         var distributor = new JinagaDistributor(storage, keystore, authenticate);
         distributor.server = Engine.listen(port);
         debug("Listening on port " + port);
@@ -205,7 +263,7 @@ class JinagaDistributor implements Coordinator {
         return distributor;
     }
 
-    static attach(storage: StorageProvider, keystore: Interface.KeystoreProvider, http, authenticate: (req: any, done: (user: Object) => void) => void): JinagaDistributor {
+    static attach(storage: PersistenceProvider, keystore: Interface.KeystoreProvider, http, authenticate: (req: any, done: (user: Object) => void) => void): JinagaDistributor {
         var distributor = new JinagaDistributor(storage, keystore, (socket: any, done: (user: Object) => void) => {
             authenticate(socket.request, done);
         });
@@ -245,13 +303,18 @@ class JinagaDistributor implements Coordinator {
         }
     }
     
-    executeQuery(
+    executeParialQuery(
         start: Object,
         query: Query,
         readerFact: Object,
         result: (error: string, facts: Array<Object>) => void
     ) {
-        this.storage.executeQuery(start, query, readerFact, result);
+        this.storage.executePartialQuery(start, query, (error, facts) => {
+            if (error)
+                result(error, null);
+            else
+                result(null, facts.filter(f => { return this.authorizeRead(f, readerFact); }));
+        });
     }
 
     send(fact: Object, sender: any) {
@@ -288,6 +351,24 @@ class JinagaDistributor implements Coordinator {
     }
 
     resendMessages() {
+    }
+
+    private authorizeRead(fact: Object, readerFact: Object) {
+        if (!fact.hasOwnProperty("in")) {
+            // Not in a locked fact
+            return true;
+        }
+        var locked = fact["in"];
+        if (!locked.hasOwnProperty("from")) {
+            // Locked fact is not from a user, so no one has access
+            return false;
+        }
+        var owner = locked["from"];
+        if (_isEqual(owner, readerFact)) {
+            // The owner has access.
+            return true;
+        }
+        return false;
     }
 
     private authorizeWrite(fact, userFact): boolean {

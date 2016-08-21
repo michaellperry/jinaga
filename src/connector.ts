@@ -47,7 +47,7 @@ class JinagaConnector implements NetworkProvider {
     }
     
     watch(start: Object, query: Query) {
-        this.distributor.executeQuery(start, query, null, (error: string, results: Array<Object>) => {
+        this.distributor.executeParialQuery(start, query, null, (error: string, results: Array<Object>) => {
             results.forEach((result: Object) => {
                 debug("Sending " + JSON.stringify(result));
                 this.coordinator.onReceived(result, null, this);
@@ -71,7 +71,7 @@ class JinagaConnector implements NetworkProvider {
     }
     
     query(start: Object, query: Query, token: number) {
-        this.distributor.executeQuery(start, query, null, (error: string, results: Array<Object>) => {
+        this.distributor.executeParialQuery(start, query, null, (error: string, results: Array<Object>) => {
             results.forEach((result: Object) => {
                 debug("Sending " + JSON.stringify(result));
                 this.coordinator.onReceived(result, null, this);
@@ -87,7 +87,7 @@ class JinagaConnector implements NetworkProvider {
     
     distribute(fact: Object) {
         this.watches.forEach((watch) => {
-            this.distributor.executeQuery(fact, watch.affected, null, (error: string, affected: Array<Object>) => {
+            this.distributor.executeParialQuery(fact, watch.affected, null, (error: string, affected: Array<Object>) => {
                 if (error) {
                     debug(error);
                     return;

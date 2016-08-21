@@ -5,13 +5,13 @@ import Coordinator = Interface.Coordinator;
 import Query = Interface.Query;
 import UserIdentity = Interface.UserIdentity;
 import Join = Interface.Join;
-import MongoGraph = require("./mongoGraph");
-import MongoSave = require("./mongoSave");
-import Keypair = require("keypair");
-import Collections = require("./collections");
+import MongoGraph = require('./mongoGraph');
+import MongoSave = require('./mongoSave');
+import Keypair = require('keypair');
+import Collections = require('./collections');
 import _isEqual = Collections._isEqual;
 
-import Pool from "./pool";
+import Pool from './pool';
 
 var MongoDb = require('mongodb');
 var MongoClient = MongoDb.MongoClient;
@@ -23,12 +23,11 @@ class MongoConnection {
     ) { }
 }
 
-class MongoProvider implements Interface.StorageProvider, Interface.KeystoreProvider {
+class MongoProvider implements Interface.PersistenceProvider, Interface.KeystoreProvider {
     private coordinator: Coordinator;
     private count: number = 0;
     private pools: { [collectionName: string]: Pool<MongoConnection> } = {};
     private quiet: () => void;
-    private cache: MongoGraph.Cache = new MongoGraph.Cache;
     
     public constructor(
         public url: string
@@ -59,13 +58,6 @@ class MongoProvider implements Interface.StorageProvider, Interface.KeystoreProv
                 }
                 else {
                     saved.forEach(f => {
-                        let predecessors = this.getPredecessors(f);
-                        predecessors.forEach(predecessor => {
-                            var start = new MongoGraph.Point(predecessor, computeHash(predecessor));
-                            var cacheHits = this.cache.invalidate(start);
-                        });
-                    });
-                    saved.forEach(f => {
                         this.coordinator.onSaved(f, source);
                     });
                 }
@@ -90,14 +82,13 @@ class MongoProvider implements Interface.StorageProvider, Interface.KeystoreProv
         return predecessors;
     }
     
-    public executeQuery(
+    public executePartialQuery(
         start: Object,
         query: Query,
-        readerFact: Object,
         result: (error: string, facts: Array<Object>) => void
     ) {
         this.withCollection("successors", (collection, done) => {
-            const processor = MongoGraph.parseSteps(this.cache, collection, readerFact, query.steps);
+            const processor = MongoGraph.pipelineProcessor(collection, query.steps);
             processor(new MongoGraph.Point(start, computeHash(start)), (error, facts) => {
                 if (error)
                     result(error, []);
@@ -107,15 +98,6 @@ class MongoProvider implements Interface.StorageProvider, Interface.KeystoreProv
                 done();
             });
         });
-    }
-    
-    public sendAllFacts() {
-    }
-    
-    public push(fact: Object) {
-    }
-    
-    public dequeue(token: number, destination: any) {
     }
     
     public getUserFact(userIdentity: UserIdentity, done: (userFact: Object) => void) {

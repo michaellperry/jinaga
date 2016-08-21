@@ -22,11 +22,11 @@
   "devDependencies": {
     "chai": "^3.2.0",
     "grunt": "^0.4.5",
-    "grunt-browserify": "^4.0.1",
-    "grunt-contrib-watch": "^0.6.1",
+    "grunt-browserify": "^5.0.0",
+    "grunt-contrib-watch": "^1.0.0",
     "grunt-mocha-test": "^0.12.7",
     "grunt-typescript": "^0.8.0",
-    "mocha": "^2.2.5",
+    "mocha": "^3.0.2",
     "typescript": "^1.8.10"
   },
   "dependencies": {
@@ -35,7 +35,7 @@
     "engine.io-client": "^1.5.2",
     "keypair": "^1.0.0",
     "minimist": "^1.2.0",
-    "mongodb": "^2.1.16",
-    "requirejs": "^2.1.20"
+    "mongodb": "^2.2.9",
+    "requirejs": "^2.3.1"
   }
 }

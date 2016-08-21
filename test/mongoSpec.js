@@ -64,7 +64,7 @@ describe("Mongo", function() {
   var query = Interface.fromDescriptiveString("S.list");
 
   it("should return no results when has no facts", function(done) {
-    mongo.executeQuery(chores, query, null, function (error, messages) {
+    mongo.executePartialQuery(chores, query, function (error, messages) {
       should.equal(null, error);
       messages.length.should.equal(0);
       done();
@@ -83,7 +83,7 @@ describe("Mongo", function() {
     });
 
     mongo.whenQuiet(function() {
-      mongo.executeQuery(chores, query, null, function (error, messages) {
+      mongo.executePartialQuery(chores, query, function (error, messages) {
         should.equal(null, error);
         messages.length.should.equal(1);
         messages[0].description.should.equal("Take out the trash");
@@ -104,7 +104,7 @@ describe("Mongo", function() {
     });
 
     mongo.whenQuiet(function() {
-      mongo.executeQuery(chores, query, null, function (error, messages) {
+      mongo.executePartialQuery(chores, query, function (error, messages) {
         should.equal(null, error);
         messages.length.should.equal(1);
         messages[0].description.should.equal("Take out the trash");
@@ -112,7 +112,7 @@ describe("Mongo", function() {
     });
 
     mongo.whenQuiet(function() {
-      mongo.executeQuery(chores, query, null, function (error, messages) {
+      mongo.executePartialQuery(chores, query, function (error, messages) {
         should.equal(null, error);
         messages.length.should.equal(1);
         messages[0].description.should.equal("Take out the trash");
@@ -133,7 +133,7 @@ describe("Mongo", function() {
     });
 
     mongo.whenQuiet(function() {
-      mongo.executeQuery(chores, query, null, function (error, messages) {
+      mongo.executePartialQuery(chores, query, function (error, messages) {
         should.equal(null, error);
         messages.length.should.equal(1);
         messages[0].description.should.equal("Take out the trash");
@@ -150,7 +150,7 @@ describe("Mongo", function() {
     });
 
     mongo.whenQuiet(function() {
-      mongo.executeQuery(chores, query, null, function (error, messages) {
+      mongo.executePartialQuery(chores, query, function (error, messages) {
         should.equal(null, error);
         messages.length.should.equal(2);
         messages[1].description.should.equal("Deposit all the cache");
@@ -168,7 +168,7 @@ describe("Mongo", function() {
     mongo.save(task, null);
 
     mongo.whenQuiet(function() {
-      mongo.executeQuery(chores, query, null, function (error, messages) {
+      mongo.executePartialQuery(chores, query, function (error, messages) {
         should.equal(null, error);
         messages.length.should.equal(1);
         messages[0].description.should.equal("Take out the trash");
@@ -186,7 +186,7 @@ describe("Mongo", function() {
     mongo.save(task, null);
 
     mongo.whenQuiet(function() {
-      mongo.executeQuery(chores, query, null, function (error, messages) {
+      mongo.executePartialQuery(chores, query, function (error, messages) {
         should.equal(null, error);
         messages.length.should.equal(1);
         messages[0].description.should.equal("Take out the trash");
@@ -204,7 +204,7 @@ describe("Mongo", function() {
     mongo.save(task, null);
 
     mongo.whenQuiet(function() {
-      mongo.executeQuery(chores, query, null, function (error, messages) {
+      mongo.executePartialQuery(chores, query, function (error, messages) {
         should.equal(null, error);
         messages.length.should.equal(0);
         done();
@@ -216,7 +216,7 @@ describe("Mongo", function() {
     mongo.save(completion, null);
 
     mongo.whenQuiet(function() {
-      mongo.executeQuery(chores, Interface.fromDescriptiveString("S.list S.task"), null, function (error2, messages) {
+      mongo.executePartialQuery(chores, Interface.fromDescriptiveString("S.list S.task"), function (error2, messages) {
         should.equal(null, error2);
         messages.length.should.equal(1);
         messages[0].completed.should.equal(true);
@@ -229,7 +229,7 @@ describe("Mongo", function() {
     mongo.save(completionWithArray, null);
 
     mongo.whenQuiet(function () {
-      mongo.executeQuery(chores, Interface.fromDescriptiveString("S.list S.task"), null, function (error2, messages) {
+      mongo.executePartialQuery(chores, Interface.fromDescriptiveString("S.list S.task"), function (error2, messages) {
         should.equal(null, error2);
         messages.length.should.equal(1);
         messages[0].completed.should.equal(true);
@@ -242,7 +242,7 @@ describe("Mongo", function() {
     mongo.save(completion, null);
 
     mongo.whenQuiet(function() {
-      mongo.executeQuery(completion, Interface.fromDescriptiveString("P.task P.list"), null, function (error2, messages) {
+      mongo.executePartialQuery(completion, Interface.fromDescriptiveString("P.task P.list"), function (error2, messages) {
         should.equal(null, error2);
         messages.length.should.equal(1);
         messages[0].name.should.equal("Chores");
@@ -255,7 +255,7 @@ describe("Mongo", function() {
     mongo.save(completion, null);
 
     mongo.whenQuiet(function() {
-      mongo.executeQuery(completion, Interface.fromDescriptiveString("P.task F.type=\"Task\" P.list F.type=\"List\""), null, function (error2, messages) {
+      mongo.executePartialQuery(completion, Interface.fromDescriptiveString("P.task F.type=\"Task\" P.list F.type=\"List\""), function (error2, messages) {
         should.equal(null, error2);
         messages.length.should.equal(1);
         messages[0].type.should.equal("List");
@@ -268,7 +268,7 @@ describe("Mongo", function() {
     mongo.save(completion, null);
 
     mongo.whenQuiet(function() {
-      mongo.executeQuery(completion, Interface.fromDescriptiveString("P.task F.type=\"Task\" P.list F.type=\"No Match\""), null, function (error2, messages) {
+      mongo.executePartialQuery(completion, Interface.fromDescriptiveString("P.task F.type=\"Task\" P.list F.type=\"No Match\""), function (error2, messages) {
         should.equal(null, error2);
         messages.length.should.equal(0);
         done();
@@ -280,80 +280,8 @@ describe("Mongo", function() {
     mongo.save(completion, null);
 
     mongo.whenQuiet(function() {
-      mongo.executeQuery(completion, Interface.fromDescriptiveString("P.task F.type=\"No Match\" P.list F.type=\"List\""), null, function (error2, messages) {
+      mongo.executePartialQuery(completion, Interface.fromDescriptiveString("P.task F.type=\"No Match\" P.list F.type=\"List\""), function (error2, messages) {
         should.equal(null, error2);
-        messages.length.should.equal(0);
-        done();
-      });
-    });
-  });
-
-  it("should not match not exists if completion exists", function(done) {
-    mongo.save(completion, null);
-
-    mongo.whenQuiet(function() {
-      mongo.executeQuery(chores, Interface.fromDescriptiveString("S.list N(S.task)"), null, function (error, messages) {
-        should.equal(null, error);
-        messages.length.should.equal(0);
-        done();
-      });
-    });
-  });
-
-  it("should match not exists if completion does not exist", function(done) {
-    mongo.save(task, null);
-
-    mongo.whenQuiet(function() {
-      mongo.executeQuery(chores, Interface.fromDescriptiveString("S.list N(S.task)"), null, function (error, messages) {
-        should.equal(null, error);
-        messages.length.should.equal(1);
-        done();
-      });
-    });
-  });
-
-  it("should match exists if completion exists", function(done) {
-    mongo.save(completion, null);
-
-    mongo.whenQuiet(function() {
-      mongo.executeQuery(chores, Interface.fromDescriptiveString("S.list E(S.task)"), null, function (error, messages) {
-        should.equal(null, error);
-        messages.length.should.equal(1);
-        done();
-      });
-    });
-  });
-
-  it("should not match exists if completion does not exist", function(done) {
-    mongo.save(task, null);
-
-    mongo.whenQuiet(function() {
-      mongo.executeQuery(chores, Interface.fromDescriptiveString("S.list E(S.task)"), null, function (error, messages) {
-        should.equal(null, error);
-        messages.length.should.equal(0);
-        done();
-      });
-    });
-  });
-
-  it("existential condition works with field conditions negative", function(done) {
-    mongo.save(task, null);
-
-    mongo.whenQuiet(function() {
-      mongo.executeQuery(chores, Interface.fromDescriptiveString("F.type=\"List\" S.list F.type=\"Task\" N(S.task F.type=\"TaskComplete\")"), null, function (error, messages) {
-        should.equal(null, error);
-        messages.length.should.equal(1);
-        done();
-      });
-    });
-  });
-
-  it("existential condition works with field conditions positive", function(done) {
-    mongo.save(completion, null);
-
-    mongo.whenQuiet(function() {
-      mongo.executeQuery(chores, Interface.fromDescriptiveString("F.type=\"List\" S.list F.type=\"Task\" N(S.task F.type=\"TaskComplete\")"), null, function (error, messages) {
-        should.equal(null, error);
         messages.length.should.equal(0);
         done();
       });
@@ -364,7 +292,7 @@ describe("Mongo", function() {
     mongo.save(completionForward, null);
 
     mongo.whenQuiet(function() {
-      mongo.executeQuery(task, Interface.fromDescriptiveString("F.type=\"Task\" S.task F.type=\"TaskComplete\""), null, function (error, messages) {
+      mongo.executePartialQuery(task, Interface.fromDescriptiveString("F.type=\"Task\" S.task F.type=\"TaskComplete\""), function (error, messages) {
         should.equal(null, error);
         messages.length.should.equal(1);
         done();

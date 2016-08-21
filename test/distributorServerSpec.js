@@ -18,7 +18,8 @@ function SocketProxy() {
     this.onMessage(JSON.stringify({
       type: "watch",
       start: start,
-      query: query
+      query: query,
+      token: 1
     }));
   };
 
@@ -102,7 +103,7 @@ describe("DistributorServer", function() {
       distributor.onReceived({ list: { name: "Chores" }, description: "Take out the trash" }, null);
     });
     mongo.whenQuiet(function () {
-      expect(proxy.messages.length).to.equal(3);
+      expect(proxy.messages.length).to.equal(4);
       expect(JSON.parse(proxy.messages[0]).type).to.equal("loggedIn");
       expect(JSON.parse(proxy.messages[1])).to.eql({
         type: "fact",
@@ -124,6 +125,10 @@ describe("DistributorServer", function() {
         },
         token: -2014427633
       });
+      expect(JSON.parse(proxy.messages[3])).to.eql({
+        type: "done",
+        token: 1
+      });
       done();
     });
   });
@@ -144,14 +149,15 @@ describe("DistributorServer", function() {
       }, thisUser, null);
     });
     mongo.whenQuiet(function () {
-      expect(proxy.messages.length).to.equal(4);
+      expect(proxy.messages.length).to.equal(5);
       expect(JSON.parse(proxy.messages[0]).type).to.equal("loggedIn");
-      expect(JSON.parse(proxy.messages[1]).type).to.equal("fact");
-      expect(JSON.parse(proxy.messages[1]).fact.type).to.equal("Jinaga.User");
+      expect(JSON.parse(proxy.messages[1]).type).to.equal("done");
       expect(JSON.parse(proxy.messages[2]).type).to.equal("fact");
-      expect(JSON.parse(proxy.messages[2]).fact.type).to.equal("Yaca.Topic");
+      expect(JSON.parse(proxy.messages[2]).fact.type).to.equal("Jinaga.User");
       expect(JSON.parse(proxy.messages[3]).type).to.equal("fact");
-      expect(JSON.parse(proxy.messages[3]).fact.type).to.equal("Yaca.Post");
+      expect(JSON.parse(proxy.messages[3]).fact.type).to.equal("Yaca.Topic");
+      expect(JSON.parse(proxy.messages[4]).type).to.equal("fact");
+      expect(JSON.parse(proxy.messages[4]).fact.type).to.equal("Yaca.Post");
       done();
     });
   });
@@ -172,8 +178,9 @@ describe("DistributorServer", function() {
       }, otherUser, null);
     });
     mongo.whenQuiet(function () {
-      expect(proxy.messages.length).to.equal(1);
+      expect(proxy.messages.length).to.equal(2);
       expect(JSON.parse(proxy.messages[0]).type).to.equal("loggedIn");
+      expect(JSON.parse(proxy.messages[1]).type).to.equal("done");
       done();
     });
   });
@@ -194,8 +201,9 @@ describe("DistributorServer", function() {
       }, thisUser, null);
     });
     mongo.whenQuiet(function () {
-      expect(proxy.messages.length).to.equal(1);
+      expect(proxy.messages.length).to.equal(2);
       expect(JSON.parse(proxy.messages[0]).type).to.equal("loggedIn");
+      expect(JSON.parse(proxy.messages[1]).type).to.equal("done");
       done();
     });
   });
@@ -216,8 +224,9 @@ describe("DistributorServer", function() {
       }, otherUser, null);
     });
     mongo.whenQuiet(function () {
-      expect(proxy.messages.length).to.equal(1);
+      expect(proxy.messages.length).to.equal(2);
       expect(JSON.parse(proxy.messages[0]).type).to.equal("loggedIn");
+      expect(JSON.parse(proxy.messages[1]).type).to.equal("done");
       done();
     });
   });
@@ -238,8 +247,9 @@ describe("DistributorServer", function() {
       proxy.watch(topic, "S.in F.type=\"Yaca.Post\"");
     });
     mongo.whenQuiet(function () {
-      expect(proxy.messages.length).to.equal(1);
+      expect(proxy.messages.length).to.equal(2);
       expect(JSON.parse(proxy.messages[0]).type).to.equal("loggedIn");
+      expect(JSON.parse(proxy.messages[1]).type).to.equal("done");
       done();
     });
   });
@@ -260,7 +270,7 @@ describe("DistributorServer", function() {
       proxy.watch(topic, "S.in F.type=\"Yaca.Post\"");
     });
     mongo.whenQuiet(function () {
-      expect(proxy.messages.length).to.equal(4);
+      expect(proxy.messages.length).to.equal(5);
       expect(JSON.parse(proxy.messages[0]).type).to.equal("loggedIn");
       expect(JSON.parse(proxy.messages[1]).type).to.equal("fact");
       expect(JSON.parse(proxy.messages[1]).fact.type).to.equal("Jinaga.User");
@@ -268,6 +278,7 @@ describe("DistributorServer", function() {
       expect(JSON.parse(proxy.messages[2]).fact.type).to.equal("Yaca.Topic");
       expect(JSON.parse(proxy.messages[3]).type).to.equal("fact");
       expect(JSON.parse(proxy.messages[3]).fact.type).to.equal("Yaca.Post");
+      expect(JSON.parse(proxy.messages[4]).type).to.equal("done");
       done();
     });
   });
