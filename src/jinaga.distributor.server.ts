@@ -23,27 +23,30 @@ class Watch {
     ) {}
 }
 
-class PartialQuery {
-    private tokens: any[] = [];
+class Promise {
     private isDone: boolean = false;
-
-    constructor(
-        private sendDone: (token: any) => void
-    ) {}
+    private whenDone: Array<() => void> = [];
 
     public done() {
         this.isDone = true;
-        this.tokens.forEach(token => {
-            this.sendDone(token);
-        });
+        this.whenDone.forEach(a => a());
     }
 
-    public whenDone(token: any) {
-        if (this.isDone) {
-            this.sendDone(token);
+    public static whenAll(promises: Promise[], action: () => void) {
+        const pending = promises.filter(p => !p.isDone);
+        if (pending.length === 0) {
+            action();
         }
         else {
-            this.tokens.push(token);
+            pending.forEach(p => {
+                p.whenDone.push(() => {
+                    const index = promises.indexOf(p);
+                    if (index >= 0)
+                        promises.splice(index, 1);
+                    if (promises.length === 0)
+                        action();
+                });
+            });
         }
     }
 }
@@ -53,7 +56,7 @@ class JinagaConnection implements Interface.Spoke {
     private userFact: Object;
     private identicon: string;
     private channel: FactChannel;
-    private partialQueries: { [start: number]: { [query: string]: PartialQuery }} = {};
+    private partialQueries: { [start: number]: { [query: string]: Promise }} = {};
 
     constructor(
         private socket,
@@ -195,13 +198,18 @@ class JinagaConnection implements Interface.Spoke {
 
     private executeQuerySegments(start: Object, token: any, query: Query) {
         const segments: Query[] = splitSegments(query);
-        segments.forEach(segment => {
-            const partialQuery: PartialQuery = this.getPartialQuery(start, segment);
-            partialQuery.whenDone(token);
+        const promises = segments.map(segment => {
+            return this.getPartialQuery(start, segment);
+        });
+        Promise.whenAll(promises, () => {
+            this.socket.send(JSON.stringify({
+                type: "done",
+                token: token
+            }));
         });
     }
 
-    private getPartialQuery(start: Object, query: Query): PartialQuery {
+    private getPartialQuery(start: Object, query: Query): Promise {
         const hash = computeHash(start);
         let queries = this.partialQueries[hash];
         if (!queries) {
@@ -211,12 +219,7 @@ class JinagaConnection implements Interface.Spoke {
         const descriptiveString = query.toDescriptiveString();
         let partialQuery = queries[descriptiveString];
         if (!partialQuery) {
-            partialQuery = new PartialQuery((token: any) => {
-                this.socket.send(JSON.stringify({
-                    type: "done",
-                    token: token
-                }));
-            });
+            partialQuery = new Promise();
             queries[descriptiveString] = partialQuery;
 
             this.distributor.executeParialQuery(start, query, this.userFact, (error: string, results: Array<Object>) => {

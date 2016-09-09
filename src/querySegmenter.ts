@@ -17,8 +17,13 @@ function childSegments(head: Step[], tail: Step[]) : Query[] {
         if (tail[0] instanceof Join) {
             const index: number = scanForEndOfSegment(tail);
             const nextHead: Step[] = head.concat(tail.slice(0, index));
-            return [new Query(nextHead)]
-                .concat(childSegments(nextHead, tail.slice(index)));
+            if ((<Join>tail[0]).direction === Interface.Direction.Successor) {
+                return [new Query(nextHead)]
+                    .concat(childSegments(nextHead, tail.slice(index)));
+            }
+            else {
+                return childSegments(nextHead, tail.slice(index));
+            }
         }
         else if (tail[0] instanceof ExistentialCondition) {
             const subquery: ExistentialCondition = tail[0] as ExistentialCondition;

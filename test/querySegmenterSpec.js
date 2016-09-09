@@ -17,23 +17,12 @@ describe('Query segmenter', function () {
     });
     it('should accept a predecessor', function () {
         var segments = splitSegments(Interface.fromDescriptiveString('P.parent'));
-        expect(segments.length).to.equal(1);
-        expect(segments[0].toDescriptiveString()).to.equal('P.parent');
+        expect(segments.length).to.equal(0);
     });
     it('should accept a successor with a field', function () {
         var segments = splitSegments(Interface.fromDescriptiveString('S.parent F.type="Type"'));
         expect(segments.length).to.equal(1);
         expect(segments[0].toDescriptiveString()).to.equal('S.parent F.type="Type"');
-    });
-    it('should accept a predecessor with a field', function () {
-        var segments = splitSegments(Interface.fromDescriptiveString('P.parent F.type="Type"'));
-        expect(segments.length).to.equal(1);
-        expect(segments[0].toDescriptiveString()).to.equal('P.parent F.type="Type"');
-    });
-    it('should accept a predecessor with two fields', function () {
-        var segments = splitSegments(Interface.fromDescriptiveString('P.parent F.type="Type" F.condition="true"'));
-        expect(segments.length).to.equal(1);
-        expect(segments[0].toDescriptiveString()).to.equal('P.parent F.type="Type" F.condition="true"');
     });
     it('should ignore leading fields', function () {
         var segments = splitSegments(Interface.fromDescriptiveString('F.type="Type" S.parent'));
@@ -53,10 +42,21 @@ describe('Query segmenter', function () {
         expect(segments[1].toDescriptiveString()).to.equal('S.list F.type="Task" S.task F.type="Completion"');
     });
     it('should fork at existential queries', function () {
-        var segments = splitSegments(Interface.fromDescriptiveString('S.list F.type="Task" N(S.task F.type="Completion") P.assignee F.type="User"'));
+        var segments = splitSegments(Interface.fromDescriptiveString('S.list F.type="Task" N(S.task F.type="Completion") P.assignee F.type="User" S.user F.type="Name"'));
         expect(segments.length).to.equal(3);
         expect(segments[0].toDescriptiveString()).to.equal('S.list F.type="Task"');
         expect(segments[1].toDescriptiveString()).to.equal('S.list F.type="Task" S.task F.type="Completion"');
-        expect(segments[2].toDescriptiveString()).to.equal('S.list F.type="Task" P.assignee F.type="User"');
+        expect(segments[2].toDescriptiveString()).to.equal('S.list F.type="Task" P.assignee F.type="User" S.user F.type="Name"');
+    });
+    it('should skip segments that end in predecessors', function () {
+        var segments = splitSegments(Interface.fromDescriptiveString('S.list F.type="Task" P.assignee F.type="User" S.user F.type="Name"'));
+        expect(segments.length).to.equal(2);
+        expect(segments[0].toDescriptiveString()).to.equal('S.list F.type="Task"');
+        expect(segments[1].toDescriptiveString()).to.equal('S.list F.type="Task" P.assignee F.type="User" S.user F.type="Name"');
+    });
+    it('should accept leading predecessor', function () {
+        var segments = splitSegments(Interface.fromDescriptiveString('P.assignee F.type="User" S.user F.type="Name"'));
+        expect(segments.length).to.equal(1);
+        expect(segments[0].toDescriptiveString()).to.equal('P.assignee F.type="User" S.user F.type="Name"');
     });
 });

@@ -24,6 +24,7 @@ describe("Mongo", function() {
     mongo.init(coordinator);
 
     chores.time = new Date();
+    me.time = new Date();
   });
 
   var chores = {
@@ -31,15 +32,28 @@ describe("Mongo", function() {
     name: "Chores"
   };
 
+  var me = {
+    type: "User",
+    identifier: "MLP"
+  };
+
+  var name = {
+    type: "Name",
+    user: me,
+    value: "Michael L Perry"
+  }
+
   var task = {
     type: "Task",
     list: chores,
+    assignee: me,
     description: "Empty the dishwasher"
   };
 
   var task2 = {
     type: "Task",
     list: chores,
+    assignee: me,
     description: "Take out the trash"
   };
 
@@ -238,27 +252,56 @@ describe("Mongo", function() {
     });
   });
 
-  it("should find grandparents", function(done) {
-    mongo.save(completion, null);
+  it("should match zig zag", function (done) {
+    mongo.save(task, null);
+    mongo.save(name, null);
 
-    mongo.whenQuiet(function() {
-      mongo.executePartialQuery(completion, Interface.fromDescriptiveString("P.task P.list"), function (error2, messages) {
-        should.equal(null, error2);
+    mongo.whenQuiet(function () {
+      mongo.executePartialQuery(chores, Interface.fromDescriptiveString("S.list P.assignee S.user"), function (error, messages) {
+        should.equal(null, error);
         messages.length.should.equal(1);
-        messages[0].name.should.equal("Chores");
+        messages[0].type.should.equal("Name");
         done();
       });
-    });
+    })
+  });
+
+  it("should match leading predecessor", function (done) {
+    mongo.save(task, null);
+    mongo.save(name, null);
+
+    mongo.whenQuiet(function () {
+      mongo.executePartialQuery(task, Interface.fromDescriptiveString("P.assignee S.user"), function (error, messages) {
+        should.equal(null, error);
+        messages.length.should.equal(1);
+        messages[0].type.should.equal("Name");
+        done();
+      });
+    })
+  });
+
+  it("should match zig zag with fields", function (done) {
+    mongo.save(task, null);
+    mongo.save(name, null);
+
+    mongo.whenQuiet(function () {
+      mongo.executePartialQuery(chores, Interface.fromDescriptiveString('S.list F.type="Task" P.assignee F.type="User" S.user F.type="Name"'), function (error, messages) {
+        should.equal(null, error);
+        messages.length.should.equal(1);
+        messages[0].type.should.equal("Name");
+        done();
+      });
+    })
   });
 
   it("should match based on field values", function(done) {
     mongo.save(completion, null);
 
     mongo.whenQuiet(function() {
-      mongo.executePartialQuery(completion, Interface.fromDescriptiveString("P.task F.type=\"Task\" P.list F.type=\"List\""), function (error2, messages) {
+      mongo.executePartialQuery(chores, Interface.fromDescriptiveString('S.list F.type="Task" S.task F.type="TaskComplete"'), function (error2, messages) {
         should.equal(null, error2);
         messages.length.should.equal(1);
-        messages[0].type.should.equal("List");
+        messages[0].type.should.equal("TaskComplete");
         done();
       });
     });
@@ -268,7 +311,7 @@ describe("Mongo", function() {
     mongo.save(completion, null);
 
     mongo.whenQuiet(function() {
-      mongo.executePartialQuery(completion, Interface.fromDescriptiveString("P.task F.type=\"Task\" P.list F.type=\"No Match\""), function (error2, messages) {
+      mongo.executePartialQuery(chores, Interface.fromDescriptiveString('S.list F.type="Task" S.task F.type="No Match"'), function (error2, messages) {
         should.equal(null, error2);
         messages.length.should.equal(0);
         done();
@@ -280,7 +323,7 @@ describe("Mongo", function() {
     mongo.save(completion, null);
 
     mongo.whenQuiet(function() {
-      mongo.executePartialQuery(completion, Interface.fromDescriptiveString("P.task F.type=\"No Match\" P.list F.type=\"List\""), function (error2, messages) {
+      mongo.executePartialQuery(chores, Interface.fromDescriptiveString('S.list F.type="No Match" S.task F.type="TaskComplete"'), function (error2, messages) {
         should.equal(null, error2);
         messages.length.should.equal(0);
         done();

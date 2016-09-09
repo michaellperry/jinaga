@@ -334,4 +334,46 @@ describe("DistributorServer", function() {
       done();
     });
   });
+
+  it('should perform zig zag query', function (done) {
+    var distributor = new JinagaDistributor(mongo, mongo, authenticateFor(thisUserCredential));
+
+    var proxy = new SocketProxy();
+    distributor.onConnection(proxy);
+    mongo.whenQuiet(function () {
+      distributor.onReceived({
+        type: "Yaca.Post",
+        from: thisUser,
+        to: otherUser,
+        in: topic
+      }, thisUser, null);
+    });
+    mongo.whenQuiet(function () {
+      distributor.onReceived({
+        type: "Jinaga.User.Name",
+        from: otherUser,
+        value: 'Michael L Perry',
+        prior: []
+      }, otherUser, null);
+    });
+    mongo.whenQuiet(function () {
+      proxy.query(topic, 'S.in F.type="Yaca.Post" P.to F.type="Jinaga.User" S.from F.type="Jinaga.User.Name"', 1);
+    });
+    mongo.whenQuiet(function () {
+      expect(proxy.messages.length).to.equal(7);
+      expect(JSON.parse(proxy.messages[0]).type).to.equal("loggedIn");
+      expect(JSON.parse(proxy.messages[1]).type).to.equal("fact");
+      expect(JSON.parse(proxy.messages[1]).fact.type).to.equal("Jinaga.User");
+      expect(JSON.parse(proxy.messages[2]).type).to.equal("fact");
+      expect(JSON.parse(proxy.messages[2]).fact.type).to.equal("Jinaga.User");
+      expect(JSON.parse(proxy.messages[3]).type).to.equal("fact");
+      expect(JSON.parse(proxy.messages[3]).fact.type).to.equal("Yaca.Topic");
+      expect(JSON.parse(proxy.messages[4]).type).to.equal("fact");
+      expect(JSON.parse(proxy.messages[4]).fact.type).to.equal("Yaca.Post");
+      expect(JSON.parse(proxy.messages[5]).type).to.equal("fact");
+      expect(JSON.parse(proxy.messages[5]).fact.type).to.equal("Jinaga.User.Name");
+      expect(proxy.messages[6]).to.equal(JSON.stringify({ "type": "done", "token": 1 }));
+      done();
+    });
+  })
 });
