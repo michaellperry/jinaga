@@ -7,17 +7,14 @@ See an example application: [ImprovingU](https://jinagademo.azurewebsites.net) -
 
 Get a quick [video introduction](https://vimeo.com/channels/jinaga) to Jinaga.
 
-- [Mutablity](https://github.com/michaellperry/jinaga/blob/master/mutability.md)
-- [Security](https://github.com/michaellperry/jinaga/blob/master/security.md)
-- [Synchronization](https://github.com/michaellperry/jinaga/blob/master/synchronization.md)
-- Conventions (coming soon)
-- Migrations (coming soon)
-- Checkpoints (coming soon)
-- [Comparison with alternatives](https://github.com/michaellperry/jinaga/blob/master/alternatives.md)
-- [Protocol](https://github.com/michaellperry/jinaga/blob/master/protocol.md)
-- [Roadmap](https://github.com/michaellperry/jinaga/blob/master/roadmap.md)
+- [Mutablity](mutability.md)
+- [Security](security.md)
+- [Synchronization](synchronization.md)
+- [Comparison with alternatives](alternatives.md)
+- [Protocol](protocol.md)
+- [Roadmap](roadmap.md)
 
-[Contributing](https://github.com/michaellperry/jinaga/blob/master/contributing.md)
+[Contributing](contributing.md)
 
 ## Universal Back End
 
