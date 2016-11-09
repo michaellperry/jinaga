@@ -40,10 +40,10 @@ class Promise {
         else {
             pending.forEach(p => {
                 p.whenDone.push(() => {
-                    const index = promises.indexOf(p);
+                    const index = pending.indexOf(p);
                     if (index >= 0)
-                        promises.splice(index, 1);
-                    if (promises.length === 0)
+                        pending.splice(index, 1);
+                    if (pending.length === 0)
                         action();
                 });
             });
