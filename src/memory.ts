@@ -11,6 +11,7 @@ import Coordinator = Interface.Coordinator;
 import PropertyCondition = Interface.PropertyCondition;
 import computeHash = Interface.computeHash;
 import isPredecessor = Interface.isPredecessor;
+import Keypair = require('keypair');
 import Collections = require("./collections");
 import _isEqual = Collections._isEqual;
 
@@ -40,8 +41,9 @@ class Node {
     }
 }
 
-class MemoryProvider implements StorageProvider, PersistenceProvider {
-    nodes: { [hash: number]: Array<Node>; } = {};
+class MemoryProvider implements StorageProvider, PersistenceProvider, Interface.KeystoreProvider {
+    nodes: { [hash: number]: Array<Node> } = {};
+    publicKeys: { [id: string]: string } = {};
     queue: Array<{hash: number, fact: Object}> = [];
     coordinator: Coordinator;
 
@@ -80,6 +82,24 @@ class MemoryProvider implements StorageProvider, PersistenceProvider {
         result: (error: string, facts: Array<Object>) => void
     ) {
         this.executeQuery(start, query, null, result);
+    }
+
+    getUserFact(userIdentity: Interface.UserIdentity, done: (userFact: Object) => void) {
+        if (!userIdentity) {
+            done(null);
+        }
+        else {
+            var publicKey = this.publicKeys[userIdentity.id];
+            if (!publicKey) {
+                let pair = Keypair({ bits: 1024 });
+                publicKey = pair.public;
+                this.publicKeys[userIdentity.id] = publicKey;
+            }
+            done({
+                type: "Jinaga.User",
+                publicKey: publicKey
+            });
+        }
     }
 
     private queryNodes(startingNode, steps:Array<Interface.Step>): Array<Node> {

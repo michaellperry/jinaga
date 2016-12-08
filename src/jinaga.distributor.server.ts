@@ -313,10 +313,29 @@ class JinagaDistributor implements Coordinator {
         result: (error: string, facts: Array<Object>) => void
     ) {
         this.storage.executePartialQuery(start, query, (error, facts) => {
-            if (error)
+            if (error) {
                 result(error, null);
-            else
-                result(null, facts.filter(f => { return this.authorizeRead(f, readerFact); }));
+            }
+            else {
+                var results: Array<Object> = [];
+                var count = facts.length;
+                if (count === 0) {
+                    result(null, facts);
+                }
+                else {
+                    facts.forEach(fact => {
+                        this.authorizeRead(fact, readerFact, authorized => {
+                            if (authorized) {
+                                results.push(fact);
+                            }
+                            count--;
+                            if (count === 0) {
+                                result(null, results);
+                            }
+                        });
+                    })
+                }
+            }
         });
     }
 
@@ -356,22 +375,47 @@ class JinagaDistributor implements Coordinator {
     resendMessages() {
     }
 
-    private authorizeRead(fact: Object, readerFact: Object) {
+    private authorizeRead(fact: Object, readerFact: Object, done: (authorized: boolean) => void) {
         if (!fact.hasOwnProperty("in")) {
             // Not in a locked fact
-            return true;
+            done(true);
+            return;
         }
-        var locked = fact["in"];
+        let locked = fact["in"];
         if (!locked.hasOwnProperty("from")) {
             // Locked fact is not from a user, so no one has access
-            return false;
+            done(false);
+            return;
         }
-        var owner = locked["from"];
+        let owner = locked["from"];
         if (_isEqual(owner, readerFact)) {
             // The owner has access.
-            return true;
+            done(true);
+            return;
         }
-        return false;
+        // Look for the read privilege to be assigned to everyone.
+        let privilege = {
+            to: {
+                type: 'Jinaga.Group',
+                identifier: 'everyone'
+            },
+            read: locked
+        }
+        this.storage.executePartialQuery(privilege, Interface.fromDescriptiveString('S.privilege'), (error, facts) => {
+            if (error) {
+                // Can't verify authorization.
+                done(false);
+                return;
+            }
+            if (facts.some(fact => fact.hasOwnProperty('from') && _isEqual(owner, fact['from']))) {
+                // The owner has authorized this privilege.
+                done(true);
+                return;
+            }
+            // The owner has not authorized this privilege.
+            done(false);
+            return;
+        })
     }
 
     private authorizeWrite(fact, userFact): boolean {
