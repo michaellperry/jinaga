@@ -20,22 +20,22 @@
   },
   "homepage": "http://jinaga.com",
   "devDependencies": {
-    "chai": "^3.2.0",
-    "grunt": "^0.4.5",
+    "chai": "^3.5.0",
+    "grunt": "^1.0.1",
     "grunt-browserify": "^5.0.0",
     "grunt-contrib-watch": "^1.0.0",
-    "grunt-mocha-test": "^0.12.7",
+    "grunt-mocha-test": "^0.13.2",
     "grunt-typescript": "^0.8.0",
-    "mocha": "^3.0.2",
-    "typescript": "^1.8.10"
+    "mocha": "^3.2.0",
+    "typescript": "^2.1.4"
   },
   "dependencies": {
-    "debug": "^2.2.0",
-    "engine.io": "^1.5.2",
-    "engine.io-client": "^1.5.2",
+    "debug": "^2.3.3",
+    "engine.io": "^1.8.1",
+    "engine.io-client": "^1.8.1",
     "keypair": "^1.0.0",
     "minimist": "^1.2.0",
-    "mongodb": "^2.2.9",
-    "requirejs": "^2.3.1"
+    "mongodb": "^2.2.12",
+    "requirejs": "^2.3.2"
   }
 }
