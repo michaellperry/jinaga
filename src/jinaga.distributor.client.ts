@@ -16,6 +16,7 @@ class JinagaDistributor implements NetworkProvider {
     watches: Array<string> = [];
 
     private maxTimeout: number = 1 * 1000;
+    private log: (id: number, fact: any) => void;
 
     constructor(
         private endpoint: string
@@ -25,6 +26,10 @@ class JinagaDistributor implements NetworkProvider {
 
     public init(coordinator: Coordinator) {
         this.coordinator = coordinator;
+    }
+
+    public capture(log: (id: number, fact: any) => void) {
+        this.log = log;
     }
 
     public watch(start: Object, query: Query, token: number) {
@@ -108,6 +113,9 @@ class JinagaDistributor implements NetworkProvider {
     private onMessage(message) {
         var messageObj = JSON.parse(message);
         if (messageObj.type === "fact") {
+            if (this.log) {
+                this.log(messageObj.id, messageObj.fact);
+            }
             this.channel.messageReceived(messageObj);
         }
         if (messageObj.type === "received") {

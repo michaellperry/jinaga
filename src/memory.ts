@@ -191,7 +191,7 @@ class MemoryProvider implements StorageProvider, PersistenceProvider, Interface.
         }
         var node = this.findNodeWithFact(array, fact);
         if (!node) {
-            var predecessors = {};
+            var predecessors: { [field: string]: Array<Node> }  = {};
             for (var field in fact) {
                 var value = fact[field];
                 if (isPredecessor(value)) {

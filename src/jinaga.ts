@@ -11,6 +11,7 @@ import QueryInverter = require("./queryInverter");
 import Inverse = QueryInverter.Inverse;
 import Debug = require("debug");
 import Collections = require("./collections");
+import FactChannel = require("./factChannel");
 import _isEqual = Collections._isEqual;
 import _some = Collections._some;
 
@@ -430,6 +431,15 @@ class Jinaga {
     }
     public login(callback: (userFact: Object) => void) {
         this.coordinator.login(callback);
+    }
+    public preload(cachedFacts: Array<any>) {
+        var source = {};
+        var channel = new FactChannel(1,
+            message => {},
+            fact => { this.coordinator.onReceived(fact, null, source); });
+        cachedFacts.forEach(cachedFact => {
+            channel.messageReceived(cachedFact);
+        });
     }
 
     public where(
