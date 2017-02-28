@@ -173,6 +173,9 @@ function buildPipelineFromFacts(steps: Step[]): Object[] {
             }]).concat(buildPipelineFromFacts(steps.slice(1)));
         }
     }
+    else {
+        return buildPipelineFromFacts(steps.slice(1));
+    }
 }
 
 export = buildPipeline;
