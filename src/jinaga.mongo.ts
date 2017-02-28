@@ -45,7 +45,30 @@ class MongoProvider implements Interface.PersistenceProvider, Interface.Keystore
                 if (err) {
                     coordinator.onError(err);
                 }
-                done();
+                collection.createIndex({
+                    'predecessors.role': 1,
+                    'predecessors.hash': 1,
+                    'fact.type': 1
+                }, function (err) {
+                    if (err) {
+                        coordinator.onError(err);
+                    }
+                    collection.createIndex({
+                        'hash': 1
+                    }, function (err) {
+                        if (err) {
+                            coordinator.onError(err);
+                        }
+                        collection.createIndex({
+                            'predecessors.hash': 1
+                        }, function (err) {
+                            if (err) {
+                                coordinator.onError(err);
+                            }
+                            done();
+                        });
+                    });
+                });
             });
         })
     }
