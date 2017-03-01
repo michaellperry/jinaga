@@ -30,12 +30,12 @@
     "typescript": "^2.1.4"
   },
   "dependencies": {
-    "debug": "^2.3.3",
-    "engine.io": "^1.8.1",
-    "engine.io-client": "^1.8.1",
-    "keypair": "^1.0.0",
+    "debug": "^2.6.1",
+    "engine.io": "^1.8.3",
+    "engine.io-client": "^1.8.3",
+    "keypair": "^1.0.1",
     "minimist": "^1.2.0",
-    "mongodb": "^2.2.12",
-    "requirejs": "^2.3.2"
+    "mongodb": "^2.2.24",
+    "requirejs": "^2.3.3"
   }
 }
