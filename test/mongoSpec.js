@@ -4,6 +4,7 @@ var MongoProvider = require("../node/jinaga.mongo");
 var Interface = require("../node/interface");
 var url = 'mongodb://localhost:27017/test';
 
+var expect = chai.expect;
 var should = chai.should();
 
 describe("Mongo", function() {
@@ -340,6 +341,36 @@ describe("Mongo", function() {
         messages.length.should.equal(1);
         done();
       });
+    });
+  });
+
+  it('should filter on type without hitting storage', function (done) {
+    var synchronous = true;
+    mongo.save(completion, null);
+
+    mongo.whenQuiet(function() {
+      mongo.executePartialQuery(completion, Interface.fromDescriptiveString('F.type="Task" P.list'), function (error, messages) {
+        should.equal(null, error);
+        messages.length.should.equal(0);
+        expect(synchronous).to.be.true;
+        done();
+      });
+      synchronous = false;
+    });
+  });
+
+  it('should execute a trivial match without hitting storage', function (done) {
+    var synchronous = true;
+    mongo.save(task, null);
+
+    mongo.whenQuiet(function() {
+      mongo.executePartialQuery(task, Interface.fromDescriptiveString('F.type="Task"'), function (error, messages) {
+        should.equal(null, error);
+        messages.length.should.equal(1);
+        expect(synchronous).to.be.true;
+        done();
+      });
+      synchronous = false;
     });
   });
 });

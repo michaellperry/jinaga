@@ -110,15 +110,17 @@ class MongoProvider implements Interface.PersistenceProvider, Interface.Keystore
         query: Query,
         result: (error: string, facts: Array<Object>) => void
     ) {
-        this.withCollection("successors", (collection, done) => {
-            const processor = MongoGraph.pipelineProcessor(collection, query.steps);
-            processor(new MongoGraph.Point(start, computeHash(start)), (error, facts) => {
-                if (error)
-                    result(error, []);
-                else
-                    result(null, facts
-                        .map(f => f.fact));
-                done();
+        MongoGraph.executeIfMatches(start, query.steps, (facts) => result(null, facts), steps => {
+            this.withCollection("successors", (collection, done) => {
+                const processor = MongoGraph.pipelineProcessor(collection, steps);
+                processor(new MongoGraph.Point(start, computeHash(start)), (error, facts) => {
+                    if (error)
+                        result(error, []);
+                    else
+                        result(null, facts
+                            .map(f => f.fact));
+                    done();
+                });
             });
         });
     }

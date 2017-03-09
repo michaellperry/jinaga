@@ -20,6 +20,26 @@ export class Point {
 
 export type Processor = (start: Point, result: (error: string, facts: Array<Point>) => void) => void;
 
+export function executeIfMatches(start: Object, steps: Step[], done: (facts: Object[]) => void, execute: (steps: Step[]) => void) {
+    if (steps.length === 0) {
+        done([start]);
+    }
+    else {
+        let head = steps[0];
+        if (head instanceof PropertyCondition) {
+            if (start[head.name] === head.value) {
+                executeIfMatches(start, steps.slice(1), done, execute);
+            }
+            else {
+                done([]);
+            }
+        }
+        else {
+            execute(steps);
+        }
+    }
+}
+
 export function pipelineProcessor(collection: any, steps: Step[]): Processor {
     return function(start, result) {
         const pipeline = buildPipeline(start.hash, steps);
