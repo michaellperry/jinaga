@@ -25,7 +25,10 @@ class ConnectorSpoke implements Interface.Spoke {
         private connector: JinagaConnector
     ) { }
     
-    distribute(fact: Object) {
+    gatherQueries(queries : Interface.QueryCache) {
+
+    }
+    distribute(queries: Interface.QueryCache, fact: Object) {
         this.connector.distribute(fact);
     }
 }

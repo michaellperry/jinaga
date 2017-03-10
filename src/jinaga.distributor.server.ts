@@ -181,18 +181,25 @@ class JinagaConnection implements Interface.Spoke {
         }));
     }
 
-    distribute(fact: Object) {
-        this.watches.forEach((watch) => {
-            this.distributor.executeParialQuery(fact, watch.affected, this.userFact, (error: string, affected: Array<Object>) => {
-                if (error) {
-                    debug(error);
-                    return;
-                }
-                var some: any = _some;
-                if (some(affected, (obj: Object) => _isEqual(obj, watch.start))) {
-                    this.channel.sendFact(fact);
-                }
-            });
+    gatherQueries(queries : Interface.QueryCache) {
+        this.watches.forEach(watch => {
+            let key = watch.affected.toDescriptiveString();
+            if (!queries.hasOwnProperty(key)) {
+                queries[key] = {
+                    query: watch.affected,
+                    result: []
+                };
+            }
+        })
+    }
+
+    distribute(queries : Interface.QueryCache, fact: Object) {
+        this.watches.forEach(watch => {
+            let affected = queries[watch.affected.toDescriptiveString()].result;
+            var some: any = _some;
+            if (some(affected, (obj: Object) => _isEqual(obj, watch.start))) {
+                this.channel.sendFact(fact);
+            }
         });
     }
 
@@ -340,9 +347,43 @@ class JinagaDistributor implements Coordinator {
     }
 
     send(fact: Object, sender: any) {
-        this.connections.forEach((connection: Interface.Spoke) => {
-            if (connection !== sender)
-                connection.distribute(fact);
+        let connections : Interface.Spoke[] = this.connections.filter(c => c !== sender);
+        let queries : Interface.QueryCache = this.gatherQueries(connections);
+        let promises : Promise[] = this.executeQueries(queries, fact);
+        Promise.whenAll(promises, () => {
+            this.distributeResults(connections, queries, fact);
+        });
+    }
+
+    private gatherQueries(connections: Interface.Spoke[]) : Interface.QueryCache {
+        let queries : Interface.QueryCache = {};
+        connections.forEach(connection => {
+            connection.gatherQueries(queries);
+        });
+        return queries;
+    }
+
+    private executeQueries(queries : Interface.QueryCache, fact: Object) : Promise[] {
+        let promises : Promise[] = [];
+        for (var key in queries) (value => {
+            let promise = new Promise();
+            promises.push(promise);
+            this.executeParialQuery(fact, value.query, null, (error: string, facts: Object[]) => {
+                if (error) {
+                    debug(error);
+                }
+                else {
+                    value.result = facts;
+                }
+                promise.done();
+            });
+        })(queries[key]);
+        return promises;
+    }
+
+    private distributeResults(connections : Interface.Spoke[], queries: Interface.QueryCache, fact: Object) {
+        connections.forEach(connection => {
+            connection.distribute(queries, fact);
         });
     }
 

@@ -310,8 +310,14 @@ export interface NetworkProvider {
     fact(fact: Object);
 }
 
+export type QueryCache = { [descriptiveString: string]: {
+    query: Query,
+    result: Object[]
+} };
+
 export interface Spoke {
-    distribute(fact: Object);
+    gatherQueries(queries : QueryCache);
+    distribute(queries: QueryCache, fact: Object);
 }
 
 export interface Proxy {
