@@ -184,6 +184,9 @@ function parseDescriptiveString(descriptive: string, index: number): {steps: Arr
 }
 
 export function isPredecessor(value: any): boolean {
+    if (value === null)
+        return false;
+        
     if (typeof(value) !== "object")
         return false;
 
