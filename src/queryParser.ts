@@ -71,6 +71,9 @@ function findTarget(spec:Object): Array<Step> {
             return [new ExistentialCondition(Quantifier.NotExists, steps)];
         }
     }
+    if (Array.isArray(spec) && spec.length === 1) {
+        return findTarget(spec[0]);
+    }
     if (spec instanceof Object) {
         var steps: Array<Step> = [];
         var targetQuery: Array<Step> = null;

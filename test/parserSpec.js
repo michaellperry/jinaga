@@ -72,6 +72,14 @@ describe('QueryParser', function() {
     }, [taskIsCompleted]);
   }
 
+  function completedTasksInListWithArray(l) {
+    l.type = 'List';
+    return j.where({
+      type: 'Task',
+      list: [l]
+    }, [taskIsCompleted]);
+  }
+
   function uncompletedTasksInListAlt(l) {
     l.type = 'List';
     return j.where({
@@ -136,4 +144,9 @@ describe('QueryParser', function() {
     var query = parse([listOfTask, uncompletedTasksInList]);
     query.toDescriptiveString().should.equal('F.type="Task" P.list F.type="List" S.list F.type="Task" N(S.task F.type="Completion")');
   })
+
+  it('should allow array with one predecessor', function () {
+    var query = parse([completedTasksInListWithArray]);
+    query.toDescriptiveString().should.equal('F.type="List" S.list F.type="Task" E(S.task F.type="Completion")');
+  });
 });
