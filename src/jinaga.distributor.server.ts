@@ -1,7 +1,7 @@
 import Engine = require("engine.io");
 import Debug = require("debug");
 import Interface = require("./interface");
-import Coordinator = Interface.Coordinator;
+import Coordinator from './coordinator';
 import computeHash = Interface.computeHash;
 import QueryInverter = require("./query/inverter");
 import Inverse = QueryInverter.Inverse;
@@ -10,7 +10,8 @@ import _isEqual = Collections._isEqual;
 import _some = Collections._some;
 import FactChannel = require("./factChannel");
 import splitSegments = require('./query/segmenter');
-import { UserIdentity, KeystoreProvider } from './keystore';
+import { UserIdentity } from './keystore/user-identity';
+import { KeystoreProvider } from './keystore/provider';
 import { QueryCache } from './query/cache'
 import { Spoke } from './network/spoke';
 import { PersistenceProvider } from './persistence/provider'

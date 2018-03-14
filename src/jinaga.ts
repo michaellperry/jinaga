@@ -1,6 +1,6 @@
 import Interface = require("./interface");
 import computeHash = Interface.computeHash;
-import Coordinator = Interface.Coordinator;
+import Coordinator from './coordinator';
 import { Instrumentation } from "./instrumentation";
 import parse = require("./query/parser");
 import MemoryProvider = require("./memory");

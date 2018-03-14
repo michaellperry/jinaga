@@ -1,8 +1,4 @@
-export interface UserIdentity {
-    provider: string;
-    id: string;
-    profile: Object;
-}
+import { UserIdentity } from './user-identity';
 
 export interface KeystoreProvider {
     getUserFact(userIdentity: UserIdentity, done: (userFact: Object) => void);

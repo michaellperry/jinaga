@@ -1,4 +1,4 @@
-import { Coordinator } from '../interface';
+import Coordinator from '../coordinator';
 import { Query } from '../query/query';
 
 export interface NetworkProvider {
