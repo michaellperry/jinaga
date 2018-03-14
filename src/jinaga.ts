@@ -5,6 +5,7 @@ import StorageProvider = Interface.StorageProvider;
 import NetworkProvider = Interface.NetworkProvider;
 import Proxy = Interface.Proxy;
 import Coordinator = Interface.Coordinator;
+import Instrumentation = Interface.Instrumentation;
 import parse = require("./queryParser");
 import MemoryProvider = require("./memory");
 import QueryInverter = require("./queryInverter");
@@ -70,6 +71,12 @@ class Watch {
         });
     }
 
+    public countWatches() {
+        return this.children.reduce((i, w) => {
+            return i + w.countWatches();
+        }, 1);
+    }
+
     private lookup(fact: Object, remove: boolean): any {
         var hash = computeHash(fact);
         var array = this.mappings[hash];
@@ -101,6 +108,11 @@ class JinagaCoordinator implements Coordinator {
     private nextToken: number = 1;
     private queries: Array<{ token: number, callback: () => void }> = [];
     private watchCount: number = 0;
+    private instrumentationAdapters: Instrumentation[] = [];
+
+    instrument(instrumentation: Instrumentation) {
+        this.instrumentationAdapters.push(instrumentation);
+    }
 
     save(storage: StorageProvider) {
         this.messages = storage;
@@ -156,6 +168,7 @@ class JinagaCoordinator implements Coordinator {
         else {
             outer.addChild(watch);
         }
+        this.watchesChanged();
 
         this.messages.executeQuery(start, full, this.userFact, (_, results) => {
             results.forEach((fact) => {
@@ -231,6 +244,7 @@ class JinagaCoordinator implements Coordinator {
         if (this.network) {
             this.network.stopWatch(watch.start, watch.joins);
         }
+        this.watchesChanged();
     }
 
     login(callback: (userFact: Object, profile: Object) => void) {
@@ -353,6 +367,15 @@ class JinagaCoordinator implements Coordinator {
         var mapping = watch.resultAdded(parentMapping, fact) || fact;
         watch.push(fact, mapping);
     }
+
+    private watchesChanged() {
+        this.instrumentationAdapters.forEach(a => {
+            const count = this.watches.reduce((i, w) => {
+                return i + w.countWatches();
+            }, 0);
+            a.setCounter('watches', count);
+        });
+    }
 }
 
 class WatchProxy {
@@ -397,6 +420,9 @@ class Jinaga {
     }
     public onProgress(handler: (queueCount: number) => void) {
         this.coordinator.addProgressHandler(handler);
+    }
+    public instrument(instrumentation: Instrumentation) {
+        this.coordinator.instrument(instrumentation);
     }
     public save(storage: StorageProvider) {
         this.coordinator.save(storage);

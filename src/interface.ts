@@ -3,6 +3,10 @@ import _isEqual = Collections._isEqual;
 import _pairs = Collections._pairs;
 import _some = Collections._some;
 
+export interface Instrumentation {
+    setCounter(name: string, count: number);
+}
+
 export enum Direction {
     Predecessor,
     Successor

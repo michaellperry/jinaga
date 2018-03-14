@@ -2,6 +2,7 @@ node_modules/
 bower_components/
 .idea/
 node/*.js
+node/*.js.map
 web/*.js
 typings/
 src/*.js
