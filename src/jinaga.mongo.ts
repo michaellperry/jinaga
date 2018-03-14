@@ -2,8 +2,6 @@ import Interface = require('./interface');
 import computeHash = Interface.computeHash;
 import isPredecessor = Interface.isPredecessor;
 import Coordinator = Interface.Coordinator;
-import Query = Interface.Query;
-import Join = Interface.Join;
 import MongoGraph = require('./mongoGraph');
 import MongoSave = require('./mongoSave');
 import Keypair = require('keypair');
@@ -16,6 +14,9 @@ import MongoDb = require('mongodb');
 var MongoClient = MongoDb.MongoClient;
 
 import { UserIdentity, KeystoreProvider } from './keystore';
+import { PersistenceProvider } from './persistence/provider'
+import { Query } from './query/query';
+import { Join } from './query/steps';
 
 class MongoConnection {
     constructor(
@@ -24,7 +25,7 @@ class MongoConnection {
     ) { }
 }
 
-class MongoProvider implements Interface.PersistenceProvider, KeystoreProvider {
+class MongoProvider implements PersistenceProvider, KeystoreProvider {
     private coordinator: Coordinator;
     private count: number = 0;
     private pools: { [collectionName: string]: Pool<MongoConnection> } = {};

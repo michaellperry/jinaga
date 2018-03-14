@@ -1,10 +1,6 @@
-import Interface = require('./interface');
-
-import Query = Interface.Query;
-import Step = Interface.Step;
-import PropertyCondition = Interface.PropertyCondition;
-import Join = Interface.Join;
-import ExistentialCondition = Interface.ExistentialCondition;
+import { Query } from './query/query';
+import { Step, Join, PropertyCondition, ExistentialCondition } from './query/steps';
+import { Direction } from './query/enums';
 
 function scanForEndOfSegment(steps: Step[]) {
     let index = 1;
@@ -17,7 +13,7 @@ function childSegments(head: Step[], tail: Step[]) : Query[] {
         if (tail[0] instanceof Join) {
             const index: number = scanForEndOfSegment(tail);
             const nextHead: Step[] = head.concat(tail.slice(0, index));
-            if ((<Join>tail[0]).direction === Interface.Direction.Successor) {
+            if ((<Join>tail[0]).direction === Direction.Successor) {
                 return [new Query(nextHead)]
                     .concat(childSegments(nextHead, tail.slice(index)));
             }

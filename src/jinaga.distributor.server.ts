@@ -1,8 +1,6 @@
 import Engine = require("engine.io");
 import Debug = require("debug");
 import Interface = require("./interface");
-import Query = Interface.Query;
-import PersistenceProvider = Interface.PersistenceProvider;
 import Coordinator = Interface.Coordinator;
 import computeHash = Interface.computeHash;
 import QueryInverter = require("./queryInverter");
@@ -14,7 +12,9 @@ import FactChannel = require("./factChannel");
 import splitSegments = require('./querySegmenter');
 import { UserIdentity, KeystoreProvider } from './keystore';
 import { QueryCache } from './querycache'
-import { Spoke, NetworkProvider } from './providers/network';
+import { Spoke, NetworkProvider } from './network/provider';
+import { PersistenceProvider } from './persistence/provider'
+import { Query } from './query/query';
 
 var debug = Debug("jinaga.distributor.server");
 

@@ -1,20 +1,19 @@
 /// <reference path="jinaga.ts" />
 
 import Interface = require("./interface");
-import StorageProvider = Interface.StorageProvider;
-import PersistenceProvider = Interface.PersistenceProvider;
-import Query = Interface.Query;
-import Direction = Interface.Direction;
-import Join = Interface.Join;
 import Coordinator = Interface.Coordinator;
-import PropertyCondition = Interface.PropertyCondition;
 import computeHash = Interface.computeHash;
 import isPredecessor = Interface.isPredecessor;
 import Keypair = require('keypair');
 import Collections = require("./collections");
 import _isEqual = Collections._isEqual;
 import { UserIdentity, KeystoreProvider } from './keystore';
-import { NetworkProvider } from './providers/network';
+import { NetworkProvider } from './network/provider';
+import { StorageProvider } from './storage/provider';
+import { PersistenceProvider } from './persistence/provider'
+import { Query } from './query/query';
+import { Step, Join, PropertyCondition, ExistentialCondition } from './query/steps';
+import { Direction, Quantifier } from './query/enums';
 
 class Node {
     successors: { [role: string]: Array<Node> } = {};
@@ -103,7 +102,7 @@ class MemoryProvider implements StorageProvider, PersistenceProvider, KeystorePr
         }
     }
 
-    private queryNodes(startingNode, steps:Array<Interface.Step>): Array<Node> {
+    private queryNodes(startingNode, steps:Array<Step>): Array<Node> {
         var nodes:Array<Node> = [startingNode];
         for (var index = 0; index < steps.length; index++) {
             var step = steps[index];
@@ -135,12 +134,12 @@ class MemoryProvider implements StorageProvider, PersistenceProvider, KeystorePr
                 });
                 nodes = nextNodes;
             }
-            else if (step instanceof Interface.ExistentialCondition) {
-                var existentialCondition = <Interface.ExistentialCondition>step;
+            else if (step instanceof ExistentialCondition) {
+                var existentialCondition = <ExistentialCondition>step;
                 var nextNodes:Array<Node> = [];
                 nodes.forEach((node) => {
                     var subNodes = this.queryNodes(node, existentialCondition.steps);
-                    if (existentialCondition.quantifier === Interface.Quantifier.Exists
+                    if (existentialCondition.quantifier === Quantifier.Exists
                             ? subNodes.length > 0 : subNodes.length === 0) {
                         nextNodes.push(node);
                     }

@@ -1,11 +1,11 @@
 import engine = require("engine.io-client");
 import Socket = engine.Socket;
 import Interface = require("./interface");
-import Query = Interface.Query;
 import Coordinator = Interface.Coordinator;
 import {computeHash} from "./interface";
 import FactChannel = require("./factChannel");
-import { NetworkProvider } from './providers/network';
+import { NetworkProvider } from './network/provider';
+import { Query } from './query/query';
 
 class JinagaDistributor implements NetworkProvider {
     socket: Socket;

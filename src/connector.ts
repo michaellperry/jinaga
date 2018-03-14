@@ -1,6 +1,5 @@
 import Interface = require("./interface");
 import Coordinator = Interface.Coordinator;
-import Query = Interface.Query;
 import QueryInverter = require("./queryInverter");
 import Inverse = QueryInverter.Inverse;
 import JinagaDistributor = require("./jinaga.distributor.server");
@@ -9,7 +8,8 @@ import _isEqual = Collections._isEqual;
 import _some = Collections._some;
 import Debug = require("debug");
 import { QueryCache } from './querycache';
-import { Spoke, NetworkProvider } from './providers/network';
+import { Spoke, NetworkProvider } from './network/provider';
+import { Query } from './query/query';
 
 var debug = Debug("jinaga.connector");
 

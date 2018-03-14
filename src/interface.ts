@@ -2,73 +2,9 @@ import Collections = require("./collections");
 import _isEqual = Collections._isEqual;
 import _pairs = Collections._pairs;
 import _some = Collections._some;
-
-export enum Direction {
-    Predecessor,
-    Successor
-}
-
-export enum Quantifier {
-    Exists,
-    NotExists
-}
-
-
-export class Step {
-    construtor() {}
-
-    public toDeclarativeString(): string {
-        throw Error("Abstract");
-    }
-}
-
-export class ExistentialCondition extends Step {
-    constructor(
-        public quantifier: Quantifier,
-        public steps: Array<Step>
-    ) { super(); }
-
-    public toDeclarativeString(): string {
-        return (this.quantifier === Quantifier.Exists ? "E(" : "N(") +
-            this.steps.map(s => s.toDeclarativeString()).join(" ") + ")";
-    }
-}
-
-export class PropertyCondition extends Step {
-    constructor(
-        public name: string,
-        public value: any
-    ) { super(); }
-
-    public toDeclarativeString(): string {
-        return "F." + this.name + "=\"" + this.value + "\"";
-    }
-}
-
-export class Join extends Step {
-    constructor(
-        public direction: Direction,
-        public role: string
-    ) { super(); }
-
-    public toDeclarativeString(): string {
-        return (this.direction === Direction.Predecessor ? "P." : "S.") + this.role;
-    }
-}
-
-export class Query {
-    constructor(
-        public steps: Array<Step>
-    ) {}
-
-    public concat(other: Query): Query {
-        return new Query(this.steps.concat(other.steps));
-    }
-
-    public toDescriptiveString(): string {
-        return this.steps.map(s => s.toDeclarativeString()).join(" ");
-    }
-}
+import { Query } from './query/query';
+import { Step, Join, PropertyCondition, ExistentialCondition } from './query/steps';
+import { Direction, Quantifier} from './query/enums';
 
 export class InverseSpecification {
     constructor(
@@ -261,28 +197,4 @@ export interface Coordinator {
     onError(err: string);
     onLoggedIn(userFact: Object, profile: Object);
     resendMessages();
-}
-
-export interface StorageProvider {
-    init(coordinator: Coordinator);
-    save(fact: Object, source: any);
-    executeQuery(
-        start: Object,
-        query: Query,
-        readerFact: Object,
-        result: (error: string, facts: Array<Object>) => void
-    );
-    sendAllFacts();
-    push(fact: Object);
-    dequeue(token: number, destination: any);
-}
-
-export interface PersistenceProvider {
-    init(coordinator: Coordinator);
-    save(fact: Object, source: any);
-    executePartialQuery(
-        start: Object,
-        query: Query,
-        result: (error: string, facts: Array<Object>) => void
-    );
 }

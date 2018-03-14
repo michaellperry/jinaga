@@ -1,7 +1,5 @@
 import Interface = require("./interface");
 import computeHash = Interface.computeHash;
-import Query = Interface.Query;
-import StorageProvider = Interface.StorageProvider;
 import Coordinator = Interface.Coordinator;
 import { Instrumentation } from "./instrumentation";
 import parse = require("./queryParser");
@@ -14,7 +12,9 @@ import FactChannel = require("./factChannel");
 import _isEqual = Collections._isEqual;
 import _some = Collections._some;
 import { Proxy, ConditionalSpecification } from './conditional';
-import { NetworkProvider } from './providers/network';
+import { NetworkProvider } from './network/provider';
+import { StorageProvider } from './storage/provider';
+import { Query } from './query/query';
 
 var debug: (string) => void = Debug ? Debug("jinaga") : function() {};
 

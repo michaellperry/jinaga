@@ -1,4 +1,5 @@
-import { Coordinator, Query } from '../interface';
+import { Coordinator } from '../interface';
+import { Query } from '../query/query';
 import { QueryCache } from '../querycache';
 
 export interface NetworkProvider {

@@ -1,16 +1,12 @@
 import Interface = require('./interface');
-import Query = Interface.Query;
-import Step = Interface.Step;
-import Join = Interface.Join;
-import Direction = Interface.Direction;
-import PropertyCondition = Interface.PropertyCondition;
-import ExistentialCondition = Interface.ExistentialCondition;
-import Quantifier = Interface.Quantifier;
 import isPredecessor = Interface.isPredecessor;
 import computeHash = Interface.computeHash;
 import Collections = require('./collections');
 import _isEqual = Collections._isEqual;
 import buildPipeline = require('./mongoPipelineBuilder');
+import { Query } from './query/query';
+import { Step, Join, PropertyCondition, ExistentialCondition } from './query/steps';
+import { Direction, Quantifier} from './query/enums';
 
 export class Point {
     constructor (

@@ -1,13 +1,14 @@
 var mocha = require('mocha');
 var chai = require('chai');
 var Interface = require('../node/interface');
+var Query = require('../node/query/query');
 var splitSegments = require('../node/querySegmenter');
 
 var expect = chai.expect;
 
 describe('Query segmenter', function () {
     it('should accept an empty array', function () {
-        var segments = splitSegments(new Interface.Query([]));
+        var segments = splitSegments(new Query.Query([]));
         expect(segments.length).to.equal(0);
     });
     it('should accept a successor', function () {
