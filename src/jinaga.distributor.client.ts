@@ -2,7 +2,6 @@ import engine = require("engine.io-client");
 import Socket = engine.Socket;
 import Interface = require("./interface");
 import Coordinator = Interface.Coordinator;
-import {computeHash} from "./interface";
 import FactChannel = require("./factChannel");
 import { NetworkProvider } from './network/provider';
 import { Query } from './query/query';

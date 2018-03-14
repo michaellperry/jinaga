@@ -13,7 +13,8 @@ module.exports = function (grunt) {
         options: {
           module: 'commonjs',
           target: 'es5',
-          rootDir: 'src'
+          rootDir: 'src',
+          noUnusedLocals: true
         }
       }
     },

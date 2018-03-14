@@ -8,7 +8,6 @@ import Keypair = require('keypair');
 import Collections = require("./collections");
 import _isEqual = Collections._isEqual;
 import { UserIdentity, KeystoreProvider } from './keystore';
-import { NetworkProvider } from './network/provider';
 import { StorageProvider } from './storage/provider';
 import { PersistenceProvider } from './persistence/provider'
 import { Query } from './query/query';

@@ -1,22 +1,18 @@
+import Keypair = require('keypair');
+import MongoDb = require('mongodb');
+
 import Interface = require('./interface');
-import computeHash = Interface.computeHash;
-import isPredecessor = Interface.isPredecessor;
-import Coordinator = Interface.Coordinator;
+import { KeystoreProvider, UserIdentity } from './keystore';
 import MongoGraph = require('./mongoGraph');
 import MongoSave = require('./mongoSave');
-import Keypair = require('keypair');
-import Collections = require('./collections');
-import _isEqual = Collections._isEqual;
-
+import { PersistenceProvider } from './persistence/provider';
 import Pool from './pool';
-
-import MongoDb = require('mongodb');
-var MongoClient = MongoDb.MongoClient;
-
-import { UserIdentity, KeystoreProvider } from './keystore';
-import { PersistenceProvider } from './persistence/provider'
 import { Query } from './query/query';
-import { Join } from './query/steps';
+
+import computeHash = Interface.computeHash;
+import Coordinator = Interface.Coordinator;
+
+var MongoClient = MongoDb.MongoClient;
 
 class MongoConnection {
     constructor(
@@ -89,22 +85,6 @@ class MongoProvider implements PersistenceProvider, KeystoreProvider {
                 done();
             });
         });
-    }
-
-    private getPredecessors(fact: Object): Array<Object> {
-        let predecessors: Array<Object> = [];
-        for (var field in fact) {
-            var value = fact[field];
-            if (isPredecessor(value)) {
-                predecessors.push(value);
-            }
-            else if (Array.isArray(value) && value.every(v => isPredecessor(v))) {
-                value.forEach(v => {
-                    predecessors.push(v);
-                });
-            }
-        }
-        return predecessors;
     }
     
     public executePartialQuery(

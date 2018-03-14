@@ -49,8 +49,8 @@ function quotedValue(descriptive: string, index: number): {value: string, index:
 }
 
 export function fromDescriptiveString(descriptive: string) {
-    var {steps, index} = parseDescriptiveString(descriptive, 0);
-    return new Query(steps);
+    const result = parseDescriptiveString(descriptive, 0);
+    return new Query(result.steps);
 }
 
 function parseDescriptiveString(descriptive: string, index: number): {steps: Array<Step>, index: number} {

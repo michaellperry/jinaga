@@ -1,7 +1,5 @@
-import Collections = require("./collections");
-import _isEqual = Collections._isEqual;
+import Collections = require('./collections');
 import _pairs = Collections._pairs;
-import _some = Collections._some;
 
 export class InverseSpecification {
     constructor(

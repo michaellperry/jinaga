@@ -12,7 +12,6 @@ import FactChannel = require("./factChannel");
 import splitSegments = require('./query/segmenter');
 import { UserIdentity, KeystoreProvider } from './keystore';
 import { QueryCache } from './query/cache'
-import { NetworkProvider } from './network/provider';
 import { Spoke } from './network/spoke';
 import { PersistenceProvider } from './persistence/provider'
 import { Query } from './query/query';

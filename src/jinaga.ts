@@ -6,7 +6,6 @@ import parse = require("./query/parser");
 import MemoryProvider = require("./memory");
 import QueryInverter = require("./query/inverter");
 import Inverse = QueryInverter.Inverse;
-import Debug = require("debug");
 import Collections = require("./collections");
 import FactChannel = require("./factChannel");
 import _isEqual = Collections._isEqual;
@@ -15,8 +14,6 @@ import { Proxy, ConditionalSpecification } from './conditional';
 import { NetworkProvider } from './network/provider';
 import { StorageProvider } from './storage/provider';
 import { Query } from './query/query';
-
-var debug: (string) => void = Debug ? Debug("jinaga") : function() {};
 
 class Watch {
     private mappings: { [hash: number]: Array<{ fact: Object, mapping: any }>; } = {};

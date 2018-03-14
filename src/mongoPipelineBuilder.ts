@@ -1,7 +1,5 @@
-import Interface = require('./interface');
-import { Query } from './query/query';
-import { Step, Join, PropertyCondition } from './query/steps';
-import { Direction} from './query/enums';
+import { Direction } from './query/enums';
+import { Join, PropertyCondition, Step } from './query/steps';
 
 function buildPipeline(startHash: number, steps: Array<Step>): Object[] {
     if (steps.length === 0) {
