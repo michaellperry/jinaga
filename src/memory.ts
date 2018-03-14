@@ -3,7 +3,6 @@
 import Interface = require("./interface");
 import StorageProvider = Interface.StorageProvider;
 import PersistenceProvider = Interface.PersistenceProvider;
-import NetworkProvider = Interface.NetworkProvider;
 import Query = Interface.Query;
 import Direction = Interface.Direction;
 import Join = Interface.Join;
@@ -15,6 +14,7 @@ import Keypair = require('keypair');
 import Collections = require("./collections");
 import _isEqual = Collections._isEqual;
 import { UserIdentity, KeystoreProvider } from './keystore';
+import { NetworkProvider } from './providers/network';
 
 class Node {
     successors: { [role: string]: Array<Node> } = {};

@@ -13,6 +13,8 @@ import _some = Collections._some;
 import FactChannel = require("./factChannel");
 import splitSegments = require('./querySegmenter');
 import { UserIdentity, KeystoreProvider } from './keystore';
+import { QueryCache } from './querycache'
+import { Spoke, NetworkProvider } from './providers/network';
 
 var debug = Debug("jinaga.distributor.server");
 
@@ -52,7 +54,7 @@ class Promise {
     }
 }
 
-class JinagaConnection implements Interface.Spoke {
+class JinagaConnection implements Spoke {
     private watches: Array<Watch> = [];
     private userFact: Object;
     private identicon: string;
@@ -182,7 +184,7 @@ class JinagaConnection implements Interface.Spoke {
         }));
     }
 
-    gatherQueries(queries : Interface.QueryCache) {
+    gatherQueries(queries : QueryCache) {
         this.watches.forEach(watch => {
             let key = watch.affected.toDescriptiveString();
             if (!queries.hasOwnProperty(key)) {
@@ -194,7 +196,7 @@ class JinagaConnection implements Interface.Spoke {
         })
     }
 
-    distribute(queries : Interface.QueryCache, fact: Object) {
+    distribute(queries : QueryCache, fact: Object) {
         this.watches.forEach(watch => {
             let affected = queries[watch.affected.toDescriptiveString()].result;
             var some: any = _some;
@@ -251,7 +253,7 @@ class JinagaConnection implements Interface.Spoke {
 
 class JinagaDistributor implements Coordinator {
     server: Engine;
-    connections: Array<Interface.Spoke> = [];
+    connections: Array<Spoke> = [];
 
     constructor(
         private storage: PersistenceProvider,
@@ -288,7 +290,7 @@ class JinagaDistributor implements Coordinator {
         this.server.on("connection", this.onConnection.bind(this));
     }
     
-    connect(spoke: Interface.Spoke) {
+    connect(spoke: Spoke) {
         this.connections.push(spoke);
     }
 
@@ -348,23 +350,23 @@ class JinagaDistributor implements Coordinator {
     }
 
     send(fact: Object, sender: any) {
-        let connections : Interface.Spoke[] = this.connections.filter(c => c !== sender);
-        let queries : Interface.QueryCache = this.gatherQueries(connections);
+        let connections : Spoke[] = this.connections.filter(c => c !== sender);
+        let queries : QueryCache = this.gatherQueries(connections);
         let promises : Promise[] = this.executeQueries(queries, fact);
         Promise.whenAll(promises, () => {
             this.distributeResults(connections, queries, fact);
         });
     }
 
-    private gatherQueries(connections: Interface.Spoke[]) : Interface.QueryCache {
-        let queries : Interface.QueryCache = {};
+    private gatherQueries(connections: Spoke[]) : QueryCache {
+        let queries : QueryCache = {};
         connections.forEach(connection => {
             connection.gatherQueries(queries);
         });
         return queries;
     }
 
-    private executeQueries(queries : Interface.QueryCache, fact: Object) : Promise[] {
+    private executeQueries(queries : QueryCache, fact: Object) : Promise[] {
         let promises : Promise[] = [];
         for (var key in queries) (value => {
             let promise = new Promise();
@@ -382,7 +384,7 @@ class JinagaDistributor implements Coordinator {
         return promises;
     }
 
-    private distributeResults(connections : Interface.Spoke[], queries: Interface.QueryCache, fact: Object) {
+    private distributeResults(connections : Spoke[], queries: QueryCache, fact: Object) {
         connections.forEach(connection => {
             connection.distribute(queries, fact);
         });

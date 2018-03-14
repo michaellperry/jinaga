@@ -1,12 +1,12 @@
 node_modules/
 bower_components/
 .idea/
-node/*.js
-node/*.js.map
-web/*.js
+node/**/*.js
+node/**/*.js.map
+web/**/*.js
 typings/
-src/*.js
-src/*.js.map
+src/**/*.js
+src/**/*.js.map
 *.tgz
 .vscode
 npm-debug.log

@@ -1,5 +1,4 @@
 import Interface = require("./interface");
-import NetworkProvider = Interface.NetworkProvider;
 import Coordinator = Interface.Coordinator;
 import Query = Interface.Query;
 import QueryInverter = require("./queryInverter");
@@ -9,6 +8,8 @@ import Collections = require("./collections");
 import _isEqual = Collections._isEqual;
 import _some = Collections._some;
 import Debug = require("debug");
+import { QueryCache } from './querycache';
+import { Spoke, NetworkProvider } from './providers/network';
 
 var debug = Debug("jinaga.connector");
 
@@ -20,15 +21,15 @@ class Watch {
     ) {}
 }
 
-class ConnectorSpoke implements Interface.Spoke {
+class ConnectorSpoke implements Spoke {
     constructor(
         private connector: JinagaConnector
     ) { }
     
-    gatherQueries(queries : Interface.QueryCache) {
+    gatherQueries(queries : QueryCache) {
 
     }
-    distribute(queries: Interface.QueryCache, fact: Object) {
+    distribute(queries: QueryCache, fact: Object) {
         this.connector.distribute(fact);
     }
 }
