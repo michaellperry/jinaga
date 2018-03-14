@@ -15,6 +15,7 @@ import { QueryCache } from './query/cache'
 import { Spoke, NetworkProvider } from './network/provider';
 import { PersistenceProvider } from './persistence/provider'
 import { Query } from './query/query';
+import { fromDescriptiveString } from './query/descriptive-string';
 
 var debug = Debug("jinaga.distributor.server");
 
@@ -129,7 +130,7 @@ class JinagaConnection implements Spoke {
             return;
 
         try {
-            var query = Interface.fromDescriptiveString(message.query);
+            var query = fromDescriptiveString(message.query);
             var inverses = QueryInverter.invertQuery(query);
             inverses.forEach((inverse: Inverse) => {
                 this.watches.push(new Watch(message.start, message.query, inverse.affected));
@@ -164,7 +165,7 @@ class JinagaConnection implements Spoke {
             return;
 
         try {
-            var query = Interface.fromDescriptiveString(message.query);
+            var query = fromDescriptiveString(message.query);
             this.executeQuerySegments(message.start, message.token, query);
         }
         catch (x) {
@@ -445,7 +446,7 @@ class JinagaDistributor implements Coordinator {
             },
             read: locked
         }
-        this.storage.executePartialQuery(privilege, Interface.fromDescriptiveString('S.privilege'), (error, facts) => {
+        this.storage.executePartialQuery(privilege, fromDescriptiveString('S.privilege'), (error, facts) => {
             if (error) {
                 // Can't verify authorization.
                 done(false);

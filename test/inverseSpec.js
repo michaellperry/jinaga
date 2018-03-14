@@ -5,7 +5,7 @@ var invertQuery = QueryInverter.invertQuery;
 var Interface = require("../node/interface");
 var Join = Interface.Join;
 var Direction = Interface.Direction;
-var fromDescriptiveString = Interface.fromDescriptiveString;
+var fromDescriptiveString = require("../node/query/descriptive-string").fromDescriptiveString;
 
 var should = chai.should();
 

@@ -1,7 +1,7 @@
 var mocha = require("mocha");
 var chai = require("chai");
 var MongoProvider = require("../node/jinaga.mongo");
-var Interface = require("../node/interface");
+var fromDescriptiveString = require("../node/query/descriptive-string").fromDescriptiveString;
 var url = 'mongodb://localhost:27017/test';
 
 var expect = chai.expect;
@@ -76,7 +76,7 @@ describe("Mongo", function() {
     task: [task, task2]
   };
 
-  var query = Interface.fromDescriptiveString("S.list");
+  var query = fromDescriptiveString("S.list");
 
   it("should return no results when has no facts", function(done) {
     mongo.executePartialQuery(chores, query, function (error, messages) {
@@ -231,7 +231,7 @@ describe("Mongo", function() {
     mongo.save(completion, null);
 
     mongo.whenQuiet(function() {
-      mongo.executePartialQuery(chores, Interface.fromDescriptiveString("S.list S.task"), function (error2, messages) {
+      mongo.executePartialQuery(chores, fromDescriptiveString("S.list S.task"), function (error2, messages) {
         should.equal(null, error2);
         messages.length.should.equal(1);
         messages[0].completed.should.equal(true);
@@ -244,7 +244,7 @@ describe("Mongo", function() {
     mongo.save(completionWithArray, null);
 
     mongo.whenQuiet(function () {
-      mongo.executePartialQuery(chores, Interface.fromDescriptiveString("S.list S.task"), function (error2, messages) {
+      mongo.executePartialQuery(chores, fromDescriptiveString("S.list S.task"), function (error2, messages) {
         should.equal(null, error2);
         messages.length.should.equal(1);
         messages[0].completed.should.equal(true);
@@ -258,7 +258,7 @@ describe("Mongo", function() {
     mongo.save(name, null);
 
     mongo.whenQuiet(function () {
-      mongo.executePartialQuery(chores, Interface.fromDescriptiveString("S.list P.assignee S.user"), function (error, messages) {
+      mongo.executePartialQuery(chores, fromDescriptiveString("S.list P.assignee S.user"), function (error, messages) {
         should.equal(null, error);
         messages.length.should.equal(1);
         messages[0].type.should.equal("Name");
@@ -272,7 +272,7 @@ describe("Mongo", function() {
     mongo.save(name, null);
 
     mongo.whenQuiet(function () {
-      mongo.executePartialQuery(task, Interface.fromDescriptiveString("P.assignee S.user"), function (error, messages) {
+      mongo.executePartialQuery(task, fromDescriptiveString("P.assignee S.user"), function (error, messages) {
         should.equal(null, error);
         messages.length.should.equal(1);
         messages[0].type.should.equal("Name");
@@ -286,7 +286,7 @@ describe("Mongo", function() {
     mongo.save(name, null);
 
     mongo.whenQuiet(function () {
-      mongo.executePartialQuery(chores, Interface.fromDescriptiveString('S.list F.type="Task" P.assignee F.type="User" S.user F.type="Name"'), function (error, messages) {
+      mongo.executePartialQuery(chores, fromDescriptiveString('S.list F.type="Task" P.assignee F.type="User" S.user F.type="Name"'), function (error, messages) {
         should.equal(null, error);
         messages.length.should.equal(1);
         messages[0].type.should.equal("Name");
@@ -299,7 +299,7 @@ describe("Mongo", function() {
     mongo.save(completion, null);
 
     mongo.whenQuiet(function() {
-      mongo.executePartialQuery(chores, Interface.fromDescriptiveString('S.list F.type="Task" S.task F.type="TaskComplete"'), function (error2, messages) {
+      mongo.executePartialQuery(chores, fromDescriptiveString('S.list F.type="Task" S.task F.type="TaskComplete"'), function (error2, messages) {
         should.equal(null, error2);
         messages.length.should.equal(1);
         messages[0].type.should.equal("TaskComplete");
@@ -312,7 +312,7 @@ describe("Mongo", function() {
     mongo.save(completion, null);
 
     mongo.whenQuiet(function() {
-      mongo.executePartialQuery(chores, Interface.fromDescriptiveString('S.list F.type="Task" S.task F.type="No Match"'), function (error2, messages) {
+      mongo.executePartialQuery(chores, fromDescriptiveString('S.list F.type="Task" S.task F.type="No Match"'), function (error2, messages) {
         should.equal(null, error2);
         messages.length.should.equal(0);
         done();
@@ -324,7 +324,7 @@ describe("Mongo", function() {
     mongo.save(completion, null);
 
     mongo.whenQuiet(function() {
-      mongo.executePartialQuery(chores, Interface.fromDescriptiveString('S.list F.type="No Match" S.task F.type="TaskComplete"'), function (error2, messages) {
+      mongo.executePartialQuery(chores, fromDescriptiveString('S.list F.type="No Match" S.task F.type="TaskComplete"'), function (error2, messages) {
         should.equal(null, error2);
         messages.length.should.equal(0);
         done();
@@ -336,7 +336,7 @@ describe("Mongo", function() {
     mongo.save(completionForward, null);
 
     mongo.whenQuiet(function() {
-      mongo.executePartialQuery(task, Interface.fromDescriptiveString("F.type=\"Task\" S.task F.type=\"TaskComplete\""), function (error, messages) {
+      mongo.executePartialQuery(task, fromDescriptiveString("F.type=\"Task\" S.task F.type=\"TaskComplete\""), function (error, messages) {
         should.equal(null, error);
         messages.length.should.equal(1);
         done();
@@ -349,7 +349,7 @@ describe("Mongo", function() {
     mongo.save(completion, null);
 
     mongo.whenQuiet(function() {
-      mongo.executePartialQuery(completion, Interface.fromDescriptiveString('F.type="Task" P.list'), function (error, messages) {
+      mongo.executePartialQuery(completion, fromDescriptiveString('F.type="Task" P.list'), function (error, messages) {
         should.equal(null, error);
         messages.length.should.equal(0);
         expect(synchronous).to.be.true;
@@ -364,7 +364,7 @@ describe("Mongo", function() {
     mongo.save(task, null);
 
     mongo.whenQuiet(function() {
-      mongo.executePartialQuery(task, Interface.fromDescriptiveString('F.type="Task"'), function (error, messages) {
+      mongo.executePartialQuery(task, fromDescriptiveString('F.type="Task"'), function (error, messages) {
         should.equal(null, error);
         messages.length.should.equal(1);
         expect(synchronous).to.be.true;
