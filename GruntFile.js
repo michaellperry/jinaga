@@ -1,18 +1,19 @@
 module.exports = function (grunt) {
-  grunt.loadNpmTasks('grunt-typescript');
+  grunt.loadNpmTasks('grunt-ts');
   grunt.loadNpmTasks('grunt-contrib-watch');
   grunt.loadNpmTasks('grunt-mocha-test');
   grunt.loadNpmTasks('grunt-browserify');
 
   grunt.initConfig({
     pkg: grunt.file.readJSON('package.json'),
-    typescript: {
+    ts: {
       node: {
         src: ['src/**/*.ts', 'typings/**/*.ts'],
         dest: 'node',
         options: {
           module: 'commonjs',
-          target: 'es5'
+          target: 'es5',
+          rootDir: 'src'
         }
       }
     },
@@ -33,7 +34,7 @@ module.exports = function (grunt) {
     watch: {
       compile: {
         files: 'src/**/*.ts',
-        tasks: ['typescript', 'browserify', 'mochaTest']
+        tasks: ['ts', 'browserify', 'mochaTest']
       },
       test: {
         files: 'test/**/*.js',
@@ -42,7 +43,7 @@ module.exports = function (grunt) {
     }
   });
 
-  grunt.registerTask('build', ['typescript', 'browserify', 'mochaTest']);
+  grunt.registerTask('build', ['ts', 'browserify', 'mochaTest']);
   grunt.registerTask('default', ['build']);
 
 }

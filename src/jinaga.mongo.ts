@@ -13,7 +13,7 @@ import _isEqual = Collections._isEqual;
 
 import Pool from './pool';
 
-var MongoDb = require('mongodb');
+import MongoDb = require('mongodb');
 var MongoClient = MongoDb.MongoClient;
 
 class MongoConnection {

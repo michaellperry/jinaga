@@ -9,3 +9,4 @@ src/*.js.map
 *.tgz
 .vscode
 npm-debug.log
+.tscache/
