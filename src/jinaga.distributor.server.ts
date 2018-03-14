@@ -3,15 +3,15 @@ import Debug = require("debug");
 import Interface = require("./interface");
 import Coordinator = Interface.Coordinator;
 import computeHash = Interface.computeHash;
-import QueryInverter = require("./queryInverter");
+import QueryInverter = require("./query/inverter");
 import Inverse = QueryInverter.Inverse;
 import Collections = require("./collections");
 import _isEqual = Collections._isEqual;
 import _some = Collections._some;
 import FactChannel = require("./factChannel");
-import splitSegments = require('./querySegmenter');
+import splitSegments = require('./query/segmenter');
 import { UserIdentity, KeystoreProvider } from './keystore';
-import { QueryCache } from './querycache'
+import { QueryCache } from './query/cache'
 import { Spoke, NetworkProvider } from './network/provider';
 import { PersistenceProvider } from './persistence/provider'
 import { Query } from './query/query';

@@ -1,9 +1,9 @@
-import Interface = require("./interface");
+import Interface = require("../interface");
 import InverseSpecification = Interface.InverseSpecification;
-import { Proxy, ConditionalSpecification } from './conditional';
-import { Query } from './query/query';
-import { Step, Join, PropertyCondition, ExistentialCondition } from './query/steps';
-import { Direction, Quantifier} from './query/enums';
+import { Proxy, ConditionalSpecification } from '../conditional';
+import { Query } from './query';
+import { Step, Join, PropertyCondition, ExistentialCondition } from './steps';
+import { Direction, Quantifier} from './enums';
 
 class ParserProxy implements Proxy {
     constructor(

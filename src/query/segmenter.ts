@@ -1,6 +1,6 @@
-import { Query } from './query/query';
-import { Step, Join, PropertyCondition, ExistentialCondition } from './query/steps';
-import { Direction } from './query/enums';
+import { Query } from './query';
+import { Step, Join, PropertyCondition, ExistentialCondition } from './steps';
+import { Direction } from './enums';
 
 function scanForEndOfSegment(steps: Step[]) {
     let index = 1;

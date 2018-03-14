@@ -1,7 +1,7 @@
-import Interface = require("./interface");
-import { Query } from './query/query';
-import { Step, Join, PropertyCondition, ExistentialCondition } from './query/steps';
-import { Direction, Quantifier} from './query/enums';
+import Interface = require("../interface");
+import { Query } from './query';
+import { Step, Join, PropertyCondition, ExistentialCondition } from './steps';
+import { Direction, Quantifier} from './enums';
 
 export class Inverse {
     constructor(

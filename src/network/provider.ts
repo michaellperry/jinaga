@@ -1,6 +1,6 @@
 import { Coordinator } from '../interface';
 import { Query } from '../query/query';
-import { QueryCache } from '../querycache';
+import { QueryCache } from '../query/cache';
 
 export interface NetworkProvider {
     init(coordinator: Coordinator);
