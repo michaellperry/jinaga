@@ -1,4 +1,4 @@
-class Pool<Connection> {
+export class Pool<Connection> {
     private connection: Connection = null;
     private actions: Array<(connection: Connection, done: () => void) => void> = [];
     private running: number = 0;
@@ -42,5 +42,3 @@ class Pool<Connection> {
         });
     }
 }
-
-export default Pool;

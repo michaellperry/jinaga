@@ -1,4 +1,4 @@
-export default interface Coordinator {
+export interface Coordinator {
     onSaved(fact: Object, source: any);
     send(fact: Object, source: any);
     onReceived(fact: Object, userFact: Object, source: any);

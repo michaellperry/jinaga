@@ -1,5 +1,5 @@
 var chai = require("chai");
-var Pool = require("../node/pool").default;
+var Pool = require("../node/pool").Pool;
 
 var expect = chai.expect;
 
