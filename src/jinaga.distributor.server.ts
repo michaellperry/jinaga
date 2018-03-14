@@ -12,6 +12,7 @@ import _isEqual = Collections._isEqual;
 import _some = Collections._some;
 import FactChannel = require("./factChannel");
 import splitSegments = require('./querySegmenter');
+import { UserIdentity, KeystoreProvider } from './keystore';
 
 var debug = Debug("jinaga.distributor.server");
 
@@ -254,7 +255,7 @@ class JinagaDistributor implements Coordinator {
 
     constructor(
         private storage: PersistenceProvider,
-        private keystore: Interface.KeystoreProvider,
+        private keystore: KeystoreProvider,
         private authenticate: (socket: any, done: (user: Object) => void) => void)
     {
         if (!this.authenticate) {
@@ -265,7 +266,7 @@ class JinagaDistributor implements Coordinator {
         storage.init(this);
     }
 
-    static listen(storage: PersistenceProvider, keystore: Interface.KeystoreProvider, port: number, authenticate: (socket: any, done: (user: Object) => void) => void): JinagaDistributor {
+    static listen(storage: PersistenceProvider, keystore: KeystoreProvider, port: number, authenticate: (socket: any, done: (user: Object) => void) => void): JinagaDistributor {
         var distributor = new JinagaDistributor(storage, keystore, authenticate);
         distributor.server = Engine.listen(port);
         debug("Listening on port " + port);
@@ -273,7 +274,7 @@ class JinagaDistributor implements Coordinator {
         return distributor;
     }
 
-    static attach(storage: PersistenceProvider, keystore: Interface.KeystoreProvider, http, authenticate: (req: any, done: (user: Object) => void) => void): JinagaDistributor {
+    static attach(storage: PersistenceProvider, keystore: KeystoreProvider, http, authenticate: (req: any, done: (user: Object) => void) => void): JinagaDistributor {
         var distributor = new JinagaDistributor(storage, keystore, (socket: any, done: (user: Object) => void) => {
             authenticate(socket.request, done);
         });
@@ -293,7 +294,7 @@ class JinagaDistributor implements Coordinator {
 
     onConnection(socket) {
         var connection = new JinagaConnection(socket, this);
-        this.authenticate(socket, (user: Interface.UserIdentity) => {
+        this.authenticate(socket, (user: UserIdentity) => {
             if (user) {
                 this.keystore.getUserFact(user, (userFact: Object) => {
                     connection.setUser(userFact, user.profile);

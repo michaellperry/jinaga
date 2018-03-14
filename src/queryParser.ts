@@ -2,13 +2,12 @@ import Interface = require("./interface");
 import Join = Interface.Join;
 import PropertyCondition = Interface.PropertyCondition;
 import Query = Interface.Query;
-import Proxy = Interface.Proxy;
 import Direction = Interface.Direction;
 import Step = Interface.Step;
-import ConditionalSpecification = Interface.ConditionalSpecification;
 import ExistentialCondition = Interface.ExistentialCondition;
 import Quantifier = Interface.Quantifier;
 import InverseSpecification = Interface.InverseSpecification;
+import { Proxy, ConditionalSpecification } from './conditional';
 
 class ParserProxy implements Proxy {
     constructor(

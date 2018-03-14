@@ -3,9 +3,8 @@ import computeHash = Interface.computeHash;
 import Query = Interface.Query;
 import StorageProvider = Interface.StorageProvider;
 import NetworkProvider = Interface.NetworkProvider;
-import Proxy = Interface.Proxy;
 import Coordinator = Interface.Coordinator;
-import Instrumentation = Interface.Instrumentation;
+import { Instrumentation } from "./instrumentation";
 import parse = require("./queryParser");
 import MemoryProvider = require("./memory");
 import QueryInverter = require("./queryInverter");
@@ -15,6 +14,7 @@ import Collections = require("./collections");
 import FactChannel = require("./factChannel");
 import _isEqual = Collections._isEqual;
 import _some = Collections._some;
+import { Proxy, ConditionalSpecification } from './conditional';
 
 var debug: (string) => void = Debug ? Debug("jinaga") : function() {};
 
@@ -472,7 +472,7 @@ class Jinaga {
         specification: Object,
         conditions: Array<(target: Proxy) => Object>
     ) {
-        return new Interface.ConditionalSpecification(specification, conditions, true);
+        return new ConditionalSpecification(specification, conditions, true);
     }
 
     public not(condition: (target: Proxy) => Object): (target: Proxy) => Object;

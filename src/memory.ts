@@ -14,6 +14,7 @@ import isPredecessor = Interface.isPredecessor;
 import Keypair = require('keypair');
 import Collections = require("./collections");
 import _isEqual = Collections._isEqual;
+import { UserIdentity, KeystoreProvider } from './keystore';
 
 class Node {
     successors: { [role: string]: Array<Node> } = {};
@@ -41,7 +42,7 @@ class Node {
     }
 }
 
-class MemoryProvider implements StorageProvider, PersistenceProvider, Interface.KeystoreProvider {
+class MemoryProvider implements StorageProvider, PersistenceProvider, KeystoreProvider {
     nodes: { [hash: number]: Array<Node> } = {};
     publicKeys: { [id: string]: string } = {};
     queue: Array<{hash: number, fact: Object}> = [];
@@ -84,7 +85,7 @@ class MemoryProvider implements StorageProvider, PersistenceProvider, Interface.
         this.executeQuery(start, query, null, result);
     }
 
-    getUserFact(userIdentity: Interface.UserIdentity, done: (userFact: Object) => void) {
+    getUserFact(userIdentity: UserIdentity, done: (userFact: Object) => void) {
         if (!userIdentity) {
             done(null);
         }

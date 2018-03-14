@@ -3,7 +3,6 @@ import computeHash = Interface.computeHash;
 import isPredecessor = Interface.isPredecessor;
 import Coordinator = Interface.Coordinator;
 import Query = Interface.Query;
-import UserIdentity = Interface.UserIdentity;
 import Join = Interface.Join;
 import MongoGraph = require('./mongoGraph');
 import MongoSave = require('./mongoSave');
@@ -16,6 +15,8 @@ import Pool from './pool';
 import MongoDb = require('mongodb');
 var MongoClient = MongoDb.MongoClient;
 
+import { UserIdentity, KeystoreProvider } from './keystore';
+
 class MongoConnection {
     constructor(
         public db: any,
@@ -23,7 +24,7 @@ class MongoConnection {
     ) { }
 }
 
-class MongoProvider implements Interface.PersistenceProvider, Interface.KeystoreProvider {
+class MongoProvider implements Interface.PersistenceProvider, KeystoreProvider {
     private coordinator: Coordinator;
     private count: number = 0;
     private pools: { [collectionName: string]: Pool<MongoConnection> } = {};

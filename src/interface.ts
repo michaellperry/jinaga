@@ -3,10 +3,6 @@ import _isEqual = Collections._isEqual;
 import _pairs = Collections._pairs;
 import _some = Collections._some;
 
-export interface Instrumentation {
-    setCounter(name: string, count: number);
-}
-
 export enum Direction {
     Predecessor,
     Successor
@@ -72,14 +68,6 @@ export class Query {
     public toDescriptiveString(): string {
         return this.steps.map(s => s.toDeclarativeString()).join(" ");
     }
-}
-
-export class ConditionalSpecification {
-    constructor(
-        public specification: Object,
-        public conditions: Array<(target: Proxy) => Object>,
-        public isAny: boolean
-    ) { }
 }
 
 export class InverseSpecification {
@@ -263,12 +251,6 @@ function computeNumberHash(val: number): number {
     return val | 0;
 }
 
-export interface UserIdentity {
-    provider: string;
-    id: string;
-    profile: Object;
-}
-
 export interface Coordinator {
     onSaved(fact: Object, source: any);
     send(fact: Object, source: any);
@@ -305,10 +287,6 @@ export interface PersistenceProvider {
     );
 }
 
-export interface KeystoreProvider {
-    getUserFact(userIdentity: UserIdentity, done: (userFact: Object) => void);
-}
-
 export interface NetworkProvider {
     init(coordinator: Coordinator);
     watch(start: Object, query: Query, token: number);
@@ -325,8 +303,4 @@ export type QueryCache = { [descriptiveString: string]: {
 export interface Spoke {
     gatherQueries(queries : QueryCache);
     distribute(queries: QueryCache, fact: Object);
-}
-
-export interface Proxy {
-    has(name: string): Proxy;
 }
