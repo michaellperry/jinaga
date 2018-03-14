@@ -8,7 +8,8 @@ import _isEqual = Collections._isEqual;
 import _some = Collections._some;
 import Debug = require("debug");
 import { QueryCache } from './query/cache';
-import { Spoke, NetworkProvider } from './network/provider';
+import { NetworkProvider } from './network/provider';
+import { Spoke } from './network/spoke';
 import { Query } from './query/query';
 
 var debug = Debug("jinaga.connector");
