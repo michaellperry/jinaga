@@ -41,10 +41,10 @@ class Node {
 }
 
 export class MemoryProvider implements StorageProvider, PersistenceProvider, KeystoreProvider {
-    nodes: { [hash: number]: Array<Node> } = {};
-    publicKeys: { [id: string]: string } = {};
-    queue: Array<{hash: number, fact: Object}> = [];
-    coordinator: Coordinator;
+    private nodes: { [hash: number]: Array<Node> } = {};
+    private publicKeys: { [id: string]: string } = {};
+    private queue: Array<{hash: number, fact: Object}> = [];
+    private coordinator: Coordinator;
 
     init(coordinator: Coordinator) {
         this.coordinator = coordinator;

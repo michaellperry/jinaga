@@ -1,37 +1,11 @@
 import { JinagaCoordinator } from './coordinator/jinaga-coordinator';
-import { Watch } from './coordinator/watch';
+import { WatchProxy } from './coordinator/watch-proxy';
 import { FactChannel } from './distributor/factChannel';
 import { Instrumentation } from './instrumentation';
 import { MemoryProvider } from './memory/provider';
 import { NetworkProvider } from './network/provider';
 import { ConditionalSpecification, InverseSpecification, Proxy } from './query/parser';
 import { StorageProvider } from './storage/provider';
-
-class WatchProxy {
-    constructor(
-        private _coordinator: JinagaCoordinator,
-        private _watch: Watch
-    ) { }
-
-    public watch(
-        templates: Array<(target: Proxy) => Object>,
-        resultAdded: (result: Object) => void,
-        resultRemoved: (result: Object) => void) : WatchProxy {
-        var nextWatch = this._coordinator.watch(
-            this._watch.start,
-            this._watch,
-            templates,
-            resultAdded,
-            resultRemoved);
-        return new WatchProxy(this._coordinator, nextWatch);
-    }
-
-    public stop() {
-        if (this._watch) {
-            this._coordinator.removeWatch(this._watch);
-        }
-    }
-}
 
 class Jinaga {
     private coordinator: JinagaCoordinator;

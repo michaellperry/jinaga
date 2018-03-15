@@ -53,7 +53,7 @@ class Promise {
     }
 }
 
-class JinagaConnection implements Spoke {
+export class JinagaConnection implements Spoke {
     private watches: Array<Watch> = [];
     private userFact: Object;
     private identicon: string;

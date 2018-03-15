@@ -14,7 +14,8 @@ module.exports = function (grunt) {
           module: 'commonjs',
           target: 'es5',
           rootDir: 'src',
-          noUnusedLocals: true
+          noUnusedLocals: true,
+          declaration: true
         }
       }
     },

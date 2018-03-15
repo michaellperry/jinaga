@@ -3,6 +3,7 @@
   "version": "1.9.1",
   "description": "Universal Web Backend",
   "main": "jinaga.js",
+  "types": "jinaga.d.ts",
   "repository": {
     "type": "git",
     "url": "https://github.com/michaellperry/jinaga"

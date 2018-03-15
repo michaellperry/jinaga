@@ -1,7 +1,7 @@
 import { _isEqual } from '../utility/collections';
 import { computeHash, isPredecessor } from '../utility/fact';
 
-class FactReference {
+export class FactReference {
     constructor(
         public id: number,
         public hash: number
