@@ -1,7 +1,7 @@
 import Keypair = require('keypair');
 import MongoDb = require('mongodb');
 
-import { Coordinator } from '../coordinator';
+import { Coordinator } from '../coordinator/coordinator';
 import Interface = require('../interface');
 import { KeystoreProvider } from '../keystore/provider';
 import { UserIdentity } from '../keystore/user-identity';

@@ -1,4 +1,4 @@
-import { Coordinator } from '../coordinator';
+import { Coordinator } from '../coordinator/coordinator';
 import { Query } from '../query/query';
 
 export interface StorageProvider {

@@ -1,4 +1,4 @@
-import { Coordinator } from './coordinator';
+import { Coordinator } from './coordinator/coordinator';
 import QueryInverter = require("./query/inverter");
 import Inverse = QueryInverter.Inverse;
 import { JinagaDistributor } from "./distributor/server";

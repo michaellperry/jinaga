@@ -1,6 +1,6 @@
 import engine = require("engine.io-client");
 import Socket = engine.Socket;
-import { Coordinator } from '../coordinator';
+import { Coordinator } from '../coordinator/coordinator';
 import FactChannel = require("../factChannel");
 import { NetworkProvider } from '../network/provider';
 import { Query } from '../query/query';

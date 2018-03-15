@@ -1,7 +1,7 @@
 /// <reference path="../jinaga.ts" />
 
 import Interface = require("../interface");
-import { Coordinator } from '../coordinator';
+import { Coordinator } from '../coordinator/coordinator';
 import computeHash = Interface.computeHash;
 import isPredecessor = Interface.isPredecessor;
 import Keypair = require('keypair');

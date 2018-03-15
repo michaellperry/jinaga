@@ -1,7 +1,7 @@
 import Engine = require("engine.io");
 import Debug = require("debug");
 import Interface = require("../interface");
-import { Coordinator } from '../coordinator';
+import { Coordinator } from '../coordinator/coordinator';
 import computeHash = Interface.computeHash;
 import QueryInverter = require("../query/inverter");
 import Inverse = QueryInverter.Inverse;
