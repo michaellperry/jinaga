@@ -1,7 +1,7 @@
-import Interface = require('./interface');
-import buildPipeline = require('./mongoPipelineBuilder');
-import { Direction } from './query/enums';
-import { Join, PropertyCondition, Step } from './query/steps';
+import Interface = require('../interface');
+import buildPipeline = require('./pipeline-builder');
+import { Direction } from '../query/enums';
+import { Join, PropertyCondition, Step } from '../query/steps';
 
 export class Point {
     constructor (

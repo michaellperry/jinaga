@@ -1,4 +1,4 @@
-import Interface = require("./interface");
+import Interface = require("../interface");
 import computeHash = Interface.computeHash;
 import isPredecessor = Interface.isPredecessor;
 
