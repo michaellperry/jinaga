@@ -8,9 +8,9 @@ import { Spoke } from '../network/spoke';
 import { PersistenceProvider } from '../persistence/provider';
 import { QueryCache } from '../query/cache';
 import { fromDescriptiveString } from '../query/descriptive-string';
-import QueryInverter = require('../query/inverter');
+import { Inverse, invertQuery } from '../query/inverter';
 import { Query } from '../query/query';
-import splitSegments = require('../query/segmenter');
+import { splitSegments } from '../query/segmenter';
 import { _isEqual, _some } from '../utility/collections';
 import { computeHash } from '../utility/fact';
 import { FactChannel } from './factChannel';
@@ -129,8 +129,8 @@ class JinagaConnection implements Spoke {
 
         try {
             var query = fromDescriptiveString(message.query);
-            var inverses = QueryInverter.invertQuery(query);
-            inverses.forEach((inverse: QueryInverter.Inverse) => {
+            var inverses = invertQuery(query);
+            inverses.forEach((inverse: Inverse) => {
                 this.watches.push(new Watch(message.start, message.query, inverse.affected));
             });
             this.executeQuerySegments(message.start, message.token, query);

@@ -1,5 +1,4 @@
-import Collections = require('./collections');
-import _pairs = Collections._pairs;
+import { _pairs } from './collections';
 
 export function isPredecessor(value: any): boolean {
     if (value === null)

@@ -1,7 +1,7 @@
 import { Direction } from '../query/enums';
 import { Join, PropertyCondition, Step } from '../query/steps';
 
-function buildPipeline(startHash: number, steps: Array<Step>): Object[] {
+export function buildPipeline(startHash: number, steps: Array<Step>): Object[] {
     if (steps.length === 0) {
         return [];
     }
@@ -173,5 +173,3 @@ function buildPipelineFromFacts(steps: Step[]): Object[] {
         return buildPipelineFromFacts(steps.slice(1));
     }
 }
-
-export = buildPipeline;

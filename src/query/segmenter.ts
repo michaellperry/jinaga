@@ -36,9 +36,7 @@ function childSegments(head: Step[], tail: Step[]) : Query[] {
     }
 }
 
-function splitSegments(query: Query) : Query[] {
+export function splitSegments(query: Query) : Query[] {
     const segments: Query[] = childSegments([], query.steps);
     return segments;
 }
-
-export = splitSegments;

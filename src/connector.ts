@@ -1,15 +1,13 @@
+import Debug = require('debug');
+
 import { Coordinator } from './coordinator/coordinator';
-import QueryInverter = require("./query/inverter");
-import Inverse = QueryInverter.Inverse;
-import { JinagaDistributor } from "./distributor/server";
-import Collections = require("./utility/collections");
-import _isEqual = Collections._isEqual;
-import _some = Collections._some;
-import Debug = require("debug");
-import { QueryCache } from './query/cache';
+import { JinagaDistributor } from './distributor/server';
 import { NetworkProvider } from './network/provider';
 import { Spoke } from './network/spoke';
+import { QueryCache } from './query/cache';
+import { Inverse, invertQuery } from './query/inverter';
 import { Query } from './query/query';
+import { _isEqual, _some } from './utility/collections';
 
 var debug = Debug("jinaga.connector");
 
@@ -57,7 +55,7 @@ class JinagaConnector implements NetworkProvider {
                 this.coordinator.onReceived(result, null, this);
             });
         });
-        var inverses = QueryInverter.invertQuery(query);
+        var inverses = invertQuery(query);
         inverses.forEach((inverse: Inverse) => {
             this.watches.push(new Watch(start, query.toDescriptiveString(), inverse.affected));
         });

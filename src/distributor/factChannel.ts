@@ -1,7 +1,6 @@
-import Collections = require('../utility/collections');
+import { _isEqual } from '../utility/collections';
 import { computeHash, isPredecessor } from '../utility/fact';
 
-import _isEqual = Collections._isEqual;
 class FactReference {
     constructor(
         public id: number,

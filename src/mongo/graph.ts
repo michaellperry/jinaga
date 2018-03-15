@@ -1,7 +1,7 @@
 import { Direction } from '../query/enums';
 import { Join, PropertyCondition, Step } from '../query/steps';
 import { isPredecessor } from '../utility/fact';
-import buildPipeline = require('./pipeline-builder');
+import { buildPipeline } from './pipeline-builder';
 
 export class Point {
     constructor (

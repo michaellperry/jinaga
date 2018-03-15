@@ -7,9 +7,9 @@ import { UserIdentity } from '../keystore/user-identity';
 import { PersistenceProvider } from '../persistence/provider';
 import { Query } from '../query/query';
 import { computeHash } from '../utility/fact';
-import MongoGraph = require('./graph');
+import { executeIfMatches, pipelineProcessor, Point } from './graph';
 import { Pool } from './pool';
-import MongoSave = require('./save');
+import { saveFact } from './save';
 
 var MongoClient = MongoDb.MongoClient;
 
@@ -72,7 +72,7 @@ export class MongoProvider implements PersistenceProvider, KeystoreProvider {
     
     public save(fact: Object, source: any) {
         this.withCollection("successors", (collection, done) => {
-            MongoSave.saveFact(collection, fact, (error, saved) => {
+            saveFact(collection, fact, (error, saved) => {
                 if (error) {
                     this.coordinator.onError(error);
                 }
@@ -91,10 +91,10 @@ export class MongoProvider implements PersistenceProvider, KeystoreProvider {
         query: Query,
         result: (error: string, facts: Array<Object>) => void
     ) {
-        MongoGraph.executeIfMatches(start, query.steps, (facts) => result(null, facts), (start, steps) => {
+        executeIfMatches(start, query.steps, (facts) => result(null, facts), (start, steps) => {
             this.withCollection("successors", (collection, done) => {
-                const processor = MongoGraph.pipelineProcessor(collection, steps);
-                processor(new MongoGraph.Point(start, computeHash(start)), (error, facts) => {
+                const processor = pipelineProcessor(collection, steps);
+                processor(new Point(start, computeHash(start)), (error, facts) => {
                     if (error)
                         result(error, []);
                     else
