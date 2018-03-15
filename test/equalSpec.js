@@ -1,5 +1,5 @@
 var chai = require("chai");
-var Collections = require("../node/collections");
+var Collections = require("../node/utility/collections");
 var _isEqual = Collections._isEqual;
 
 var expect = chai.expect;

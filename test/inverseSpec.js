@@ -1,6 +1,6 @@
 var chai = require("chai");
 var Jinaga = require("../node/jinaga");
-var QueryInverter = require("../node/queryInverter");
+var QueryInverter = require("../node/query/inverter");
 var invertQuery = QueryInverter.invertQuery;
 var Interface = require("../node/interface");
 var Join = Interface.Join;

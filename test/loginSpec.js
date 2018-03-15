@@ -1,6 +1,6 @@
 var chai = require("chai");
 var Jinaga = require("../node/jinaga");
-var Collections = require("../node/collections");
+var Collections = require("../node/utility/collections");
 
 var expect = chai.expect;
 var _isEqual = Collections._isEqual;

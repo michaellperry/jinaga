@@ -1,10 +1,21 @@
 import Interface = require('../interface');
 import InverseSpecification = Interface.InverseSpecification;
 
-import { ConditionalSpecification, Proxy } from '../conditional';
 import { Direction, Quantifier } from './enums';
 import { Query } from './query';
 import { ExistentialCondition, Join, PropertyCondition, Step } from './steps';
+
+export interface Proxy {
+    has(name: string): Proxy;
+}
+
+export class ConditionalSpecification {
+    constructor(
+        public specification: Object,
+        public conditions: Array<(target: Proxy) => Object>,
+        public isAny: boolean
+    ) { }
+}
 
 class ParserProxy implements Proxy {
     constructor(
@@ -95,7 +106,7 @@ function findTarget(spec:Object): Array<Step> {
     return null;
 }
 
-function parse(templates: Array<(target: Proxy) => Object>): Query {
+export function parse(templates: Array<(target: Proxy) => Object>): Query {
     var steps: Array<Step> = [];
     for (var templateIndex in templates) {
         var template = templates[templateIndex];
@@ -106,5 +117,3 @@ function parse(templates: Array<(target: Proxy) => Object>): Query {
     }
     return new Query(steps);
 }
-
-export = parse;
