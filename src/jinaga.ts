@@ -2,10 +2,9 @@ import { JinagaCoordinator } from './coordinator/jinaga-coordinator';
 import { Watch } from './coordinator/watch';
 import FactChannel = require('./factChannel');
 import { Instrumentation } from './instrumentation';
-import Interface = require('./interface');
 import { MemoryProvider } from './memory/provider';
 import { NetworkProvider } from './network/provider';
-import { ConditionalSpecification, Proxy } from './query/parser';
+import { ConditionalSpecification, InverseSpecification, Proxy } from './query/parser';
 import { StorageProvider } from './storage/provider';
 
 class WatchProxy {
@@ -110,11 +109,11 @@ class Jinaga {
     public not(conditionOrSpecification: any): any {
         if (typeof(conditionOrSpecification) === "function") {
             var condition = <(target: Proxy) => Object>conditionOrSpecification;
-            return (t: Proxy) => new Interface.InverseSpecification(condition(t));
+            return (t: Proxy) => new InverseSpecification(condition(t));
         }
         else {
             var specification = <Object>conditionOrSpecification;
-            return new Interface.InverseSpecification(specification);
+            return new InverseSpecification(specification);
         }
     }
 }

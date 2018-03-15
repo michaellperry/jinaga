@@ -1,12 +1,6 @@
 import Collections = require('./utility/collections');
 import _pairs = Collections._pairs;
 
-export class InverseSpecification {
-    constructor(
-        public specification: Object
-    ) { }
-}
-
 export function isPredecessor(value: any): boolean {
     if (value === null)
         return false;

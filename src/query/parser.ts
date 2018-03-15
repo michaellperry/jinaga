@@ -1,6 +1,3 @@
-import Interface = require('../interface');
-import InverseSpecification = Interface.InverseSpecification;
-
 import { Direction, Quantifier } from './enums';
 import { Query } from './query';
 import { ExistentialCondition, Join, PropertyCondition, Step } from './steps';
@@ -14,6 +11,12 @@ export class ConditionalSpecification {
         public specification: Object,
         public conditions: Array<(target: Proxy) => Object>,
         public isAny: boolean
+    ) { }
+}
+
+export class InverseSpecification {
+    constructor(
+        public specification: Object
     ) { }
 }
 
