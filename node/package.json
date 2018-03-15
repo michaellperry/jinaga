@@ -1,11 +1,11 @@
 {
   "name": "jinaga",
-  "version": "1.8.6",
+  "version": "1.9.1",
   "description": "Universal Web Backend",
   "main": "jinaga.js",
   "repository": {
     "type": "git",
-    "url": "https://gihub.com/michaellperry/jinaga"
+    "url": "https://github.com/michaellperry/jinaga"
   },
   "keywords": [
     "messaging"
