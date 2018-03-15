@@ -1,6 +1,6 @@
-import Interface = require('./interface');
+import Interface = require('../interface');
 import isPredecessor = Interface.isPredecessor;
-import Collections = require("./utility/collections");
+import Collections = require("../utility/collections");
 import _isEqual = Collections._isEqual;
 
 class FactReference {
@@ -11,7 +11,7 @@ class FactReference {
     }
 }
 
-class FactChannel {
+export class FactChannel {
     private nextId: number;
     private nodes: { [hash: number]: Array<{id: number, fact: Object}> } = {};
     
@@ -117,5 +117,3 @@ class FactChannel {
         return null;
     }
 }
-
-export = FactChannel;

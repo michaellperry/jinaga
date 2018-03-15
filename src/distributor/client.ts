@@ -1,10 +1,11 @@
-import engine = require("engine.io-client");
-import Socket = engine.Socket;
+import engine = require('engine.io-client');
+
 import { Coordinator } from '../coordinator/coordinator';
-import FactChannel = require("../factChannel");
 import { NetworkProvider } from '../network/provider';
 import { Query } from '../query/query';
+import { FactChannel } from './factChannel';
 
+import Socket = engine.Socket;
 export class JinagaDistributor implements NetworkProvider {
     socket: Socket;
     coordinator: Coordinator;

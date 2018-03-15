@@ -1,6 +1,6 @@
 import { JinagaCoordinator } from './coordinator/jinaga-coordinator';
 import { Watch } from './coordinator/watch';
-import FactChannel = require('./factChannel');
+import { FactChannel } from './distributor/factChannel';
 import { Instrumentation } from './instrumentation';
 import { MemoryProvider } from './memory/provider';
 import { NetworkProvider } from './network/provider';

@@ -1,22 +1,24 @@
-import Engine = require("engine.io");
-import Debug = require("debug");
-import Interface = require("../interface");
+import Debug = require('debug');
+import Engine = require('engine.io');
+
 import { Coordinator } from '../coordinator/coordinator';
+import Interface = require('../interface');
+import { KeystoreProvider } from '../keystore/provider';
+import { UserIdentity } from '../keystore/user-identity';
+import { Spoke } from '../network/spoke';
+import { PersistenceProvider } from '../persistence/provider';
+import { QueryCache } from '../query/cache';
+import { fromDescriptiveString } from '../query/descriptive-string';
+import QueryInverter = require('../query/inverter');
+import { Query } from '../query/query';
+import splitSegments = require('../query/segmenter');
+import Collections = require('../utility/collections');
+import { FactChannel } from './factChannel';
+
 import computeHash = Interface.computeHash;
-import QueryInverter = require("../query/inverter");
 import Inverse = QueryInverter.Inverse;
-import Collections = require("../utility/collections");
 import _isEqual = Collections._isEqual;
 import _some = Collections._some;
-import FactChannel = require("../factChannel");
-import splitSegments = require('../query/segmenter');
-import { UserIdentity } from '../keystore/user-identity';
-import { KeystoreProvider } from '../keystore/provider';
-import { QueryCache } from '../query/cache'
-import { Spoke } from '../network/spoke';
-import { PersistenceProvider } from '../persistence/provider'
-import { Query } from '../query/query';
-import { fromDescriptiveString } from '../query/descriptive-string';
 
 var debug = Debug("jinaga.distributor.server");
 
