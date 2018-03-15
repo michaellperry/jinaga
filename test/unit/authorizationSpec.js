@@ -1,6 +1,6 @@
 var chai = require("chai");
-var JinagaDistributor = require("../node/jinaga.distributor.server");
-var MemoryProvider = require("../node/memory");
+var JinagaDistributor = require("../../node/jinaga.distributor.server");
+var MemoryProvider = require("../../node/memory");
 
 var url = "mongodb://localhost:27017/test";
 

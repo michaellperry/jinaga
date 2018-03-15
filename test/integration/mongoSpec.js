@@ -1,7 +1,7 @@
 var mocha = require("mocha");
 var chai = require("chai");
-var MongoProvider = require("../node/jinaga.mongo");
-var fromDescriptiveString = require("../node/query/descriptive-string").fromDescriptiveString;
+var MongoProvider = require("../../node/jinaga.mongo");
+var fromDescriptiveString = require("../../node/query/descriptive-string").fromDescriptiveString;
 var url = 'mongodb://localhost:27017/test';
 
 var expect = chai.expect;

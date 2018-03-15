@@ -1,6 +1,6 @@
 var mocha = require('mocha');
 var chai = require('chai');
-var FactChannel = require('../node/distributor/factChannel').FactChannel;
+var FactChannel = require('../../node/distributor/factChannel').FactChannel;
 
 var expect = chai.expect;
 

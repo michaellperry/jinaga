@@ -1,7 +1,7 @@
 var mocha = require('mocha');
 var chai = require('chai');
-var MemoryProvider = require('../node/memory');
-var fromDescriptiveString = require("../node/query/descriptive-string").fromDescriptiveString;
+var MemoryProvider = require('../../node/memory');
+var fromDescriptiveString = require("../../node/query/descriptive-string").fromDescriptiveString;
 
 var expect = chai.expect;
 var should = chai.should();

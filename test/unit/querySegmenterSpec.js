@@ -1,8 +1,8 @@
 var mocha = require('mocha');
 var chai = require('chai');
-var Query = require('../node/query/query');
-var splitSegments = require('../node/query/segmenter').splitSegments;
-var fromDescriptiveString = require("../node/query/descriptive-string").fromDescriptiveString;
+var Query = require('../../node/query/query');
+var splitSegments = require('../../node/query/segmenter').splitSegments;
+var fromDescriptiveString = require("../../node/query/descriptive-string").fromDescriptiveString;
 
 var expect = chai.expect;
 

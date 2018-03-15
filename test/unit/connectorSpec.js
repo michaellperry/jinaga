@@ -1,8 +1,8 @@
 var chai = require("chai");
-var Jinaga = require("../node/jinaga");
-var JinagaDistributor = require("../node/jinaga.distributor.server");
-var MemoryProvider = require("../node/memory");
-var JinagaConnector = require("../node/connector");
+var Jinaga = require("../../node/jinaga");
+var JinagaDistributor = require("../../node/jinaga.distributor.server");
+var MemoryProvider = require("../../node/memory");
+var JinagaConnector = require("../../node/connector");
 
 var expect = chai.expect;
 

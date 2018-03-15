@@ -1,6 +1,6 @@
 var chai = require('chai');
-var parse = require('../node/query/parser').parse;
-var Jinaga = require('../node/jinaga');
+var parse = require('../../node/query/parser').parse;
+var Jinaga = require('../../node/jinaga');
 
 var should = chai.should();
 

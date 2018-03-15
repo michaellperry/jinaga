@@ -1,6 +1,6 @@
 var chai = require("chai");
-var invertQuery = require("../node/query/inverter").invertQuery;
-var fromDescriptiveString = require("../node/query/descriptive-string").fromDescriptiveString;
+var invertQuery = require("../../node/query/inverter").invertQuery;
+var fromDescriptiveString = require("../../node/query/descriptive-string").fromDescriptiveString;
 
 var should = chai.should();
 

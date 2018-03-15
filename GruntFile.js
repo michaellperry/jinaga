@@ -25,11 +25,17 @@ module.exports = function (grunt) {
       }
     },
     mochaTest : {
-      test: {
+      integration: {
         options: {
           reporter: 'spec'
         },
-        src: ['test/**/*.js']
+        src: ['test/integration/**/*.js']
+      },
+      unit: {
+        options: {
+          reporter: 'spec'
+        },
+        src: ['test/unit/**/*.js']
       }
     },
     watch: {
@@ -46,5 +52,6 @@ module.exports = function (grunt) {
 
   grunt.registerTask('build', ['ts', 'browserify', 'mochaTest']);
   grunt.registerTask('default', ['build']);
+  grunt.registerTask('ci', ['ts', 'mochaTest:unit']);
 
 }

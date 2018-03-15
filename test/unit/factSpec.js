@@ -1,6 +1,6 @@
 var mocha = require("mocha");
 var chai = require("chai");
-var computeHash = require('../node/utility/fact').computeHash;
+var computeHash = require('../../node/utility/fact').computeHash;
 
 var expect = chai.expect;
 

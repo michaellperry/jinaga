@@ -1,5 +1,5 @@
 var chai = require("chai");
-var Pool = require("../node/mongo/pool").Pool;
+var Pool = require("../../node/mongo/pool").Pool;
 
 var expect = chai.expect;
 
