@@ -5,7 +5,7 @@ import { Coordinator } from '../coordinator';
 import computeHash = Interface.computeHash;
 import isPredecessor = Interface.isPredecessor;
 import Keypair = require('keypair');
-import Collections = require("../collections");
+import Collections = require("../utility/collections");
 import _isEqual = Collections._isEqual;
 import { UserIdentity } from '../keystore/user-identity';
 import { KeystoreProvider } from '../keystore/provider';

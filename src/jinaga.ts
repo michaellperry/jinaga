@@ -6,7 +6,7 @@ import parse = require("./query/parser");
 import { MemoryProvider } from './memory/provider';
 import QueryInverter = require("./query/inverter");
 import Inverse = QueryInverter.Inverse;
-import Collections = require("./collections");
+import Collections = require("./utility/collections");
 import FactChannel = require("./factChannel");
 import _isEqual = Collections._isEqual;
 import _some = Collections._some;

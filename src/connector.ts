@@ -2,7 +2,7 @@ import { Coordinator } from './coordinator';
 import QueryInverter = require("./query/inverter");
 import Inverse = QueryInverter.Inverse;
 import { JinagaDistributor } from "./distributor/server";
-import Collections = require("./collections");
+import Collections = require("./utility/collections");
 import _isEqual = Collections._isEqual;
 import _some = Collections._some;
 import Debug = require("debug");

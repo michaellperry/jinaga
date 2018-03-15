@@ -5,7 +5,7 @@ import { Coordinator } from '../coordinator';
 import computeHash = Interface.computeHash;
 import QueryInverter = require("../query/inverter");
 import Inverse = QueryInverter.Inverse;
-import Collections = require("../collections");
+import Collections = require("../utility/collections");
 import _isEqual = Collections._isEqual;
 import _some = Collections._some;
 import FactChannel = require("../factChannel");

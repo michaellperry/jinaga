@@ -1,6 +1,6 @@
 import Interface = require('./interface');
 import isPredecessor = Interface.isPredecessor;
-import Collections = require("./collections");
+import Collections = require("./utility/collections");
 import _isEqual = Collections._isEqual;
 
 class FactReference {

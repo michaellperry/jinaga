@@ -1,4 +1,4 @@
-import Collections = require('./collections');
+import Collections = require('./utility/collections');
 import _pairs = Collections._pairs;
 
 export class InverseSpecification {
