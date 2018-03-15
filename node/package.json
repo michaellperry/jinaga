@@ -1,6 +1,6 @@
 {
   "name": "jinaga",
-  "version": "1.8.5",
+  "version": "1.8.6",
   "description": "Universal Web Backend",
   "main": "jinaga.js",
   "repository": {
@@ -18,11 +18,11 @@
   "homepage": "http://jinaga.com",
   "dependencies": {
     "debug": "^2.6.1",
-    "engine.io": "^1.8.3",
-    "engine.io-client": "^1.8.3",
+    "engine.io": "^1.8.5",
+    "engine.io-client": "^1.8.5",
     "keypair": "^1.0.1",
     "minimist": "^1.2.0",
-    "mongodb": "^2.2.24",
+    "mongodb": "^2.2.35",
     "requirejs": "^2.3.3"
   }
 }
