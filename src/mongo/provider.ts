@@ -8,7 +8,7 @@ import { UserIdentity } from '../keystore/user-identity';
 import MongoGraph = require('./graph');
 import MongoSave = require('./save');
 import { PersistenceProvider } from '../persistence/provider';
-import { Pool } from '../pool';
+import { Pool } from './pool';
 import { Query } from '../query/query';
 
 import computeHash = Interface.computeHash;

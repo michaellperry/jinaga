@@ -3,7 +3,7 @@ import computeHash = Interface.computeHash;
 import { Coordinator } from './coordinator';
 import { Instrumentation } from "./instrumentation";
 import parse = require("./query/parser");
-import MemoryProvider = require("./memory");
+import { MemoryProvider } from './memory/provider';
 import QueryInverter = require("./query/inverter");
 import Inverse = QueryInverter.Inverse;
 import Collections = require("./collections");
