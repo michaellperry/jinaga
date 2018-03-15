@@ -2,16 +2,15 @@ import Keypair = require('keypair');
 import MongoDb = require('mongodb');
 
 import { Coordinator } from '../coordinator/coordinator';
-import Interface = require('../interface');
 import { KeystoreProvider } from '../keystore/provider';
 import { UserIdentity } from '../keystore/user-identity';
-import MongoGraph = require('./graph');
-import MongoSave = require('./save');
 import { PersistenceProvider } from '../persistence/provider';
-import { Pool } from './pool';
 import { Query } from '../query/query';
+import { computeHash } from '../utility/fact';
+import MongoGraph = require('./graph');
+import { Pool } from './pool';
+import MongoSave = require('./save');
 
-import computeHash = Interface.computeHash;
 var MongoClient = MongoDb.MongoClient;
 
 class MongoConnection {

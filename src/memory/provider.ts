@@ -1,19 +1,18 @@
 /// <reference path="../jinaga.ts" />
 
-import Interface = require("../interface");
-import { Coordinator } from '../coordinator/coordinator';
-import computeHash = Interface.computeHash;
-import isPredecessor = Interface.isPredecessor;
 import Keypair = require('keypair');
-import Collections = require("../utility/collections");
-import _isEqual = Collections._isEqual;
-import { UserIdentity } from '../keystore/user-identity';
+
+import { Coordinator } from '../coordinator/coordinator';
 import { KeystoreProvider } from '../keystore/provider';
-import { StorageProvider } from '../storage/provider';
-import { PersistenceProvider } from '../persistence/provider'
-import { Query } from '../query/query';
-import { Step, Join, PropertyCondition, ExistentialCondition } from '../query/steps';
+import { UserIdentity } from '../keystore/user-identity';
+import { PersistenceProvider } from '../persistence/provider';
 import { Direction, Quantifier } from '../query/enums';
+import { Query } from '../query/query';
+import { ExistentialCondition, Join, PropertyCondition, Step } from '../query/steps';
+import { StorageProvider } from '../storage/provider';
+import { _isEqual } from '../utility/collections';
+import { computeHash, isPredecessor } from '../utility/fact';
+
 
 class Node {
     successors: { [role: string]: Array<Node> } = {};

@@ -1,8 +1,7 @@
-import Interface = require('../interface');
-import isPredecessor = Interface.isPredecessor;
-import Collections = require("../utility/collections");
-import _isEqual = Collections._isEqual;
+import Collections = require('../utility/collections');
+import { computeHash, isPredecessor } from '../utility/fact';
 
+import _isEqual = Collections._isEqual;
 class FactReference {
     constructor(
         public id: number,
@@ -24,7 +23,7 @@ export class FactChannel {
     }
     
     public sendFact(fact: Object): FactReference {
-        var hash = Interface.computeHash(fact);
+        var hash = computeHash(fact);
         var existing = this.findExistingFact(hash, fact);
         if (existing)
             return existing;
@@ -44,7 +43,7 @@ export class FactChannel {
                     fact[field] = this.parseMessageValue(value);
                 }
             }
-            this.addNewFact(Interface.computeHash(fact), message.id, fact);
+            this.addNewFact(computeHash(fact), message.id, fact);
             this.onFactReceived(fact);
         }
     }

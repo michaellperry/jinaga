@@ -2,7 +2,6 @@ import Debug = require('debug');
 import Engine = require('engine.io');
 
 import { Coordinator } from '../coordinator/coordinator';
-import Interface = require('../interface');
 import { KeystoreProvider } from '../keystore/provider';
 import { UserIdentity } from '../keystore/user-identity';
 import { Spoke } from '../network/spoke';
@@ -12,13 +11,9 @@ import { fromDescriptiveString } from '../query/descriptive-string';
 import QueryInverter = require('../query/inverter');
 import { Query } from '../query/query';
 import splitSegments = require('../query/segmenter');
-import Collections = require('../utility/collections');
+import { _isEqual, _some } from '../utility/collections';
+import { computeHash } from '../utility/fact';
 import { FactChannel } from './factChannel';
-
-import computeHash = Interface.computeHash;
-import Inverse = QueryInverter.Inverse;
-import _isEqual = Collections._isEqual;
-import _some = Collections._some;
 
 var debug = Debug("jinaga.distributor.server");
 
@@ -135,7 +130,7 @@ class JinagaConnection implements Spoke {
         try {
             var query = fromDescriptiveString(message.query);
             var inverses = QueryInverter.invertQuery(query);
-            inverses.forEach((inverse: Inverse) => {
+            inverses.forEach((inverse: QueryInverter.Inverse) => {
                 this.watches.push(new Watch(message.start, message.query, inverse.affected));
             });
             this.executeQuerySegments(message.start, message.token, query);

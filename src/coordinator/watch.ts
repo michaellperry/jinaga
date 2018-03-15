@@ -1,7 +1,7 @@
-import { computeHash } from '../interface';
 import { Inverse } from '../query/inverter';
 import { Query } from '../query/query';
 import { _isEqual } from '../utility/collections';
+import { computeHash } from '../utility/fact';
 
 export class Watch {
     private mappings: { [hash: number]: Array<{ fact: Object, mapping: any }>; } = {};

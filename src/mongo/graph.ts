@@ -1,7 +1,7 @@
-import Interface = require('../interface');
-import buildPipeline = require('./pipeline-builder');
 import { Direction } from '../query/enums';
 import { Join, PropertyCondition, Step } from '../query/steps';
+import { isPredecessor } from '../utility/fact';
+import buildPipeline = require('./pipeline-builder');
 
 export class Point {
     constructor (
@@ -25,7 +25,7 @@ export function executeIfMatches(start: Object, steps: Step[], done: (facts: Obj
                 done([]);
             }
         }
-        else if (head instanceof Join && head.direction === Direction.Predecessor && Interface.isPredecessor(start[head.role])) {
+        else if (head instanceof Join && head.direction === Direction.Predecessor && isPredecessor(start[head.role])) {
             executeIfMatches(start[head.role], steps.slice(1), done, execute);
         }
         else {

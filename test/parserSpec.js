@@ -1,6 +1,4 @@
 var chai = require('chai');
-var Interface = require('../node/interface');
-var Direction = Interface.Direction;
 var parse = require('../node/query/parser').parse;
 var Jinaga = require('../node/jinaga');
 

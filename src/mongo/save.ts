@@ -1,6 +1,4 @@
-import Interface = require("../interface");
-import computeHash = Interface.computeHash;
-import isPredecessor = Interface.isPredecessor;
+import { computeHash, isPredecessor } from '../utility/fact';
 
 class Relation {
     constructor (
