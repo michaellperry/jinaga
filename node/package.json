@@ -1,6 +1,6 @@
 {
   "name": "jinaga",
-  "version": "1.9.2",
+  "version": "1.9.3",
   "description": "Universal Web Backend",
   "main": "jinaga.js",
   "types": "jinaga.d.ts",
