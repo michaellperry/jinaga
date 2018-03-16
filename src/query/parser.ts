@@ -26,6 +26,8 @@ class ParserProxy implements Proxy {
         private __role: string) {
     }
 
+    [key:string]: any;
+
     has(name:string):Proxy {
         var proxy = new ParserProxy(this, name);
         this[name] = proxy;
@@ -35,8 +37,8 @@ class ParserProxy implements Proxy {
     public createQuery(): Array<Step> {
         var currentSteps: Array<Step> = [];
         for (var name in this) {
-            if (name[0] != "_" && typeof this[name] !== "function" && !(this[name] instanceof ParserProxy)) {
-                var value = this[name];
+            var value: any = this[name];
+            if (name[0] != "_" && typeof this[name] !== "function" && !(value instanceof ParserProxy)) {
                 currentSteps.push(new PropertyCondition(name, value));
             }
         }
@@ -52,7 +54,7 @@ class ParserProxy implements Proxy {
     }
 }
 
-function findTarget(spec:Object): Array<Step> {
+function findTarget(spec:any): Array<Step> {
     if (spec instanceof ParserProxy) {
         return (<ParserProxy>spec).createQuery();
     }

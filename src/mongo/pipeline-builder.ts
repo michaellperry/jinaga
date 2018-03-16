@@ -123,7 +123,7 @@ function buildPipelineFromFacts(steps: Step[]): Object[] {
 
     if (steps[0] instanceof PropertyCondition) {
         const propertyCondition = <PropertyCondition>steps[0];
-        var match = {};
+        var match: { [key: string]: any } = {};
         match["fact." + propertyCondition.name] = propertyCondition.value;
         return (<Object[]>[{
             "$match": match

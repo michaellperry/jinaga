@@ -1,13 +1,11 @@
-import engine = require('engine.io-client');
-
 import { Coordinator } from '../coordinator/coordinator';
 import { NetworkProvider } from '../network/provider';
 import { Query } from '../query/query';
 import { FactChannel } from './factChannel';
+import client = require('engine.io-client');
 
-import Socket = engine.Socket;
 export class JinagaDistributor implements NetworkProvider {
-    socket: Socket;
+    socket: client.Socket;
     coordinator: Coordinator;
     isOpen: boolean = false;
     channel: FactChannel;
@@ -77,7 +75,7 @@ export class JinagaDistributor implements NetworkProvider {
         this.channel = new FactChannel(1,
             message => this.send(JSON.stringify(message)),
             fact => this.coordinator.onReceived(fact, null, this));
-        this.socket = new Socket(this.endpoint);
+        this.socket = client(this.endpoint);
         this.socket.on("open", () => { this.onOpen(); });
         this.socket.on("error", error => { this.onError(error.message); });
     }
@@ -104,12 +102,19 @@ export class JinagaDistributor implements NetworkProvider {
         this.pending = [];
     }
 
-    private onError(error) {
+    private onError(error: string) {
         this.coordinator.onError(error);
         this.retry();
     }
 
-    private onMessage(message) {
+    private onMessage(message: string | ArrayBuffer) {
+        if (typeof message === 'string')
+            this.onMessageString(message);
+        else
+            this.onError("I don't know how to do array buffers.");
+    }
+
+    private onMessageString(message: string) {
         var messageObj = JSON.parse(message);
         if (messageObj.type === "fact") {
             if (this.log) {

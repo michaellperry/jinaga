@@ -49,14 +49,14 @@ export class Watch {
         }
     }
 
-    public depthFirst(action: (Watch) => void) {
+    public depthFirst(action: (watch: Watch) => void) {
         action(this);
         this.children.forEach((watch) => {
             watch.depthFirst(action);
         });
     }
 
-    public countWatches() {
+    public countWatches(): number {
         return this.children.reduce((i, w) => {
             return i + w.countWatches();
         }, 1);

@@ -7,11 +7,13 @@ export class Point {
     constructor (
         public fact: Object,
         public hash: number) {} 
+
+    [key: string]: any;
 }
 
 export type Processor = (start: Point, result: (error: string, facts: Array<Point>) => void) => void;
 
-export function executeIfMatches(start: Object, steps: Step[], done: (facts: Object[]) => void, execute: (start: Object, steps: Step[]) => void) {
+export function executeIfMatches(start: { [key: string]: any }, steps: Step[], done: (facts: Object[]) => void, execute: (start: Object, steps: Step[]) => void) {
     if (steps.length === 0) {
         done([start]);
     }
@@ -39,7 +41,7 @@ export function pipelineProcessor(collection: any, steps: Step[]): Processor {
         const pipeline = buildPipeline(start.hash, steps);
         collection
             .aggregate(pipeline)
-            .toArray((err, documents) => {
+            .toArray((err: { message: string }, documents: { fact: Object, hash: number}[]) => {
                 result(
                     err ? err.message : null,
                     documents ? documents

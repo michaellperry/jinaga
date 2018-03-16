@@ -1,0 +1,3 @@
+{
+    "typescript.tsdk": "${workspaceFolder}/node_modules/typescript/lib"
+}

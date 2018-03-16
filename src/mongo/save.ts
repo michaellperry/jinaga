@@ -31,7 +31,7 @@ export function saveFact(collection: any, fact: Object, done: (error: string, sa
         fact: fact
     };
     
-    collection.insertOne(document, (e) => {
+    collection.insertOne(document, (e: { code: number, message: string }) => {
         if (e) {
             if (e.code != 11000) {
                 done(e.message, null);
@@ -63,7 +63,7 @@ export function saveFact(collection: any, fact: Object, done: (error: string, sa
     });
 }
 
-function getRelations(fact: Object): Array<Relation> {
+function getRelations(fact: { [key: string]: any }): Array<Relation> {
     let predecessors: Array<Relation> = [];
     for (var field in fact) {
         var value = fact[field];

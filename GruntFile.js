@@ -15,6 +15,7 @@ module.exports = function (grunt) {
           target: 'es5',
           rootDir: 'src',
           noUnusedLocals: true,
+          noImplicitAny: true,
           declaration: true
         }
       }

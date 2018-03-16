@@ -38,7 +38,7 @@ export class MongoProvider implements PersistenceProvider, KeystoreProvider {
                 'predecessors': 1
             }, {
                 unique: true
-            }, function (err) {
+            }, function (err: string) {
                 if (err) {
                     coordinator.onError(err);
                 }
@@ -46,19 +46,19 @@ export class MongoProvider implements PersistenceProvider, KeystoreProvider {
                     'predecessors.role': 1,
                     'predecessors.hash': 1,
                     'fact.type': 1
-                }, function (err) {
+                }, function (err: string) {
                     if (err) {
                         coordinator.onError(err);
                     }
                     collection.createIndex({
                         'hash': 1
-                    }, function (err) {
+                    }, function (err: string) {
                         if (err) {
                             coordinator.onError(err);
                         }
                         collection.createIndex({
                             'predecessors.hash': 1
-                        }, function (err) {
+                        }, function (err: string) {
                             if (err) {
                                 coordinator.onError(err);
                             }
@@ -112,7 +112,7 @@ export class MongoProvider implements PersistenceProvider, KeystoreProvider {
         }
         else {
             this.withCollection("users", (users, close: () => void) => {
-                var publicKey = null;
+                var publicKey: string = null;
                 users.find({
                     provider: userIdentity.provider,
                     userId: userIdentity.id
@@ -141,7 +141,7 @@ export class MongoProvider implements PersistenceProvider, KeystoreProvider {
                                 userId: userIdentity.id,
                                 privateKey: privateKey,
                                 publicKey: publicKey
-                            }, (error, result) => {
+                            }, (error: { message: string }) => {
                                 if (error) {
                                     this.coordinator.onError(error.message);
                                     done(null);
@@ -188,7 +188,7 @@ export class MongoProvider implements PersistenceProvider, KeystoreProvider {
         if (!this.pools[collectionName]) {
             this.pools[collectionName] = new Pool<MongoConnection>(
                 (done: (connection: MongoConnection) => void) => {
-                    MongoClient.connect(this.url, (err, db) => {
+                    MongoClient.connect(this.url, (err: { message: string }, db: any) => {
                         if (err) {
                             this.coordinator.onError(err.message);
                             done(null);

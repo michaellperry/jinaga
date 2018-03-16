@@ -33,7 +33,7 @@ export interface Func<T,TResult>
     (item: T): TResult;
 }
 
-export function _pairs(obj: Object) {
+export function _pairs(obj: {[key: string]:any}) {
     var result = [];
     for (var key in obj) {
         if (obj.hasOwnProperty(key)) {
@@ -51,24 +51,24 @@ export function _some(items: Array<any>, check: Func<any, boolean>) {
 }
 
 
-function isRegExp(value) {
+function isRegExp(value: Object) {
     return Object.prototype.toString.call(value) === '[object RegExp]';
 }
-function isDate(value) {
+function isDate(value: Object) {
     return Object.prototype.toString.call(value) === '[object Date]';
 }
-function isFunction(value) {
+function isFunction(value: Object) {
     return Object.prototype.toString.call(value) === '[object Function]';
 }
-function isArray(value) {
+function isArray(value: Object) {
     return Object.prototype.toString.call(value) === '[object Array]';
 }
 
-export function _isEqual(o1:any, o2:any) {
+export function _isEqual(o1:any, o2:any): boolean {
     if (o1 === o2) return true;
     if (o1 === null || o2 === null) return false;
     if (o1 !== o1 && o2 !== o2) return true; // NaN === NaN
-    var t1 = typeof o1, t2 = typeof o2, length, key, keySet;
+    var t1 = typeof o1, t2 = typeof o2, length, key, keySet: {[key:string]: boolean};
     if (t1 == t2) {
         if (t1 == 'object') {
             if (isArray(o1)) {

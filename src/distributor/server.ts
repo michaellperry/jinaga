@@ -53,6 +53,12 @@ class Promise {
     }
 }
 
+export interface Socket {
+    send(str: string): void;
+    on(event: string, callback: (arg: any) => void): void;
+    close(): void;
+}
+
 export class JinagaConnection implements Spoke {
     private watches: Array<Watch> = [];
     private userFact: Object;
@@ -61,7 +67,7 @@ export class JinagaConnection implements Spoke {
     private partialQueries: { [start: number]: { [query: string]: Promise }} = {};
 
     constructor(
-        private socket,
+        private socket: Socket,
         private distributor: JinagaDistributor)
     {
         this.channel = new FactChannel(2,
@@ -94,7 +100,7 @@ export class JinagaConnection implements Spoke {
         }));
     }
 
-    private onMessage(message) {
+    private onMessage(message: string) {
         try {
             var messageObj = JSON.parse(message);
             if (messageObj.type === "watch") {
@@ -123,7 +129,7 @@ export class JinagaConnection implements Spoke {
         this.distributor.onClose(this);
     }
 
-    private watch(message) {
+    private watch(message: any) {
         if (!message.start || !message.query)
             return;
 
@@ -140,7 +146,7 @@ export class JinagaConnection implements Spoke {
         }
     }
 
-    private stop(message) {
+    private stop(message: any) {
         if (!message.start || !message.query)
             return;
 
@@ -158,7 +164,7 @@ export class JinagaConnection implements Spoke {
         }
     }
 
-    private query(message) {
+    private query(message: any) {
         if (!message.start || !message.query || !message.token)
             return;
 
@@ -171,7 +177,7 @@ export class JinagaConnection implements Spoke {
         }
     }
 
-    private fact(message) {
+    private fact(message: any) {
         if (!message.fact)
             return;
 
@@ -251,16 +257,16 @@ export class JinagaConnection implements Spoke {
 }
 
 export class JinagaDistributor implements Coordinator {
-    server: Engine;
+    server: Engine.Server;
     connections: Array<Spoke> = [];
 
     constructor(
         private storage: PersistenceProvider,
         private keystore: KeystoreProvider,
-        private authenticate: (socket: any, done: (user: Object) => void) => void)
+        private authenticate: (socket: Socket, done: (user: Object) => void) => void)
     {
         if (!this.authenticate) {
-            this.authenticate = (socket: any, done: (user: Object) => void) => {
+            this.authenticate = (socket: Socket, done: (user: Object) => void) => {
                 done(null);
             };
         }
@@ -275,7 +281,7 @@ export class JinagaDistributor implements Coordinator {
         return distributor;
     }
 
-    static attach(storage: PersistenceProvider, keystore: KeystoreProvider, http, authenticate: (req: any, done: (user: Object) => void) => void): JinagaDistributor {
+    static attach(storage: PersistenceProvider, keystore: KeystoreProvider, http: any, authenticate: (req: any, done: (user: Object) => void) => void): JinagaDistributor {
         var distributor = new JinagaDistributor(storage, keystore, (socket: any, done: (user: Object) => void) => {
             authenticate(socket.request, done);
         });
@@ -293,7 +299,7 @@ export class JinagaDistributor implements Coordinator {
         this.connections.push(spoke);
     }
 
-    onConnection(socket) {
+    onConnection(socket: Socket) {
         var connection = new JinagaConnection(socket, this);
         this.authenticate(socket, (user: UserIdentity) => {
             if (user) {
@@ -418,7 +424,7 @@ export class JinagaDistributor implements Coordinator {
     resendMessages() {
     }
 
-    private authorizeRead(fact: Object, readerFact: Object, done: (authorized: boolean) => void) {
+    private authorizeRead(fact: { [key: string]: any }, readerFact: Object, done: (authorized: boolean) => void) {
         if (!fact.hasOwnProperty("in")) {
             // Not in a locked fact
             done(true);
@@ -461,7 +467,7 @@ export class JinagaDistributor implements Coordinator {
         })
     }
 
-    private authorizeWrite(fact, userFact): boolean {
+    private authorizeWrite(fact: { [key: string]: any }, userFact: any): boolean {
         if (fact.hasOwnProperty("from")) {
             if (!_isEqual(userFact, fact["from"])) {
                 // Impersonating another user.

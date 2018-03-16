@@ -18,8 +18,8 @@ class Node {
     successors: { [role: string]: Array<Node> } = {};
 
     constructor(
-        public fact: Object,
-        public predecessors: Object) {
+        public fact: { [key: string]: any },
+        public predecessors: { [key: string]: Node[] }) {
     }
 
     addSuccessor(role: string, node: Node) {
@@ -101,7 +101,7 @@ export class MemoryProvider implements StorageProvider, PersistenceProvider, Key
         }
     }
 
-    private queryNodes(startingNode, steps:Array<Step>): Array<Node> {
+    private queryNodes(startingNode: Node, steps:Array<Step>): Array<Node> {
         var nodes:Array<Node> = [startingNode];
         for (var index = 0; index < steps.length; index++) {
             var step = steps[index];
@@ -126,7 +126,7 @@ export class MemoryProvider implements StorageProvider, PersistenceProvider, Key
             else if (step instanceof PropertyCondition) {
                 var propertyCondition = <PropertyCondition>step;
                 var nextNodes:Array<Node> = [];
-                nodes.forEach(function (node) {
+                nodes.forEach(node => {
                     if (node.fact[propertyCondition.name] == propertyCondition.value) {
                         nextNodes.push(node);
                     }
@@ -181,7 +181,7 @@ export class MemoryProvider implements StorageProvider, PersistenceProvider, Key
         return null;
     }
 
-    private insertNode(fact: Object, source: any): Node {
+    private insertNode(fact: { [key: string]: any }, source: any): Node {
         var hash = computeHash(fact);
         var array = this.nodes[hash];
         if (!array) {

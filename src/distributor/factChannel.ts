@@ -9,14 +9,21 @@ export class FactReference {
     }
 }
 
+export interface Message {
+    type: string;
+    id: number;
+    fact: { [key: string]: any };
+    token: number;
+}
+
 export class FactChannel {
     private nextId: number;
     private nodes: { [hash: number]: Array<{id: number, fact: Object}> } = {};
     
     constructor(
         nextId: number,
-        private output: (Object) => void,
-        private onFactReceived: (Object) => void
+        private output: (obj: Message) => void,
+        private onFactReceived: (obj: Object) => void
     ) {
         this.nextId = nextId;
     }
@@ -32,11 +39,11 @@ export class FactChannel {
     
     public messageReceived(message: any) {
         if (message.type === 'fact' && message.hasOwnProperty("id") && message.hasOwnProperty("fact")) {
-            let fact = {};
+            let fact: { [key: string]: any } = {};
             for (let field in message.fact) {
                 let value = message.fact[field]
                 if (Array.isArray(value)) {
-                    fact[field] = value.map(v => this.parseMessageValue(v));
+                    fact[field] = value.map((v: any) => this.parseMessageValue(v));
                 }
                 else {
                     fact[field] = this.parseMessageValue(value);
@@ -60,8 +67,8 @@ export class FactChannel {
         return null;
     }
     
-    private sendNewFact(hash: number, fact: Object): FactReference {
-        var memento = {};
+    private sendNewFact(hash: number, fact: { [key: string]: any }): FactReference {
+        var memento: { [key: string]: any } = {};
         for (var field in fact) {
             var value = fact[field];
             if (isPredecessor(value)) {
