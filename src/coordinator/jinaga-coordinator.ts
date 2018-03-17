@@ -6,6 +6,7 @@ import { StorageProvider } from '../storage/provider';
 import { _isEqual, _some } from '../utility/collections';
 import { Coordinator } from './coordinator';
 import { Watch } from './watch';
+import { Subscription } from './subscription';
 
 export class JinagaCoordinator implements Coordinator {
     private errorHandlers: Array<(message: string) => void> = [];
@@ -113,7 +114,7 @@ export class JinagaCoordinator implements Coordinator {
             };
 
             this.queries.push({ token: this.nextToken, callback: watchFinished });
-            this.network.watch(start, full, this.nextToken);
+            this.network.query(start, full, this.nextToken);
             this.nextToken++;
             this.watchCount++;
             if (this.watchCount === 1) {
@@ -122,6 +123,16 @@ export class JinagaCoordinator implements Coordinator {
         }
         return watch;
     }
+
+    subscribe(start: Object, templates: ((target: Proxy) => Object)[]) {
+        var query = parse(templates);
+        var subscription = new Subscription(start, query);
+        if (this.network) {
+            this.network.watch(start, query, this.nextToken);
+            this.nextToken++;
+        }
+        return subscription;
+    };
 
     query(
         start: Object,
@@ -154,10 +165,13 @@ export class JinagaCoordinator implements Coordinator {
                 this.watches.splice(index, 1);
             }
         }
-        if (this.network) {
-            this.network.stopWatch(watch.start, watch.joins);
-        }
         this.watchesChanged();
+    }
+
+    stopSubscription(subscription: Subscription) {
+        if (this.network) {
+            this.network.stopWatch(subscription.start, subscription.joins);
+        }
     }
 
     login(callback: (userFact: Object, profile: Object) => void) {

@@ -66,6 +66,7 @@ describe("Connector", function () {
         var watch = j2.watch({}, [factsInRoot], function (fact) {
             facts.push(fact);
         });
+        var subscription = j2.subscribe({}, [factsInRoot]);
         
         j1.fact({
             root: {},
@@ -73,6 +74,7 @@ describe("Connector", function () {
         });
         
         watch.stop();
+        subscription.stop();
         
         expect(facts.length).to.equal(1);
         expect(facts[0].value).to.equal(17);
@@ -84,6 +86,7 @@ describe("Connector", function () {
         var watch = j2.watch({ match: "not" }, [factsInRoot], function (fact) {
             facts.push(fact);
         });
+        var subscription = j2.subscribe({}, [factsInRoot]);
         
         j1.fact({
             root: {},
@@ -91,6 +94,7 @@ describe("Connector", function () {
         });
         
         watch.stop();
+        subscription.stop();
         
         expect(facts.length).to.equal(0);
     })
@@ -101,14 +105,17 @@ describe("Connector", function () {
         var watch = j2.watch({}, [factsInRoot], function (fact) {
             facts.push(fact);
         });
+        var subscription = j2.subscribe({}, [factsInRoot]);
         
-        watch.stop();
+        subscription.stop();
         
         j1.fact({
             root: {},
             value: 17
         });
-        
+
+        watch.stop();
+
         expect(facts.length).to.equal(0);
     });
 });

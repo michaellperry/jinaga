@@ -1,4 +1,5 @@
 import { JinagaCoordinator } from './coordinator/jinaga-coordinator';
+import { SubscriptionProxy } from './coordinator/subscription-proxy';
 import { WatchProxy } from './coordinator/watch-proxy';
 import { FactChannel } from './distributor/factChannel';
 import { Instrumentation } from './instrumentation';
@@ -42,7 +43,7 @@ class Jinaga {
         start: Object,
         templates: Array<(target: Proxy) => Object>,
         resultAdded: (result: Object) => void,
-        resultRemoved: (result: Object) => void) : WatchProxy {
+        resultRemoved: (result: Object) => void = null) : WatchProxy {
         var watch = this.coordinator.watch(
             JSON.parse(JSON.stringify(start)),
             null,
@@ -50,6 +51,10 @@ class Jinaga {
             (mapping: any, result: Object) => resultAdded(result),
             resultRemoved);
         return new WatchProxy(this.coordinator, watch);
+    }
+    subscribe(start: Object, templates: ((target: Proxy) => Object)[]) {
+        var watch = this.coordinator.subscribe(JSON.parse(JSON.stringify(start)), templates);
+        return new SubscriptionProxy(this.coordinator, watch);
     }
     public query(
         start: Object,
