@@ -10,8 +10,8 @@ export class WatchProxy {
 
     public watch(
         templates: Array<(target: Proxy) => Object>,
-        resultAdded: (result: Object) => void,
-        resultRemoved: (result: Object) => void) : WatchProxy {
+        resultAdded: (mapping: any, result: Object) => void,
+        resultRemoved: (result: Object) => void = null) : WatchProxy {
         var nextWatch = this._coordinator.watch(
             this._watch.start,
             this._watch,

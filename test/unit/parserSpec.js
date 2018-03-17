@@ -59,7 +59,7 @@ describe('QueryParser', function() {
     return j.where({
       type: 'Task',
       list: l
-    }, [taskIsNotCompleted]);
+    }, taskIsNotCompleted);
   }
 
   function completedTasksInList(l) {
@@ -67,7 +67,7 @@ describe('QueryParser', function() {
     return j.where({
       type: 'Task',
       list: l
-    }, [taskIsCompleted]);
+    }, taskIsCompleted);
   }
 
   function completedTasksInListWithArray(l) {
@@ -75,7 +75,7 @@ describe('QueryParser', function() {
     return j.where({
       type: 'Task',
       list: [l]
-    }, [taskIsCompleted]);
+    }, taskIsCompleted);
   }
 
   function uncompletedTasksInListAlt(l) {
@@ -83,7 +83,7 @@ describe('QueryParser', function() {
     return j.where({
       type: 'Task',
       list: l
-    }, [j.not(taskIsCompleted)]);
+    }, j.not(taskIsCompleted));
   }
 
   function completedTasksInListAlt(l) {
@@ -91,7 +91,7 @@ describe('QueryParser', function() {
     return j.where({
       type: 'Task',
       list: l
-    }, [j.not(taskIsNotCompleted)]);
+    }, j.not(taskIsNotCompleted));
   }
 
   beforeEach(function () {

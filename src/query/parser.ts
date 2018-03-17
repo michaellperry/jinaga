@@ -6,6 +6,17 @@ export interface Proxy {
     has(name: string): Proxy;
 }
 
+export class Clause<T, U> {
+    constructor(
+        public templates: ((target: Proxy) => Object)[]
+    ) {
+    }
+
+    suchThat<V>(template: (target: U) => V) {
+        return new Clause<T, V>(this.templates.concat([template as any]));
+    }
+}
+
 export class ConditionalSpecification {
     constructor(
         public specification: Object,
@@ -121,4 +132,21 @@ export function parse(templates: Array<(target: Proxy) => Object>): Query {
         steps = steps.concat(targetJoins);
     }
     return new Query(steps);
+}
+
+export type TemplateList<T, U> = Clause<T, U> | Array<(target: T) => U> | ((target: T) => U);
+
+export function getTemplates<T, U>(templates: TemplateList<T, U>): ((target: Proxy) => Object)[] {
+    if (Array.isArray(templates)) {
+        return templates as any;
+    }
+    else if (templates instanceof Clause) {
+        return templates.templates;
+    }
+    else if (typeof(templates) === "function") {
+        return [templates as any];
+    }
+    else {
+        throw new Error('Not a valid template list');
+    }
 }
