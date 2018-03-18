@@ -1,4 +1,5 @@
 module.exports = function (grunt) {
+  grunt.loadNpmTasks('grunt-contrib-clean');
   grunt.loadNpmTasks('grunt-ts');
   grunt.loadNpmTasks('grunt-contrib-watch');
   grunt.loadNpmTasks('grunt-mocha-test');
@@ -6,6 +7,9 @@ module.exports = function (grunt) {
 
   grunt.initConfig({
     pkg: grunt.file.readJSON('package.json'),
+    clean: {
+      node: ['node/*', '!node/.npmignore', '!node/package.json', '!node/README.md']
+    },
     ts: {
       node: {
         src: ['src/**/*.ts', 'typings/**/*.ts'],
@@ -52,8 +56,8 @@ module.exports = function (grunt) {
     }
   });
 
-  grunt.registerTask('build', ['ts', 'browserify', 'mochaTest']);
+  grunt.registerTask('build', ['clean', 'ts', 'browserify', 'mochaTest']);
   grunt.registerTask('default', ['build']);
-  grunt.registerTask('ci', ['ts', 'mochaTest:unit']);
+  grunt.registerTask('ci', ['clean', 'ts', 'mochaTest:unit']);
 
 }
