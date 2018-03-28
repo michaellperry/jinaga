@@ -1,0 +1,1 @@
+export { Jinaga } from './jinaga';
