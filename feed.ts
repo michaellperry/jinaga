@@ -1,8 +1,8 @@
-import { Storage } from './storage';
-import { FactReference, Query, Fact } from './fact';
+import { Query } from './query';
+import { FactRecord, FactReference, Storage } from './storage';
 
 export class Observable {
-    subscribe(handler: (fact: Fact) => void): Observable {
+    subscribe(handler: (fact: FactRecord) => void): Observable {
         throw new Error('Not implemented');
     }
 
@@ -20,11 +20,11 @@ export class Feed implements Storage {
 
     }
 
-    save(fact: Fact): Promise<boolean> {
+    save(fact: FactRecord): Promise<boolean> {
         throw new Error('Not implemented');
     }
     
-    find(start: FactReference, query: Query): Promise<Fact[]> {
+    find(start: FactReference, query: Query): Promise<FactRecord[]> {
         throw new Error('Not implemented');
     }
 

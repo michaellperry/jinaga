@@ -1,6 +1,14 @@
-import { Fact, FactReference, Query } from './fact';
+import { Query } from './query';
+
+export class FactReference {
+
+}
+
+export class FactRecord {
+    
+}
 
 export interface Storage {
-    save(fact: Fact): Promise<boolean>;
-    find(start: FactReference, query: Query): Promise<Fact[]>;
+    save(fact: FactRecord): Promise<boolean>;
+    find(start: FactReference, query: Query): Promise<FactRecord[]>;
 }

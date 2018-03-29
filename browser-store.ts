@@ -1,12 +1,12 @@
-import { Fact, FactReference, Query } from './fact';
-import { Storage } from './storage';
+import { Query } from './query';
+import { FactRecord, FactReference, Storage } from './storage';
 
 export class BrowserStore implements Storage {
-    save(fact: Fact): Promise<boolean> {
+    save(fact: FactRecord): Promise<boolean> {
         throw new Error('Not implemented');
     }
 
-    find(start: FactReference, query: Query): Promise<Fact[]> {
+    find(start: FactReference, query: Query): Promise<FactRecord[]> {
         throw new Error('Not implemented');
     }
 }

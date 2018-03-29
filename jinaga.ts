@@ -1,9 +1,9 @@
-import { Fact } from './fact';
-import { Fork } from './fork';
+import { FactRecord } from './storage';
 import { Authorization } from './authorization';
 import { BrowserStore } from './browser-store';
 import { Cache } from './cache';
 import { Feed } from './feed';
+import { Fork } from './fork';
 import { WebClient } from './web-client';
 
 export interface TemplateList<T, U> {
@@ -18,7 +18,7 @@ export interface Profile {
     displayName: string;
 }
 
-function hydrate<T>(fact: Fact): T {
+function hydrate<T>(fact: FactRecord): T {
     throw new Error('Not implemented');
 }
 
