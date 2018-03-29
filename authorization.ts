@@ -1,9 +1,17 @@
-import { Fact, FactReference, Principal, Query } from './fact';
+import { Profile } from './jinaga';
+import { Fact, FactReference, Query, Principal } from './fact';
+import { Fork } from './fork';
 import { Storage } from './storage';
+import { WebClient } from './web-client';
 
 export class Authorization implements Storage {
-    constructor(private inner: Storage, private principal: Principal) {
+    private principal: Principal;
 
+    constructor(inner: Fork, client: WebClient) {
+    }
+
+    login(): Promise<{ userFact: Fact, profile: Profile }> {
+        throw new Error('Not implemented');
     }
 
     save(fact: Fact): Promise<boolean> {
