@@ -1,3 +1,4 @@
+import { delay } from '../util/fn';
 import { Fork } from './fork';
 import { Profile } from './jinaga';
 import { Query } from './query';
@@ -14,8 +15,14 @@ export class Authorization implements Storage {
     constructor(inner: Fork, client: WebClient) {
     }
 
-    login(): Promise<{ userFact: FactRecord, profile: Profile }> {
-        throw new Error('Not implemented');
+    async login(): Promise<{ userFact: FactRecord, profile: Profile }> {
+        await delay(500, true);
+        return {
+            userFact: new FactRecord(),
+            profile: {
+                displayName: 'Fake User'
+            }
+        };
     }
 
     save(fact: FactRecord): Promise<boolean> {

@@ -18,12 +18,16 @@ export interface Profile {
     displayName: string;
 }
 
-function hydrate<T>(fact: FactRecord): T {
-    throw new Error('Not implemented');
+function hydrate<T>(fact: FactRecord) {
+    return <T>{};
 }
 
 export class Jinaga {
     private authorization: Authorization;
+
+    private errorHandlers: ((message: string) => void)[] = [];
+    private loadingHandlers: ((loading: boolean) => void)[] = [];
+    private progressHandlers: ((count: number) => void)[] = [];
     
     constructor(url: string) {
         const store = new BrowserStore();
@@ -34,16 +38,16 @@ export class Jinaga {
         this.authorization = new Authorization(fork, webClient);
     }
 
-    onError(handler: (message: string) => void): void {
-        throw new Error('Not implemented');
+    onError(handler: (message: string) => void) {
+        this.errorHandlers.push(handler);
     }
 
-    onLoading(handler: (loading: boolean) => void): void {
-        throw new Error('Not implemented');
+    onLoading(handler: (loading: boolean) => void) {
+        this.loadingHandlers.push(handler);
     }
 
-    onProgress(handler: (queueCount: number) => void): void {
-        throw new Error('Not implemented');
+    onProgress(handler: (queueCount: number) => void) {
+        this.progressHandlers.push(handler);
     }
 
     query<T, U>(start: T, templates: TemplateList<T, U>, done: (result: U[]) => void): void {
