@@ -1,1 +1,1 @@
-export { Jinaga } from './jinaga';
+export { Jinaga, Profile } from './jinaga';

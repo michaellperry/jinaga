@@ -50,11 +50,12 @@ export class Jinaga {
         throw new Error('Not implemented');
     }
 
-    login<U>(callback: (userFact: U, profile: Profile) => void): void {
-        this.authorization.login()
-            .then(({ userFact, profile }) => {
-                callback(hydrate<U>(userFact), profile);
-            });
+    async login<U>(): Promise<{ userFact: U, profile: Profile }> {
+        const { userFact, profile } = await this.authorization.login();
+        return {
+            userFact: hydrate<U>(userFact),
+            profile
+        };
     }
 
     fact<T>(prototype: T) : T {
