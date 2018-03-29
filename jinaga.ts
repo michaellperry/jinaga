@@ -5,13 +5,21 @@ import { Cache } from './cache';
 import { Feed } from './feed';
 import { Fork } from './fork';
 import { WebClient } from './web-client';
+import { delay } from 'util/fn';
 
 export interface TemplateList<T, U> {
 
 }
 
-export interface Clause<T, U> {
+export interface Proxy {
+    has(name: string): Proxy;
+}
 
+export class Clause<T, U> {
+    constructor(
+        public templates: ((target: Proxy) => {})[]
+    ) {
+    }
 }
 
 export interface Profile {
@@ -50,8 +58,8 @@ export class Jinaga {
         this.progressHandlers.push(handler);
     }
 
-    query<T, U>(start: T, templates: TemplateList<T, U>, done: (result: U[]) => void): void {
-        throw new Error('Not implemented');
+    async query<T, U>(start: T, templates: TemplateList<T, U>): Promise<U[]> {
+        return await delay(500, []);
     }
 
     async login<U>(): Promise<{ userFact: U, profile: Profile }> {
@@ -63,7 +71,7 @@ export class Jinaga {
     }
 
     fact<T>(prototype: T) : T {
-        throw new Error('Not implemented');
+        return prototype;
     }
     
     where<T, U>(specification: Object, templates: TemplateList<T, U>): T {
@@ -71,7 +79,7 @@ export class Jinaga {
     }
 
     suchThat<T, U>(template: ((target: T) => U)): Clause<T, U> {
-        throw new Error('Not implemented');
+        return new Clause<T, U>([template as any]);
     }
 
     not<T, U>(condition: (target: T) => U): (target: T) => U;
