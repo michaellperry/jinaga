@@ -41,7 +41,7 @@ export class Jinaga {
         const store = new BrowserStore();
         const cache = new Cache(store);
         const feed = new Feed(cache);
-        const webClient = new WebClient();
+        const webClient = new WebClient(url);
         const fork = new Fork(feed, webClient);
         this.authorization = new Authorization(fork, webClient);
     }

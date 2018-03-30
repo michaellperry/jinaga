@@ -3,25 +3,27 @@ import { Fork } from './fork';
 import { Profile } from './jinaga';
 import { Query } from './query';
 import { FactRecord, FactReference, Storage } from './storage';
-import { WebClient } from './web-client';
+import { FactMessage, WebClient } from './web-client';
 
 export class Principal {
     
 }
 
+function parse(factMessage: FactMessage): FactRecord {
+    return <FactRecord>factMessage;
+}
+
 export class Authorization implements Storage {
     private principal: Principal;
 
-    constructor(inner: Fork, client: WebClient) {
+    constructor(inner: Fork, private client: WebClient) {
     }
 
     async login(): Promise<{ userFact: FactRecord, profile: Profile }> {
-        await delay(500, true);
+        const response = await this.client.login();
         return {
             userFact: new FactRecord(),
-            profile: {
-                displayName: 'Fake User'
-            }
+            profile: response.profile
         };
     }
 
