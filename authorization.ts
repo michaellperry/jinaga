@@ -9,7 +9,7 @@ export class Principal {
     
 }
 
-function parse(factMessage: FactMessage): FactRecord {
+function parseFactMessage(factMessage: FactMessage) {
     return <FactRecord>factMessage;
 }
 
@@ -22,7 +22,7 @@ export class Authorization implements Storage {
     async login(): Promise<{ userFact: FactRecord, profile: Profile }> {
         const response = await this.client.login();
         return {
-            userFact: new FactRecord(),
+            userFact: parseFactMessage(response.userFact),
             profile: response.profile
         };
     }
