@@ -1,6 +1,6 @@
 import { Collection, MongoClient } from 'mongodb';
 
-import { delay } from 'util/fn';
+import { delay } from '../../util/fn';
 
 export type Document = { [key: string]: any };
 
