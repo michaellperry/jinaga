@@ -42,13 +42,12 @@ export class Connection {
 }
 
 export class ConnectionFactory {
-    private clientPool: { mongoClient: MongoClient }[] = [];
+    private mongoClient: MongoClient;
 
     constructor(
         private url: string,
         private dbName: string,
-        private collectionName: string,
-        private poolMaxAge: number) {
+        private collectionName: string) {
 
     }
 
@@ -58,29 +57,14 @@ export class ConnectionFactory {
         const collection = db.collection(this.collectionName);
         const connection = new Connection(collection);
         const result = await callback(connection);
-        this.returnClient(mongoClient);
         return result;
     }
 
     private async getClient() {
-        if (this.clientPool.length > 0) {
-            const entry = this.clientPool.pop();
-            return entry.mongoClient;
+        if (!this.mongoClient) {
+            this.mongoClient = await this.createClient();
         }
-        else {
-            return await this.createClient();
-        }
-    }
-
-    private async returnClient(mongoClient: MongoClient) {
-        const entry = { mongoClient };
-        this.clientPool.push(entry);
-        await delay(this.poolMaxAge, true);
-        const index = this.clientPool.indexOf(entry);
-        if (index >= 0) {
-            this.clientPool.splice(index, 1);
-            mongoClient.close();
-        }
+        return this.mongoClient;
     }
 
     private createClient() {

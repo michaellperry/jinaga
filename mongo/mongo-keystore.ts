@@ -9,10 +9,9 @@ export class MongoKeystore implements Keystore {
 
     constructor(
         url: string,
-        dbName: string,
-        poolMaxAge: number) {
+        dbName: string) {
 
-        this.connectionFactory = new ConnectionFactory(url, dbName, 'users', poolMaxAge);
+        this.connectionFactory = new ConnectionFactory(url, dbName, 'users');
     }
     
     getUserFact(userIdentity: UserIdentity): Promise<FactRecord> {

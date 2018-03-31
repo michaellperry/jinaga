@@ -10,11 +10,11 @@ import { HttpRouter } from './rest/router';
 export class JinagaServer {
     handler: Handler;
 
-    constructor(mongoUrl: string, mongoDbName: string, poolMaxAge: number) {
-        const store = new MongoStore(mongoUrl, mongoDbName, poolMaxAge);
+    constructor(mongoUrl: string, mongoDbName: string) {
+        const store = new MongoStore(mongoUrl, mongoDbName);
         const cache = new Cache(store);
         const feed = new Feed(cache);
-        const keystore = new MongoKeystore(mongoUrl, mongoDbName, poolMaxAge);
+        const keystore = new MongoKeystore(mongoUrl, mongoDbName);
         const authorization = new Authorization(feed, keystore);
         const router = new HttpRouter(authorization);
         this.handler = router.handler;

@@ -7,10 +7,9 @@ export class MongoStore implements Storage {
 
     constructor(
         url: string,
-        dbName: string,
-        poolMaxAge: number) {
+        dbName: string) {
 
-        this.connectionFactory = new ConnectionFactory(url, dbName, 'facts', poolMaxAge);
+        this.connectionFactory = new ConnectionFactory(url, dbName, 'facts');
     }
     
     save(fact: FactRecord): Promise<boolean> {
