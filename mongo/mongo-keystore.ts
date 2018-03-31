@@ -22,7 +22,6 @@ export class MongoKeystore implements Keystore {
                 userId: userIdentity.id
             });
             const publicKey = await this.getPublicKey(userDocuments, connection, userIdentity);
-            console.log('Found public key: ' + publicKey);
             return {
                 type: 'Jinaga.User',
                 fields: {
@@ -37,7 +36,6 @@ export class MongoKeystore implements Keystore {
             throw new Error('Duplicate entries found in the keystore');
         }
         else if (userDocuments.length === 1) {
-            console.log('Found user document: ' + JSON.stringify(userDocuments[0]));
             return userDocuments[0].publicKey;
         }
         else {
@@ -55,7 +53,6 @@ export class MongoKeystore implements Keystore {
             privateKey: privateKey,
             publicKey: publicKey
         });
-        console.log('Generated key: ' + publicKey);
         return publicKey;
     }
 }
