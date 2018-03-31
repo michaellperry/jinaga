@@ -13,7 +13,7 @@ export class JinagaServer {
         const store = new MongoStore();
         const cache = new Cache(store);
         const feed = new Feed(cache);
-        const authorization = new Authorization(feed);
+        const authorization = new Authorization(feed, store);
         const router = new HttpRouter(authorization);
         this.handler = router.handler;
     }

@@ -18,7 +18,7 @@ function get(method: ((req: Request) => Promise<{}>)): Handler {
     };
 }
 
-export interface UserIdentity {
+export interface RequestUser {
     provider: string;
     id: string;
     profile: ProfileMessage;
@@ -27,24 +27,25 @@ export interface UserIdentity {
 export class HttpRouter {
     handler: Handler;
 
-    constructor(authorization: Authorization) {
+    constructor(private authorization: Authorization) {
         const router = express.Router();
         router.get('/login', get(this.login));
         this.handler = router;
     }
 
-    private async login(req: Request): Promise<LoginResponse> {
-        const userIdentity = <UserIdentity>req.user;
-        if (userIdentity) {
-            return {
-                userFact: {
-
-                },
-                profile: userIdentity.profile
-            };
-        }
-        else {
+    private async login(req: Request) {
+        const user = <RequestUser>req.user;
+        if (!user) {
             throw new Error('User not authenticated');
         }
+
+        const userFact = await this.authorization.getUserFact({
+            provider: user.provider,
+            id: user.id
+        });
+        return {
+            userFact: userFact,
+            profile: user.profile
+        };
     }
 }
