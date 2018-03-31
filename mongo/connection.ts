@@ -1,4 +1,4 @@
-import { Collection, MongoClient } from 'mongodb';
+import connect, { Collection, MongoClient, MongoCallback } from 'mongodb';
 
 import { delay } from '../../util/fn';
 
@@ -84,7 +84,8 @@ export class ConnectionFactory {
 
     private createClient() {
         return new Promise<MongoClient>((resolve, reject) => {
-            MongoClient.connect(this.url, (err, db) => {
+            const mdb: (url: string, callback: MongoCallback<MongoClient>) => void = <any>connect;
+            mdb(this.url, (err, db) => {
                 if (err) {
                     reject(err.message);
                 }
