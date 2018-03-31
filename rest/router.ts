@@ -1,11 +1,11 @@
-import express, { Handler } from 'express';
+import express, { Handler, Request } from 'express';
 
 import { Authorization } from '../authorization';
-import { LoginResponse } from './messages';
+import { LoginResponse, ProfileMessage } from './messages';
 
-function get(method: (() => Promise<{}>)): Handler {
+function get(method: ((req: Request) => Promise<{}>)): Handler {
     return (req, res, next) => {
-        method()
+        method(req)
             .then(response => {
                 res.send(response);
                 next();
@@ -18,6 +18,12 @@ function get(method: (() => Promise<{}>)): Handler {
     };
 }
 
+export interface UserIdentity {
+    provider: string;
+    id: string;
+    profile: ProfileMessage;
+}
+
 export class HttpRouter {
     handler: Handler;
 
@@ -27,14 +33,18 @@ export class HttpRouter {
         this.handler = router;
     }
 
-    private async login(): Promise<LoginResponse> {
-        return {
-            userFact: {
+    private async login(req: Request): Promise<LoginResponse> {
+        const userIdentity = <UserIdentity>req.user;
+        if (userIdentity) {
+            return {
+                userFact: {
 
-            },
-            profile: {
-                displayName: 'Called Server'
-            }
-        };
+                },
+                profile: userIdentity.profile
+            };
+        }
+        else {
+            throw new Error('User not authenticated');
+        }
     }
 }
