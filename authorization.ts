@@ -1,9 +1,9 @@
-import { delay } from '../util/fn';
 import { Fork } from './fork';
 import { Profile } from './jinaga';
 import { Query } from './query';
+import { FactMessage } from './rest/messages';
 import { FactRecord, FactReference, Storage } from './storage';
-import { FactMessage, WebClient } from './web-client';
+import { WebClient } from './rest/web-client';
 
 export class Principal {
     

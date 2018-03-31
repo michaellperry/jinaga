@@ -1,23 +1,12 @@
-import express from 'express';
+import express, { Handler } from 'express';
 
-type Handler = express.Handler;
+import { HttpRouter } from './rest/router';
 
 export class JinagaServer {
     handler: Handler;
 
     constructor() {
-        const router = express.Router();
-        router.get('/login', (req, res, next) => {
-            res.send({
-                userFact: {
-
-                },
-                profile: {
-                    displayName: 'Called Server'
-                }
-            });
-            next();
-        });
-        this.handler = router;
+        const router = new HttpRouter();
+        this.handler = router.handler;
     }
 }

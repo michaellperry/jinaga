@@ -1,26 +1,19 @@
-export class FactMessage {
-
-}
-
-export class ProfileMessage {
-    displayName: string;
-}
-
-export type LoginResponse = {
-    userFact: FactMessage,
-    profile: ProfileMessage
-}
+import { LoginResponse } from './messages';
 
 export class WebClient {
     constructor(private url: string) {
     }
 
     async login(): Promise<LoginResponse> {
-        return new Promise<LoginResponse>((resolve, reject) => {
+        return <LoginResponse>await this.get('/login');
+    }
+
+    private async get(path: string): Promise<{}> {
+        return new Promise<{}>((resolve, reject) => {
             const request = new XMLHttpRequest();
-            request.open('GET', this.url + '/login', true);
+            request.open('GET', this.url + path, true);
             request.onload = () => {
-                const response = <LoginResponse>JSON.parse(request.response);
+                const response = <{}>JSON.parse(request.response);
                 resolve(response);
             };
             request.onerror = (event) => {

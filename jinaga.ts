@@ -4,7 +4,7 @@ import { BrowserStore } from './browser-store';
 import { Cache } from './cache';
 import { Feed } from './feed';
 import { Fork } from './fork';
-import { WebClient } from './web-client';
+import { WebClient } from './rest/web-client';
 import { delay } from 'util/fn';
 
 export interface TemplateList<T, U> {

@@ -1,5 +1,5 @@
 import { Storage } from './storage';
-import { WebClient } from './web-client';
+import { WebClient } from './rest/web-client';
 
 export class Fork {
     constructor(
