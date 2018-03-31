@@ -5,7 +5,7 @@ import { Cache } from './cache';
 import { Feed } from './feed';
 import { Fork } from './fork';
 import { WebClient } from './rest/web-client';
-import { delay } from 'util/fn';
+import { delay } from '../util/fn';
 
 export interface TemplateList<T, U> {
 
@@ -27,7 +27,9 @@ export interface Profile {
 }
 
 function hydrate<T>(fact: FactRecord) {
-    return <T>{};
+    const hydrated: any = fact.fields;
+    hydrated.type = fact.type;
+    return <T>hydrated;
 }
 
 export class Jinaga {
