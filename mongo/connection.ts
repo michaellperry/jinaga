@@ -16,6 +16,7 @@ export class Connection {
             cursor.forEach((result) => {
                 results.push(result);
             }, (error) => {
+                cursor.close();
                 if (error) {
                     reject(error.message);
                 }
