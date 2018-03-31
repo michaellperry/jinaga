@@ -4,8 +4,9 @@ export class FactReference {
 
 }
 
-export class FactRecord {
-    
+export interface FactRecord {
+    type: string;
+    fields: {};
 }
 
 export interface Storage {

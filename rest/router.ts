@@ -29,7 +29,7 @@ export class HttpRouter {
 
     constructor(private authorization: Authorization) {
         const router = express.Router();
-        router.get('/login', get(this.login));
+        router.get('/login', get(req => this.login(req)));
         this.handler = router;
     }
 
