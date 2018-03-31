@@ -1,5 +1,5 @@
 import { FactRecord } from './storage';
-import { Authorization } from './authorization';
+import { Authentication } from './authentication';
 import { BrowserStore } from './browser-store';
 import { Cache } from './cache';
 import { Feed } from './feed';
@@ -31,7 +31,7 @@ function hydrate<T>(fact: FactRecord) {
 }
 
 export class Jinaga {
-    private authorization: Authorization;
+    private authorization: Authentication;
 
     private errorHandlers: ((message: string) => void)[] = [];
     private loadingHandlers: ((loading: boolean) => void)[] = [];
@@ -43,7 +43,7 @@ export class Jinaga {
         const feed = new Feed(cache);
         const webClient = new WebClient(url);
         const fork = new Fork(feed, webClient);
-        this.authorization = new Authorization(fork, webClient);
+        this.authorization = new Authentication(fork, webClient);
     }
 
     onError(handler: (message: string) => void) {

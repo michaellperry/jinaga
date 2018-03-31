@@ -1,5 +1,6 @@
 import express, { Handler } from 'express';
 
+import { Authorization } from '../authorization';
 import { LoginResponse } from './messages';
 
 function get(method: (() => Promise<{}>)): Handler {
@@ -20,7 +21,7 @@ function get(method: (() => Promise<{}>)): Handler {
 export class HttpRouter {
     handler: Handler;
 
-    constructor() {
+    constructor(authorization: Authorization) {
         const router = express.Router();
         router.get('/login', get(this.login));
         this.handler = router;
