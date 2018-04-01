@@ -1,9 +1,8 @@
-import { Fork } from './fork';
 import { Profile } from './jinaga';
-import { Query } from './query';
+import { Query } from './query/query';
 import { FactMessage } from './rest/messages';
-import { FactRecord, FactReference, Storage } from './storage';
 import { WebClient } from './rest/web-client';
+import { FactRecord, FactReference, Storage } from './storage';
 
 export class Principal {
     
@@ -16,7 +15,7 @@ function parseFactMessage(factMessage: FactMessage) {
 export class Authentication implements Storage {
     private principal: Principal;
 
-    constructor(inner: Fork, private client: WebClient) {
+    constructor(private inner: Storage, private client: WebClient) {
     }
 
     async login(): Promise<{ userFact: FactRecord, profile: Profile }> {
@@ -31,7 +30,7 @@ export class Authentication implements Storage {
         throw new Error('Not implemented');
     }
 
-    find(start: FactReference, query: Query): Promise<FactRecord[]> {
-        throw new Error('Not implemented');
+    find(start: FactReference, query: Query) {
+        return this.inner.find(start, query);
     }
 }

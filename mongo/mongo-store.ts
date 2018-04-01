@@ -1,4 +1,4 @@
-import { Query } from '../query';
+import { Query } from '../query/query';
 import { FactRecord, FactReference, Storage } from '../storage';
 import { ConnectionFactory } from './connection';
 

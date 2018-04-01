@@ -1,39 +1,47 @@
-import { FactRecord } from './storage';
 import { Authentication } from './authentication';
 import { BrowserStore } from './browser-store';
 import { Cache } from './cache';
 import { Feed } from './feed';
 import { Fork } from './fork';
+import {
+    Clause,
+    ConditionalSpecification,
+    getTemplates,
+    InverseSpecification,
+    parseQuery,
+    Proxy,
+    TemplateList,
+} from './query/query-parser';
 import { WebClient } from './rest/web-client';
-import { delay } from '../util/fn';
-
-export interface TemplateList<T, U> {
-
-}
-
-export interface Proxy {
-    has(name: string): Proxy;
-}
-
-export class Clause<T, U> {
-    constructor(
-        public templates: ((target: Proxy) => {})[]
-    ) {
-    }
-}
+import { FactRecord } from './storage';
 
 export interface Profile {
     displayName: string;
 }
 
-function hydrate<T>(fact: FactRecord) {
-    const hydrated: any = fact.fields;
-    hydrated.type = fact.type;
-    return <T>hydrated;
+function hydrate<T>(record: FactRecord) {
+    const fact: any = record.fields;
+    fact.type = record.type;
+    return <T>fact;
+}
+
+function dehydrate<T>(fact: T): FactRecord {
+    let type: string = null;
+    let fields: { [key: string]: any } = {};
+    for (let field in fact) {
+        const value = fact[field];
+        if (field === 'type' && typeof(value) === 'string') {
+            type = value;
+        }
+        else {
+            fields[field] = value;
+        }
+    }
+    return { type, fields };
 }
 
 export class Jinaga {
-    private authorization: Authentication;
+    private authentication: Authentication;
 
     private errorHandlers: ((message: string) => void)[] = [];
     private loadingHandlers: ((loading: boolean) => void)[] = [];
@@ -45,7 +53,7 @@ export class Jinaga {
         const feed = new Feed(cache);
         const webClient = new WebClient(url);
         const fork = new Fork(feed, webClient);
-        this.authorization = new Authentication(fork, webClient);
+        this.authentication = new Authentication(fork, webClient);
     }
 
     onError(handler: (message: string) => void) {
@@ -61,11 +69,12 @@ export class Jinaga {
     }
 
     async query<T, U>(start: T, templates: TemplateList<T, U>): Promise<U[]> {
-        return await delay(500, []);
+        const results = await this.authentication.find(dehydrate(start), parseQuery(templates));
+        return results.map(record => hydrate<U>(record));
     }
 
     async login<U>(): Promise<{ userFact: U, profile: Profile }> {
-        const { userFact, profile } = await this.authorization.login();
+        const { userFact, profile } = await this.authentication.login();
         return {
             userFact: hydrate<U>(userFact),
             profile
@@ -77,7 +86,7 @@ export class Jinaga {
     }
     
     where<T, U>(specification: Object, templates: TemplateList<T, U>): T {
-        throw new Error('Not implemented');
+        return new ConditionalSpecification(specification, getTemplates(templates), true) as any;
     }
 
     suchThat<T, U>(template: ((target: T) => U)): Clause<T, U> {
@@ -87,6 +96,13 @@ export class Jinaga {
     not<T, U>(condition: (target: T) => U): (target: T) => U;
     not<T>(specification: T): T;
     not<T, U>(conditionOrSpecification: ((target: T) => U) | T): ((target: T) => U) | T {
-        throw new Error('Not implemented');
+        if (typeof(conditionOrSpecification) === "function") {
+            const condition: (target: Proxy) => Object = conditionOrSpecification as any;
+            return ((t: Proxy) => new InverseSpecification(condition(t))) as any;
+        }
+        else {
+            const specification = <{}>conditionOrSpecification;
+            return new InverseSpecification(specification) as any;
+        }
     }
 }
