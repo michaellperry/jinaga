@@ -5,7 +5,7 @@ import { Cache } from './cache';
 import { Feed } from './feed';
 import { MongoKeystore } from './mongo/mongo-keystore';
 import { MongoStore } from './mongo/mongo-store';
-import { HttpRouter } from './rest/router';
+import { HttpRouter } from './http/router';
 
 export class JinagaServer {
     handler: Handler;

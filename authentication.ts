@@ -1,7 +1,7 @@
 import { Profile } from './jinaga';
 import { Query } from './query/query';
-import { FactMessage } from './rest/messages';
-import { WebClient } from './rest/web-client';
+import { FactMessage } from './http/messages';
+import { WebClient } from './http/web-client';
 import { FactRecord, FactReference, Storage } from './storage';
 
 export class Principal {

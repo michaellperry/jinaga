@@ -1,6 +1,6 @@
 import { Query } from './query/query';
-import { FactMessage, QueryMessage } from './rest/messages';
-import { WebClient } from './rest/web-client';
+import { FactMessage, QueryMessage } from './http/messages';
+import { WebClient } from './http/web-client';
 import { FactRecord, FactReference, Storage } from './storage';
 
 function serializeQuery(start: FactReference, query: Query) : QueryMessage {

@@ -13,7 +13,7 @@ import {
     Proxy,
     TemplateList,
 } from './query/query-parser';
-import { WebClient } from './rest/web-client';
+import { WebClient } from './http/web-client';
 import { FactRecord, FactReference } from './storage';
 
 export interface Profile {
