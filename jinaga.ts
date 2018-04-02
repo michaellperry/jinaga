@@ -3,6 +3,7 @@ import { BrowserStore } from './browser-store';
 import { Cache } from './cache';
 import { Feed } from './feed';
 import { Fork } from './fork';
+import { computeHash } from './hash';
 import {
     Clause,
     ConditionalSpecification,
@@ -13,7 +14,7 @@ import {
     TemplateList,
 } from './query/query-parser';
 import { WebClient } from './rest/web-client';
-import { FactRecord } from './storage';
+import { FactRecord, FactReference } from './storage';
 
 export interface Profile {
     displayName: string;
@@ -25,7 +26,7 @@ function hydrate<T>(record: FactRecord) {
     return <T>fact;
 }
 
-function dehydrate<T>(fact: T): FactRecord {
+function dehydrateFact<T>(fact: T): FactRecord {
     let type: string = null;
     let fields: { [key: string]: any } = {};
     for (let field in fact) {
@@ -38,6 +39,14 @@ function dehydrate<T>(fact: T): FactRecord {
         }
     }
     return { type, fields };
+}
+
+function dehydrateReference<T>(fact: T): FactReference {
+    const factRecord = dehydrateFact(fact);
+    return {
+        type: factRecord.type,
+        hash: computeHash(factRecord.fields)
+    };
 }
 
 export class Jinaga {
@@ -69,7 +78,7 @@ export class Jinaga {
     }
 
     async query<T, U>(start: T, templates: TemplateList<T, U>): Promise<U[]> {
-        const results = await this.authentication.find(dehydrate(start), parseQuery(templates));
+        const results = await this.authentication.find(dehydrateReference(start), parseQuery(templates));
         return results.map(record => hydrate<U>(record));
     }
 
