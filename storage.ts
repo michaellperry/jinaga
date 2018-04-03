@@ -2,7 +2,7 @@ import { Query } from './query/query';
 
 export class FactReference {
     type: string;
-    hash: number;
+    hash: string;
 }
 
 export interface FactRecord {

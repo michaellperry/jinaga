@@ -1,13 +1,18 @@
-import { UserIdentity, Keystore } from './keystore';
 import { Feed } from './feed';
-import { FactRecord } from './storage';
+import { Keystore, UserIdentity } from './keystore';
+import { Query } from './query/query';
+import { FactReference } from './storage';
 
 export class Authorization {
-    constructor(feed: Feed, private keystore: Keystore) {
+    constructor(private feed: Feed, private keystore: Keystore) {
         
     }
 
     getUserFact(userIdentity: UserIdentity) {
         return this.keystore.getUserFact(userIdentity);
+    }
+
+    query(userIdentity: UserIdentity, start: FactReference, query: Query) {
+        return this.feed.find(start, query);
     }
 }

@@ -38,6 +38,7 @@ export class WebClient {
             request.onerror = (event) => {
                 reject(event.error.message);
             };
+            request.setRequestHeader('Content-Type', 'application/json');
             request.send(JSON.stringify(body));
         });
     }

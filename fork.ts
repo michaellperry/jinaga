@@ -28,7 +28,8 @@ export class Fork implements Storage {
 
     async find(start: FactReference, query: Query): Promise<FactRecord[]> {
         const response = await this.client.query(serializeQuery(start, query));
-        const facts = response.results.map(message => deserializeFact(message));
-        return facts;
+        throw new Error('Not implemented');
+        // const facts = response.results.map(message => deserializeFact(message));
+        // return facts;
     }
 }

@@ -1,9 +1,16 @@
 export type FactReferenceMessage = {
-
+    type: string,
+    hash: string
 };
 
 export type FactMessage = {
-
+    type: string,
+    hash: string,
+    roles: {
+        role: string,
+        predecessors: FactReferenceMessage[]
+    },
+    fields: {}
 };
 
 export type ProfileMessage = {
@@ -16,13 +23,11 @@ export type LoginResponse = {
 };
 
 export type QueryMessage = {
-    start: {
-        type: string,
-        hash: number
-    },
+    start: FactReferenceMessage,
     query: string
 };
 
 export type QueryResponse = {
-    results: FactMessage[]
+    facts: FactMessage[],
+    results: FactReferenceMessage[]
 };
