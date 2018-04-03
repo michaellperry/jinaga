@@ -38,14 +38,14 @@ function dehydrateFact<T>(fact: T): FactRecord {
             fields[field] = value;
         }
     }
-    return { type, fields };
+    return { type, predecessors: {}, fields };
 }
 
 function dehydrateReference<T>(fact: T): FactReference {
     const factRecord = dehydrateFact(fact);
     return {
         type: factRecord.type,
-        hash: computeHash(factRecord.fields)
+        hash: computeHash(factRecord)
     };
 }
 

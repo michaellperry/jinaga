@@ -1,14 +1,15 @@
 import { Query } from './query/query';
 
-export class FactReference {
+export type FactReference = {
     type: string;
     hash: string;
-}
+};
 
-export interface FactRecord {
+export type FactRecord = {
     type: string;
+    predecessors: { [role: string]: FactReference[] },
     fields: {};
-}
+};
 
 export interface Storage {
     save(fact: FactRecord): Promise<boolean>;

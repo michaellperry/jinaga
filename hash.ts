@@ -1,6 +1,42 @@
 import * as jsSHA from 'jssha';
+import { FactRecord, FactReference } from './storage';
 
-export function computeHash(obj: {}) {
+export function computeHash(fact: FactRecord) {
+    if (!fact)
+        return '';
+
+    return computeObjectHash({
+        fields: fact.fields,
+        predecessors: canonicalPredecessors(fact.predecessors)
+    });
+}
+
+function canonicalPredecessors(predecessors: { [role: string]: FactReference[] })
+    : { [role: string]: FactReference[] } {
+    let result: { [role: string]: FactReference[] } = {};
+    for(const role in predecessors) {
+        const referenceMessages = predecessors[role];
+        result[role] = sortedPredecessors(referenceMessages);
+    }
+    return result;
+}
+
+function sortedPredecessors(predecessors: FactReference[]) {
+    return predecessors.slice().sort((a,b) => {
+        if (a.hash < b.hash)
+            return -1;
+        else if (a.hash > b.hash)
+            return 1;
+        if (a.type < b.type)
+            return -1;
+        else if (a.type > b.type)
+            return 1;
+        else
+            return 0;
+    });
+}
+
+function computeObjectHash(obj: {}) {
     if (!obj)
         return '';
 

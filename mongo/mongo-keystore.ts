@@ -23,6 +23,7 @@ export class MongoKeystore implements Keystore {
             const publicKey = await this.getPublicKey(userDocuments, connection, userIdentity);
             return {
                 type: 'Jinaga.User',
+                predecessors: {},
                 fields: {
                     publicKey: publicKey
                 }

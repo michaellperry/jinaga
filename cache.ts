@@ -13,4 +13,4 @@ export class Cache implements Storage {
     find(start: FactReference, query: Query): Promise<FactRecord[]> {
         throw new Error('Not implemented');
     }
-}FactReference
+}

@@ -1,6 +1,6 @@
 import { Profile } from './jinaga';
 import { Query } from './query/query';
-import { FactMessage } from './http/messages';
+import { FactMessage, FactReferenceMessage } from './http/messages';
 import { WebClient } from './http/web-client';
 import { FactRecord, FactReference, Storage } from './storage';
 
@@ -8,8 +8,29 @@ export class Principal {
     
 }
 
-function parseFactMessage(factMessage: FactMessage) {
-    return <FactRecord>factMessage;
+function parseFactReferenceMessage(factReferenceMessage: FactReferenceMessage) : FactReference {
+    return {
+        type: factReferenceMessage.type,
+        hash: factReferenceMessage.hash
+    };
+}
+
+function parsePredecessorMessages(predecessors: { [role: string]: FactReferenceMessage[] })
+    : { [role: string]: FactReference[] } {
+    let result: { [role: string]: FactReference[] } = {};
+    for(const role in predecessors) {
+        const referenceMessages = predecessors[role];
+        result[role] = referenceMessages.map(parseFactReferenceMessage);
+    }
+    return result;
+}
+
+function parseFactMessage(factMessage: FactMessage): FactRecord {
+    return {
+        type: factMessage.type,
+        predecessors: parsePredecessorMessages(factMessage.predecessors),
+        fields: factMessage.fields
+    };
 }
 
 export class Authentication implements Storage {

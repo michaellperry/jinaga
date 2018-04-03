@@ -6,10 +6,7 @@ export type FactReferenceMessage = {
 export type FactMessage = {
     type: string,
     hash: string,
-    roles: {
-        role: string,
-        predecessors: FactReferenceMessage[]
-    },
+    predecessors: { [role: string]: FactReferenceMessage[] },
     fields: {}
 };
 
