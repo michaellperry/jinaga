@@ -1,12 +1,10 @@
-import express, { Handler, Request } from 'express';
+import express, { Handler } from 'express';
 
 import { Authorization } from '../authorization';
-import { LoginResponse, ProfileMessage, QueryMessage, QueryResponse, FactMessage, FactReferenceMessage } from './messages';
-import { FactReference, FactRecord } from '../storage';
-import { Query } from '../query/query';
-import { UserIdentity } from '../keystore';
-import { fromDescriptiveString } from '../query/descriptive-string';
 import { computeHash } from '../hash';
+import { fromDescriptiveString } from '../query/descriptive-string';
+import { FactRecord, FactReference } from '../storage';
+import { ProfileMessage, QueryMessage, QueryResponse } from './messages';
 
 function get<U>(method: ((req: RequestUser) => Promise<U>)): Handler {
     return (req, res, next) => {
@@ -44,14 +42,14 @@ function post<T, U>(method: (user: RequestUser, message: T) => Promise<U>): Hand
     };
 }
 
-function serializeFactReferenceFromFact(factRecord: FactRecord) : FactReferenceMessage {
+function serializeFactReferenceFromFact(factRecord: FactRecord) : FactReference {
     return {
         type: factRecord.type,
         hash: computeHash(factRecord)
     };
 }
 
-function serializeFactReference(factReference: FactReference) : FactReferenceMessage {
+function serializeFactReference(factReference: FactReference) : FactReference {
     return {
         type: factReference.type,
         hash: factReference.hash
@@ -59,14 +57,14 @@ function serializeFactReference(factReference: FactReference) : FactReferenceMes
 }
 
 function serializePredecessors(predecessors: { [role: string]: FactReference[] }) {
-    let result: { [role: string]: FactReferenceMessage[] } = {};
+    let result: { [role: string]: FactReference[] } = {};
     for (const role in predecessors) {
         result[role] = predecessors[role].map(serializeFactReference);
     }
     return result;
 }
 
-function serializeFact(factRecord: FactRecord) : FactMessage {
+function serializeFact(factRecord: FactRecord) : FactRecord {
     const hash = computeHash(factRecord);
     return {
         type: factRecord.type,

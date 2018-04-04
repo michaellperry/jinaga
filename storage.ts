@@ -7,6 +7,7 @@ export type FactReference = {
 
 export type FactRecord = {
     type: string;
+    hash: string;
     predecessors: { [role: string]: FactReference[] },
     fields: {};
 };

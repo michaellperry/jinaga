@@ -1,30 +1,20 @@
-export type FactReferenceMessage = {
-    type: string,
-    hash: string
-};
-
-export type FactMessage = {
-    type: string,
-    hash: string,
-    predecessors: { [role: string]: FactReferenceMessage[] },
-    fields: {}
-};
+import { FactRecord, FactReference } from '../storage';
 
 export type ProfileMessage = {
     displayName: string;
 };
 
 export type LoginResponse = {
-    userFact: FactMessage,
+    userFact: FactRecord,
     profile: ProfileMessage
 };
 
 export type QueryMessage = {
-    start: FactReferenceMessage,
+    start: FactReference,
     query: string
 };
 
 export type QueryResponse = {
-    facts: FactMessage[],
-    results: FactReferenceMessage[]
+    facts: FactRecord[],
+    results: FactReference[]
 };

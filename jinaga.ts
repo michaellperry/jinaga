@@ -4,6 +4,7 @@ import { Cache } from './cache';
 import { Feed } from './feed';
 import { Fork } from './fork';
 import { computeHash } from './hash';
+import { WebClient } from './http/web-client';
 import {
     Clause,
     ConditionalSpecification,
@@ -13,7 +14,6 @@ import {
     Proxy,
     TemplateList,
 } from './query/query-parser';
-import { WebClient } from './http/web-client';
 import { FactRecord, FactReference } from './storage';
 
 export interface Profile {
@@ -38,7 +38,7 @@ function dehydrateFact<T>(fact: T): FactRecord {
             fields[field] = value;
         }
     }
-    return { type, predecessors: {}, fields };
+    return { type, hash: '', predecessors: {}, fields };
 }
 
 function dehydrateReference<T>(fact: T): FactReference {
