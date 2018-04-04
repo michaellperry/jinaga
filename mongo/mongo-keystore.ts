@@ -1,8 +1,9 @@
 import Keypair from 'keypair';
 
 import { Keystore, UserIdentity } from '../keystore';
-import { FactRecord } from '../storage';
+import { FactRecord, PredecessorCollection } from '../storage';
 import { Connection, ConnectionFactory, Document } from './connection';
+import { computeHash } from '../hash';
 
 export class MongoKeystore implements Keystore {
     private connectionFactory: ConnectionFactory;
@@ -21,14 +22,13 @@ export class MongoKeystore implements Keystore {
                 userId: userIdentity.id
             });
             const publicKey = await this.getPublicKey(userDocuments, connection, userIdentity);
-            return {
-                type: 'Jinaga.User',
-                hash: '',
-                predecessors: {},
-                fields: {
-                    publicKey: publicKey
-                }
+            const type = 'Jinaga.User';
+            const predecessors: PredecessorCollection = {};
+            const fields = {
+                publicKey: publicKey
             };
+            const hash = computeHash(fields, predecessors);
+            return { type, hash, predecessors, fields };
         });
     }
 

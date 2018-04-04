@@ -1,5 +1,24 @@
 import { LoginResponse, QueryMessage, QueryResponse } from './messages';
 
+function createXHR(method: string, path: string, resolve: (result: any) => void, reject: (reason: any) => void) {
+    const xhr = new XMLHttpRequest();
+    xhr.open(method, path, true);
+    xhr.onload = () => {
+        if (xhr.responseType === 'json') {
+            const response = <{}>JSON.parse(xhr.response);
+            resolve(response);
+        }
+        else {
+            reject(xhr.responseText);
+        }
+    };
+    xhr.onerror = (event) => {
+        reject(event.error.message);
+    };
+    xhr.setRequestHeader('Accept', 'application/json');
+    return xhr;
+}
+
 export class WebClient {
     constructor(private url: string) {
     }
@@ -14,32 +33,16 @@ export class WebClient {
 
     private async get(path: string) {
         return new Promise<{}>((resolve, reject) => {
-            const request = new XMLHttpRequest();
-            request.open('GET', this.url + path, true);
-            request.onload = () => {
-                const response = <{}>JSON.parse(request.response);
-                resolve(response);
-            };
-            request.onerror = (event) => {
-                reject(event.error.message);
-            };
-            request.send();
+            const xhr = createXHR('GET', this.url + path, resolve, reject);
+            xhr.send();
         });
     }
 
     private async post(path: string, body: {}) {
         return new Promise<{}>((resolve, reject) => {
-            const request = new XMLHttpRequest();
-            request.open('POST', this.url + path, true);
-            request.onload = () => {
-                const response = <{}>JSON.parse(request.response);
-                resolve(response);
-            };
-            request.onerror = (event) => {
-                reject(event.error.message);
-            };
-            request.setRequestHeader('Content-Type', 'application/json');
-            request.send(JSON.stringify(body));
+            const xhr = createXHR('POST', this.url + path, resolve, reject);
+            xhr.setRequestHeader('Content-Type', 'application/json');
+            xhr.send(JSON.stringify(body));
         });
     }
 }

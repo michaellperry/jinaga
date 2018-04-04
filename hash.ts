@@ -3,6 +3,7 @@ import * as jsSHA from 'jssha';
 import { FactRecord, FactReference, PredecessorCollection } from './storage';
 
 export function computeHash(fields: {}, predecessors: PredecessorCollection) {
+    console.log(jsSHA);
     return computeObjectHash({
         fields: fields,
         predecessors: canonicalPredecessors(predecessors)
