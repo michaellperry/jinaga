@@ -5,10 +5,14 @@ export type FactReference = {
     hash: string;
 };
 
+export type PredecessorCollection = {
+    [role: string]: FactReference[]
+};
+
 export type FactRecord = {
     type: string;
     hash: string;
-    predecessors: { [role: string]: FactReference[] },
+    predecessors: PredecessorCollection,
     fields: {};
 };
 

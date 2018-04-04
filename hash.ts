@@ -1,19 +1,16 @@
 import * as jsSHA from 'jssha';
-import { FactRecord, FactReference } from './storage';
 
-export function computeHash(fact: FactRecord) {
-    if (!fact)
-        return '';
+import { FactRecord, FactReference, PredecessorCollection } from './storage';
 
+export function computeHash(fields: {}, predecessors: PredecessorCollection) {
     return computeObjectHash({
-        fields: fact.fields,
-        predecessors: canonicalPredecessors(fact.predecessors)
+        fields: fields,
+        predecessors: canonicalPredecessors(predecessors)
     });
 }
 
-function canonicalPredecessors(predecessors: { [role: string]: FactReference[] })
-    : { [role: string]: FactReference[] } {
-    let result: { [role: string]: FactReference[] } = {};
+function canonicalPredecessors(predecessors: PredecessorCollection) {
+    let result: PredecessorCollection = {};
     for(const role in predecessors) {
         const referenceMessages = predecessors[role];
         result[role] = sortedPredecessors(referenceMessages);

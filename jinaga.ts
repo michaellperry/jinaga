@@ -14,7 +14,7 @@ import {
     Proxy,
     TemplateList,
 } from './query/query-parser';
-import { FactRecord, FactReference } from './storage';
+import { FactRecord, FactReference, PredecessorCollection } from './storage';
 
 export interface Profile {
     displayName: string;
@@ -38,14 +38,16 @@ function dehydrateFact<T>(fact: T): FactRecord {
             fields[field] = value;
         }
     }
-    return { type, hash: '', predecessors: {}, fields };
+    const predecessors: PredecessorCollection = {};
+    const hash = computeHash(fields, predecessors);
+    return { type, hash, predecessors, fields };
 }
 
 function dehydrateReference<T>(fact: T): FactReference {
     const factRecord = dehydrateFact(fact);
     return {
         type: factRecord.type,
-        hash: computeHash(factRecord)
+        hash: factRecord.hash
     };
 }
 

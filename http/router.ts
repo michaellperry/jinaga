@@ -45,7 +45,7 @@ function post<T, U>(method: (user: RequestUser, message: T) => Promise<U>): Hand
 function serializeFactReferenceFromFact(factRecord: FactRecord) : FactReference {
     return {
         type: factRecord.type,
-        hash: computeHash(factRecord)
+        hash: computeHash(factRecord.fields, factRecord.predecessors)
     };
 }
 
@@ -53,24 +53,6 @@ function serializeFactReference(factReference: FactReference) : FactReference {
     return {
         type: factReference.type,
         hash: factReference.hash
-    };
-}
-
-function serializePredecessors(predecessors: { [role: string]: FactReference[] }) {
-    let result: { [role: string]: FactReference[] } = {};
-    for (const role in predecessors) {
-        result[role] = predecessors[role].map(serializeFactReference);
-    }
-    return result;
-}
-
-function serializeFact(factRecord: FactRecord) : FactRecord {
-    const hash = computeHash(factRecord);
-    return {
-        type: factRecord.type,
-        hash: hash,
-        predecessors: serializePredecessors(factRecord.predecessors),
-        fields: factRecord.fields
     };
 }
 
@@ -113,7 +95,7 @@ export class HttpRouter {
         const query = fromDescriptiveString(queryMessage.query);
         const result = await this.authorization.query(userIdentity, start, query);
         return {
-            facts: result.map(serializeFact),
+            facts: result,
             results: result.map(serializeFactReferenceFromFact)
         };
     }
