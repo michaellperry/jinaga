@@ -16,7 +16,7 @@ export class MongoStore implements Storage {
         throw new Error('Not implemented');
     }
 
-    find(start: FactReference, query: Query): Promise<FactRecord[]> {
-        throw new Error('Not implemented');
+    async find(start: FactReference, query: Query): Promise<FactRecord[]> {
+        return [];
     }
 }

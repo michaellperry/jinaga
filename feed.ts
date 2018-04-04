@@ -25,7 +25,7 @@ export class Feed implements Storage {
     }
     
     find(start: FactReference, query: Query): Promise<FactRecord[]> {
-        throw new Error('Not implemented');
+        return this.inner.find(start, query);
     }
 
     from(fact: FactReference, query: Query): Observable {
