@@ -14,6 +14,7 @@ function get<U>(method: ((req: RequestUser) => Promise<U>)): Handler {
         }
         method(user)
             .then(response => {
+                res.setHeader('Content-Type', 'application/json');
                 res.send(JSON.stringify(response));
                 next();
             })
@@ -31,6 +32,7 @@ function post<T, U>(method: (user: RequestUser, message: T) => Promise<U>): Hand
         const message = <T>req.body;
         method(user, message)
             .then(response => {
+                res.setHeader('Content-Type', 'application/json');
                 res.send(JSON.stringify(response));
                 next();
             })

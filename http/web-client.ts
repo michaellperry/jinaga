@@ -4,12 +4,16 @@ function createXHR(method: string, path: string, resolve: (result: any) => void,
     const xhr = new XMLHttpRequest();
     xhr.open(method, path, true);
     xhr.onload = () => {
-        if (xhr.responseType === 'json') {
-            const response = <{}>JSON.parse(xhr.response);
+        if (xhr.status >= 400) {
+            reject(xhr.responseText);
+        }
+        else if (xhr.responseType === 'json') {
+            const response = <{}>xhr.response;
             resolve(response);
         }
         else {
-            reject(xhr.responseText);
+            const response = <{}>JSON.parse(xhr.response);
+            resolve(response);
         }
     };
     xhr.onerror = (event) => {
