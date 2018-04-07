@@ -1,4 +1,5 @@
-import jsSHA from 'jssha';
+import { hash } from 'tweetnacl';
+import { decodeUTF8, encodeBase64 } from 'tweetnacl-util';
 
 import { FactRecord, FactReference, PredecessorCollection } from './storage';
 
@@ -38,9 +39,10 @@ function computeObjectHash(obj: {}) {
         return '';
 
     const str = canonicalize(obj);
-    const shaObj = new jsSHA("SHA-256", "TEXT");
-    shaObj.update(str);
-    return shaObj.getHash("B64");
+    const bytes = decodeUTF8(str);
+    const result = hash(bytes);
+    const b64 = encodeBase64(result);
+    return b64;
 }
 
 type Pair = { key: string, value: any };
