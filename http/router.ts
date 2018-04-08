@@ -12,17 +12,19 @@ function get<U>(method: ((req: RequestUser) => Promise<U>)): Handler {
         if (!user) {
             res.sendStatus(401);
         }
-        method(user)
-            .then(response => {
-                res.setHeader('Content-Type', 'application/json');
-                res.send(JSON.stringify(response));
-                next();
-            })
-            .catch(error => {
-                console.error(error);
-                res.sendStatus(500);
-                next();
-            });
+        else {
+            method(user)
+                .then(response => {
+                    res.setHeader('Content-Type', 'application/json');
+                    res.send(JSON.stringify(response));
+                    next();
+                })
+                .catch(error => {
+                    console.error(error);
+                    res.sendStatus(500);
+                    next();
+                });
+        }
     };
 }
 
@@ -69,7 +71,7 @@ export class HttpRouter {
 
     constructor(private authorization: Authorization) {
         const router = express.Router();
-        router.get('/login', get(req => this.login(req)));
+        router.get('/login', get(user => this.login(user)));
         router.post('/query', post((user, queryMessage: QueryMessage) => this.query(user, queryMessage)));
         this.handler = router;
     }
