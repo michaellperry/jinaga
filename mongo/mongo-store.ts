@@ -12,8 +12,23 @@ export class MongoStore implements Storage {
         this.connectionFactory = new ConnectionFactory(url, dbName, 'facts');
     }
     
-    save(fact: FactRecord): Promise<boolean> {
-        throw new Error('Not implemented');
+    async save(fact: FactRecord): Promise<boolean> {
+        const result = await this.connectionFactory.with(async (connection) => {
+            try {
+                await connection.insertOne(fact);
+                return true;
+            }
+            catch (error) {
+                if (error.code === 11000) {
+                    // Duplicate key. The object was already saved.
+                    return false;
+                }
+                else {
+                    throw new Error(error.message);
+                }
+            }
+        });
+        return result;
     }
 
     async find(start: FactReference, query: Query): Promise<FactRecord[]> {

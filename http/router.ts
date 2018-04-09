@@ -4,7 +4,8 @@ import { Authorization } from '../authorization';
 import { computeHash } from '../hash';
 import { fromDescriptiveString } from '../query/descriptive-string';
 import { FactRecord, FactReference } from '../storage';
-import { ProfileMessage, QueryMessage, QueryResponse } from './messages';
+import { ProfileMessage, QueryMessage, QueryResponse, SaveMessage, SaveResponse } from './messages';
+import { UserIdentity } from '../keystore';
 
 function get<U>(method: ((req: RequestUser) => Promise<U>)): Handler {
     return (req, res, next) => {
@@ -53,10 +54,10 @@ function serializeFactReferenceFromFact(factRecord: FactRecord) : FactReference 
     };
 }
 
-function serializeFactReference(factReference: FactReference) : FactReference {
+function serializeUserIdentity(user: RequestUser) : UserIdentity {
     return {
-        type: factReference.type,
-        hash: factReference.hash
+        provider: user.provider,
+        id: user.id
     };
 }
 
@@ -73,6 +74,7 @@ export class HttpRouter {
         const router = express.Router();
         router.get('/login', get(user => this.login(user)));
         router.post('/query', post((user, queryMessage: QueryMessage) => this.query(user, queryMessage)));
+        router.post('/save', post((user, saveMessage: SaveMessage) => this.save(user, saveMessage)));
         this.handler = router;
     }
 
@@ -88,19 +90,21 @@ export class HttpRouter {
     }
 
     private async query(user: RequestUser, queryMessage: QueryMessage) : Promise<QueryResponse> {
-        const userIdentity = {
-            provider: user.provider,
-            id: user.id
-        };
-        const start = {
-            type: queryMessage.start.type,
-            hash: queryMessage.start.hash
-        };
+        const userIdentity = serializeUserIdentity(user);
         const query = fromDescriptiveString(queryMessage.query);
-        const result = await this.authorization.query(userIdentity, start, query);
+        const result = await this.authorization.query(userIdentity, queryMessage.start, query);
         return {
             facts: result,
             results: result.map(serializeFactReferenceFromFact)
         };
+    }
+
+    private async save(user: RequestUser, saveMessage: SaveMessage) : Promise<SaveResponse> {
+        const userIdentity = serializeUserIdentity(user);
+        const promises = saveMessage.facts.map(async (fact) => {
+            await this.authorization.save(userIdentity, fact);
+        });
+        await Promise.all(promises);
+        return {};
     }
 }

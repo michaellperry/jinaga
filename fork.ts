@@ -1,7 +1,13 @@
-import { QueryMessage } from './http/messages';
+import { QueryMessage, SaveMessage } from './http/messages';
 import { WebClient } from './http/web-client';
 import { Query } from './query/query';
 import { FactRecord, FactReference, Storage } from './storage';
+
+function serializeSave(fact: FactRecord) : SaveMessage {
+    return {
+        facts: [fact]
+    };
+}
 
 function serializeQuery(start: FactReference, query: Query) : QueryMessage {
     return {
@@ -24,8 +30,9 @@ export class Fork implements Storage {
         
     }
 
-    save(fact: FactRecord): Promise<boolean> {
-        throw new Error('Not implemented');
+    async save(fact: FactRecord): Promise<boolean> {
+        const response = await this.client.save(serializeSave(fact));
+        return true;
     }
 
     async find(start: FactReference, query: Query) {

@@ -16,8 +16,9 @@ export class Authentication implements Storage {
         return this.client.login();
     }
 
-    save(fact: FactRecord): Promise<boolean> {
-        throw new Error('Not implemented');
+    async save(fact: FactRecord): Promise<boolean> {
+        const saved = await this.inner.save(fact);
+        return saved;
     }
 
     find(start: FactReference, query: Query) {

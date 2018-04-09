@@ -92,8 +92,17 @@ export class Jinaga {
         };
     }
 
-    fact<T>(prototype: T) : T {
-        return prototype;
+    async fact<T>(prototype: T) : Promise<T> {
+        try {
+            const fact = JSON.parse(JSON.stringify(prototype));
+            const factRecord = dehydrateFact(fact);
+            const saved = await this.authentication.save(factRecord);
+            return fact;
+        } catch (error) {
+            this.errorHandlers.forEach((errorHandler) => {
+                errorHandler(error);
+            });
+        }
     }
     
     where<T, U>(specification: Object, templates: TemplateList<T, U>): T {

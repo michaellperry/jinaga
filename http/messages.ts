@@ -18,3 +18,11 @@ export type QueryResponse = {
     facts: FactRecord[],
     results: FactReference[]
 };
+
+export type SaveMessage = {
+    facts: FactRecord[]
+};
+
+export type SaveResponse = {
+
+};

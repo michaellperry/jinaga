@@ -21,7 +21,7 @@ export class Feed implements Storage {
     }
 
     save(fact: FactRecord): Promise<boolean> {
-        throw new Error('Not implemented');
+        return this.inner.save(fact);
     }
     
     find(start: FactReference, query: Query): Promise<FactRecord[]> {
