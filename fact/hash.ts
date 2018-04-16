@@ -1,7 +1,7 @@
 import tweetnaclutil from 'tweetnacl-util';
 import tweetnacl from 'tweetnacl';
 
-import { FactRecord, FactReference, PredecessorCollection } from './storage';
+import { FactRecord, FactReference, PredecessorCollection } from '../storage';
 
 export function computeHash(fields: {}, predecessors: PredecessorCollection) {
     return computeObjectHash({

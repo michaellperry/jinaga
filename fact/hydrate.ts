@@ -1,5 +1,5 @@
 import { computeHash } from './hash';
-import { FactRecord, FactReference, PredecessorCollection } from './storage';
+import { FactRecord, FactReference, PredecessorCollection } from '../storage';
 
 export function hydrate<T>(record: FactRecord) {
     const fact: any = record.fields;

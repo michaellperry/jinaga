@@ -1,7 +1,7 @@
 import express, { Handler } from 'express';
 
 import { Authorization } from '../authorization';
-import { computeHash } from '../hash';
+import { computeHash } from '../fact/hash';
 import { fromDescriptiveString } from '../query/descriptive-string';
 import { FactRecord, FactReference } from '../storage';
 import { ProfileMessage, QueryMessage, QueryResponse, SaveMessage, SaveResponse } from './messages';

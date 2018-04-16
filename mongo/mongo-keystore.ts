@@ -3,7 +3,7 @@ import Keypair from 'keypair';
 import { Keystore, UserIdentity } from '../keystore';
 import { FactRecord, PredecessorCollection } from '../storage';
 import { Connection, ConnectionFactory, Document } from './connection';
-import { computeHash } from '../hash';
+import { computeHash } from '../fact/hash';
 
 export class MongoKeystore implements Keystore {
     private connectionFactory: ConnectionFactory;

@@ -4,7 +4,7 @@ import { Cache } from './cache';
 import { Feed } from './feed';
 import { Fork } from './fork';
 import { WebClient } from './http/web-client';
-import { dehydrateFact, dehydrateReference, hydrate } from './hydrate';
+import { dehydrateFact, dehydrateReference, hydrate } from './fact/hydrate';
 import {
     Clause,
     ConditionalSpecification,
