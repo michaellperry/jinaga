@@ -3,8 +3,8 @@ import { BrowserStore } from './browser-store';
 import { Cache } from './cache';
 import { Feed } from './feed';
 import { Fork } from './fork';
-import { computeHash } from './hash';
 import { WebClient } from './http/web-client';
+import { dehydrateFact, dehydrateReference, hydrate } from './hydrate';
 import {
     Clause,
     ConditionalSpecification,
@@ -14,55 +14,9 @@ import {
     Proxy,
     TemplateList,
 } from './query/query-parser';
-import { FactRecord, FactReference, PredecessorCollection } from './storage';
 
 export interface Profile {
     displayName: string;
-}
-
-function hydrate<T>(record: FactRecord) {
-    const fact: any = record.fields;
-    fact.type = record.type;
-    return <T>fact;
-}
-
-function dehydrateFact<T>(fact: T): FactRecord {
-    let type: string = null;
-    let fields: { [key: string]: any } = {};
-    let predecessors: PredecessorCollection = {};
-    for (let field in fact) {
-        const value = fact[field];
-        if (field === 'type' && typeof(value) === 'string') {
-            type = value;
-        }
-        else if (typeof(value) === 'object') {
-            if (!predecessors.hasOwnProperty(field)) {
-                predecessors[field] = [];
-            }
-            const list = predecessors[field];
-            if (Array.isArray(value)) {
-                value.forEach((element) => {
-                    list.push(dehydrateReference(value));
-                });
-            }
-            else {
-                list.push(dehydrateReference(value));
-            }
-        }
-        else {
-            fields[field] = value;
-        }
-    }
-    const hash = computeHash(fields, predecessors);
-    return { type, hash, predecessors, fields };
-}
-
-function dehydrateReference<T>(fact: T): FactReference {
-    const factRecord = dehydrateFact(fact);
-    return {
-        type: factRecord.type,
-        hash: factRecord.hash
-    };
 }
 
 export class Jinaga {
