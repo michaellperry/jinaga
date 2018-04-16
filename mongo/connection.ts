@@ -9,6 +9,19 @@ export class Connection {
 
     }
 
+    createIndex(spec: {}, options?: {}) {
+        return new Promise<void>((resolve, reject) => {
+            this.collection.createIndex(spec, options, (error) => {
+                if (error) {
+                    reject(error.message);
+                }
+                else {
+                    resolve();
+                }
+            });
+        });
+    }
+
     find(query: {}) {
         return new Promise<Document[]>((resolve, reject) => {
             const results: Document[] = [];
@@ -31,7 +44,13 @@ export class Connection {
         return new Promise<void>((resolve, reject) => {
             this.collection.insertOne(document, (error) => {
                 if (error) {
-                    reject(error.message);
+                    if (error.code === 11000) {
+                        // Duplicate key. The object was already saved.
+                        resolve();
+                    }
+                    else {
+                        reject(error.message);
+                    }
                 }
                 else {
                     resolve();

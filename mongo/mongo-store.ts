@@ -1,9 +1,10 @@
 import { Query } from '../query/query';
 import { FactRecord, FactReference, Storage } from '../storage';
-import { ConnectionFactory } from './connection';
+import { Connection, ConnectionFactory } from './connection';
 
 export class MongoStore implements Storage {
     private connectionFactory: ConnectionFactory;
+    private initialized: boolean = false;
 
     constructor(
         url: string,
@@ -14,24 +15,26 @@ export class MongoStore implements Storage {
     
     async save(fact: FactRecord): Promise<boolean> {
         const result = await this.connectionFactory.with(async (connection) => {
-            try {
-                await connection.insertOne(fact);
-                return true;
-            }
-            catch (error) {
-                if (error.code === 11000) {
-                    // Duplicate key. The object was already saved.
-                    return false;
-                }
-                else {
-                    throw new Error(error.message);
-                }
-            }
+            await this.initialize(connection);
+            await connection.insertOne(fact);
+            return true;
         });
         return result;
     }
 
     async find(start: FactReference, query: Query): Promise<FactRecord[]> {
         return [];
+    }
+
+    private async initialize(connection: Connection) {
+        if (!this.initialized) {
+            await connection.createIndex({
+                type: 1,
+                hash: 1
+            }, {
+                unique: true
+            });
+            this.initialized = true;
+        }
     }
 }
