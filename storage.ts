@@ -17,6 +17,6 @@ export type FactRecord = {
 };
 
 export interface Storage {
-    save(fact: FactRecord): Promise<boolean>;
+    save(facts: FactRecord[]): Promise<boolean>;
     find(start: FactReference, query: Query): Promise<FactRecord[]>;
 }

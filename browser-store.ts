@@ -2,7 +2,7 @@ import { Query } from './query/query';
 import { FactRecord, FactReference, Storage } from './storage';
 
 export class BrowserStore implements Storage {
-    save(fact: FactRecord): Promise<boolean> {
+    save(facts: FactRecord[]): Promise<boolean> {
         throw new Error('Not implemented');
     }
 

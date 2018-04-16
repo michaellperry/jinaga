@@ -13,10 +13,13 @@ export class MongoStore implements Storage {
         this.connectionFactory = new ConnectionFactory(url, dbName, 'facts');
     }
     
-    async save(fact: FactRecord): Promise<boolean> {
+    async save(facts: FactRecord[]): Promise<boolean> {
         const result = await this.connectionFactory.with(async (connection) => {
             await this.initialize(connection);
-            await connection.insertOne(fact);
+            const promises = facts.map((fact) => {
+                return connection.insertOne(fact);
+            });
+            await Promise.all(promises);
             return true;
         });
         return result;

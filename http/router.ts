@@ -101,10 +101,7 @@ export class HttpRouter {
 
     private async save(user: RequestUser, saveMessage: SaveMessage) : Promise<SaveResponse> {
         const userIdentity = serializeUserIdentity(user);
-        const promises = saveMessage.facts.map(async (fact) => {
-            await this.authorization.save(userIdentity, fact);
-        });
-        await Promise.all(promises);
+        await this.authorization.save(userIdentity, saveMessage.facts);
         return {};
     }
 }

@@ -16,8 +16,8 @@ export class Authentication implements Storage {
         return this.client.login();
     }
 
-    async save(fact: FactRecord): Promise<boolean> {
-        const saved = await this.inner.save(fact);
+    async save(facts: FactRecord[]): Promise<boolean> {
+        const saved = await this.inner.save(facts);
         return saved;
     }
 

@@ -20,8 +20,8 @@ export class Feed implements Storage {
 
     }
 
-    save(fact: FactRecord): Promise<boolean> {
-        return this.inner.save(fact);
+    save(facts: FactRecord[]): Promise<boolean> {
+        return this.inner.save(facts);
     }
     
     find(start: FactReference, query: Query): Promise<FactRecord[]> {

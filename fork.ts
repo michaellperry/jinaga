@@ -3,9 +3,9 @@ import { WebClient } from './http/web-client';
 import { Query } from './query/query';
 import { FactRecord, FactReference, Storage } from './storage';
 
-function serializeSave(fact: FactRecord) : SaveMessage {
+function serializeSave(facts: FactRecord[]) : SaveMessage {
     return {
-        facts: [fact]
+        facts: facts
     };
 }
 
@@ -30,8 +30,8 @@ export class Fork implements Storage {
         
     }
 
-    async save(fact: FactRecord): Promise<boolean> {
-        const response = await this.client.save(serializeSave(fact));
+    async save(facts: FactRecord[]): Promise<boolean> {
+        const response = await this.client.save(serializeSave(facts));
         return true;
     }
 

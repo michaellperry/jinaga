@@ -29,16 +29,30 @@ function hydrate<T>(record: FactRecord) {
 function dehydrateFact<T>(fact: T): FactRecord {
     let type: string = null;
     let fields: { [key: string]: any } = {};
+    let predecessors: PredecessorCollection = {};
     for (let field in fact) {
         const value = fact[field];
         if (field === 'type' && typeof(value) === 'string') {
             type = value;
         }
+        else if (typeof(value) === 'object') {
+            if (!predecessors.hasOwnProperty(field)) {
+                predecessors[field] = [];
+            }
+            const list = predecessors[field];
+            if (Array.isArray(value)) {
+                value.forEach((element) => {
+                    list.push(dehydrateReference(value));
+                });
+            }
+            else {
+                list.push(dehydrateReference(value));
+            }
+        }
         else {
             fields[field] = value;
         }
     }
-    const predecessors: PredecessorCollection = {};
     const hash = computeHash(fields, predecessors);
     return { type, hash, predecessors, fields };
 }
@@ -96,7 +110,7 @@ export class Jinaga {
         try {
             const fact = JSON.parse(JSON.stringify(prototype));
             const factRecord = dehydrateFact(fact);
-            const saved = await this.authentication.save(factRecord);
+            const saved = await this.authentication.save([factRecord]);
             return fact;
         } catch (error) {
             this.errorHandlers.forEach((errorHandler) => {

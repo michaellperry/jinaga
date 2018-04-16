@@ -16,7 +16,7 @@ export class Authorization {
         return this.feed.find(start, query);
     }
 
-    save(userIdentity: UserIdentity, fact: FactRecord) {
-        return this.feed.save(fact);
+    save(userIdentity: UserIdentity, facts: FactRecord[]) {
+        return this.feed.save(facts);
     }
 }
