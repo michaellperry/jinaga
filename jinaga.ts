@@ -63,8 +63,8 @@ export class Jinaga {
     async fact<T>(prototype: T) : Promise<T> {
         try {
             const fact = JSON.parse(JSON.stringify(prototype));
-            const factRecord = dehydrateFact(fact);
-            const saved = await this.authentication.save([factRecord]);
+            const factRecords = dehydrateFact(fact);
+            const saved = await this.authentication.save(factRecords);
             return fact;
         } catch (error) {
             this.errorHandlers.forEach((errorHandler) => {

@@ -1,7 +1,8 @@
-import tweetnaclutil from 'tweetnacl-util';
 import tweetnacl from 'tweetnacl';
+import tweetnaclutil from 'tweetnacl-util';
 
-import { FactRecord, FactReference, PredecessorCollection } from '../storage';
+import { FactReference, PredecessorCollection } from '../storage';
+import { HashMap } from './hydrate';
 
 export function computeHash(fields: {}, predecessors: PredecessorCollection) {
     return computeObjectHash({
@@ -47,7 +48,7 @@ function computeObjectHash(obj: {}) {
 
 type Pair = { key: string, value: any };
 
-function canonicalize(obj: { [key: string]: any }) {
+function canonicalize(obj: HashMap) {
     let pairs: Pair[] = [];
     for (const key in obj) {
         const value = obj[key];
