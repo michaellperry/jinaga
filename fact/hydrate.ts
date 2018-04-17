@@ -50,17 +50,13 @@ class Dehydration {
                 type = value;
             }
             else if (typeof(value) === 'object') {
-                if (!predecessors.hasOwnProperty(field)) {
-                    predecessors[field] = [];
-                }
-                const list = predecessors[field];
                 if (Array.isArray(value)) {
-                    value.forEach((element) => {
-                        list.push(this.dehydrate(value));
+                    predecessors[field] = value.map(element => {
+                        return this.dehydrate(value);
                     });
                 }
                 else {
-                    list.push(this.dehydrate(value));
+                    predecessors[field] = this.dehydrate(value);
                 }
             }
             else {

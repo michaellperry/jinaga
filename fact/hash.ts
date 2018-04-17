@@ -15,7 +15,12 @@ function canonicalPredecessors(predecessors: PredecessorCollection) {
     let result: PredecessorCollection = {};
     for(const role in predecessors) {
         const referenceMessages = predecessors[role];
-        result[role] = sortedPredecessors(referenceMessages);
+        if (Array.isArray(referenceMessages)) {
+            result[role] = sortedPredecessors(referenceMessages);
+        }
+        else {
+            result[role] = referenceMessages;
+        }
     }
     return result;
 }

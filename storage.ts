@@ -6,7 +6,7 @@ export type FactReference = {
 };
 
 export type PredecessorCollection = {
-    [role: string]: FactReference[]
+    [role: string]: FactReference[] | FactReference
 };
 
 export type FactRecord = {
