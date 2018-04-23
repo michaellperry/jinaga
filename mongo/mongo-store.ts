@@ -1,6 +1,7 @@
 import { Query } from '../query/query';
 import { FactRecord, FactReference, Storage } from '../storage';
 import { Connection, ConnectionFactory } from './connection';
+import { pipelineFromSteps } from './pipeline';
 
 export class MongoStore implements Storage {
     private connectionFactory: ConnectionFactory;
@@ -26,44 +27,12 @@ export class MongoStore implements Storage {
     }
 
     async find(start: FactReference, query: Query): Promise<FactRecord[]> {
-        // S.from F.type="ImprovingU.UserName" N(S.prior F.type="ImprovingU.UserName")
+        console.log(query.toDescriptiveString());
+        const pipeline = pipelineFromSteps(start, query.steps);
+        console.log(pipeline);
         const result = await this.connectionFactory.with(async (connection) => {
             await this.initialize(connection);
-            return connection.aggregate([{
-                "$match": {
-                    "predecessors.from.hash": start.hash,
-                    "predecessors.from.type": start.type,
-                    "type": "ImprovingU.UserName"
-                }
-            }, {
-                "$lookup": {
-                    "from": "facts",
-                    "let": {
-                        "hash": "$hash",
-                        "type": "$type"
-                    },
-                    "pipeline": [{
-                        "$unwind": "$predecessors.prior"
-                    }, {
-                        "$match": {
-                            "$expr": {
-                                "$and": [
-                                    { "$eq": [ "$predecessors.prior.hash", "$$hash"] },
-                                    { "$eq": [ "$predecessors.prior.type", "$$type"] },
-                                    { "$eq": [ "$type", "ImprovingU.UserName"] }
-                                ]
-                            }
-                        }
-                    }, {
-                        "$limit": 1
-                    }],
-                    "as": "successors"
-                }
-            }, {
-                "$match": {
-                    "successors.hash": { "$exists": false }
-                }
-            }]);
+            return connection.aggregate(pipeline);
         });
         console.log(result);
         return [];
