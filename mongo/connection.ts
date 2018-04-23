@@ -58,6 +58,22 @@ export class Connection {
             })
         });
     }
+
+    aggregate(pipeline: {}[]) {
+        return new Promise<any[]>((resolve, reject) => {
+            const results: Document[] = [];
+            const cursor = this.collection.aggregate(pipeline);
+            cursor.each((error, result) => {
+                cursor.close();
+                if (error) {
+                    reject(error.message);
+                }
+                else {
+                    resolve(result);
+                }
+            });
+        });
+    }
 }
 
 export class ConnectionFactory {
