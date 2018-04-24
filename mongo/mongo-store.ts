@@ -1,7 +1,16 @@
 import { Query } from '../query/query';
 import { FactRecord, FactReference, Storage } from '../storage';
-import { Connection, ConnectionFactory } from './connection';
+import { Connection, ConnectionFactory, Document } from './connection';
 import { pipelineFromSteps } from './pipeline';
+
+function loadRecord(r: Document): FactRecord {
+    return {
+        type: r.type,
+        hash: r.hash,
+        predecessors: r.predecessors,
+        fields: r.fields
+    };
+}
 
 export class MongoStore implements Storage {
     private connectionFactory: ConnectionFactory;
@@ -30,12 +39,12 @@ export class MongoStore implements Storage {
         console.log(query.toDescriptiveString());
         const pipeline = pipelineFromSteps(start, query.steps);
         console.log(pipeline);
-        const result = await this.connectionFactory.with(async (connection) => {
+        const results = await this.connectionFactory.with(async (connection) => {
             await this.initialize(connection);
             return connection.aggregate(pipeline);
         });
-        console.log(result);
-        return [];
+        console.log(results);
+        return results.map(r => loadRecord(r));
     }
 
     private async initialize(connection: Connection) {

@@ -24,17 +24,13 @@ export class Connection {
 
     find(query: {}) {
         return new Promise<Document[]>((resolve, reject) => {
-            const results: Document[] = [];
             const cursor = this.collection.find(query);
-            cursor.forEach((result) => {
-                results.push(result);
-            }, (error) => {
-                cursor.close();
+            cursor.toArray((error, result) => {
                 if (error) {
                     reject(error.message);
                 }
                 else {
-                    resolve(results);
+                    resolve(result);
                 }
             });
         });
@@ -60,11 +56,9 @@ export class Connection {
     }
 
     aggregate(pipeline: {}[]) {
-        return new Promise<any[]>((resolve, reject) => {
-            const results: Document[] = [];
+        return new Promise<Document[]>((resolve, reject) => {
             const cursor = this.collection.aggregate(pipeline);
-            cursor.each((error, result) => {
-                cursor.close();
+            cursor.toArray((error, result) => {
                 if (error) {
                     reject(error.message);
                 }
