@@ -27,6 +27,7 @@ export class PostgresStore implements Storage {
         console.log(query.toDescriptiveString());
         const sqlQuery = sqlFromSteps(start, query.steps);
         console.log(sqlQuery.sql);
+        console.log(sqlQuery.parameters);
         const { rows } = await this.connectionFactory.with(async (connection) => {
             return await connection.query(sqlQuery.sql, sqlQuery.parameters);
         });

@@ -9,8 +9,7 @@ export type SqlQuery = {
 export function sqlFromSteps(start: FactReference, steps: Step[]) : SqlQuery {
     const builder = new QueryBuilder();
 
-    const parts = builder.sqlFromSteps(start, steps);
-    return builder.assembleQuery(parts);
+    return builder.buildQuery(start, steps);
 }
 
 type QueryParts = {
@@ -29,15 +28,11 @@ class QueryBuilder {
     private parameters: any[] = [];
     private nextAlias: number = 1;
 
-    sqlFromSteps(start: FactReference, steps: Step[]): QueryParts {
+    buildQuery(start: FactReference, steps: Step[]): SqlQuery {
         const final = steps.reduce((state, step) => {
             return state.transition(step);
         }, this.stateStart(start));
-        return final.parts;
-    }
-    
-    assembleQuery(parts: QueryParts): SqlQuery {
-        const sql = this.assembleQueryString(parts);
+        const sql = this.assembleQueryString(final.parts);
         const parameters = this.parameters;
         return { sql, parameters };
     }
@@ -46,6 +41,13 @@ class QueryBuilder {
         const sql = 'SELECT ' + parts.prefix + 'type AS type, ' + parts.prefix + 'hash AS hash ' +
             parts.fromClause + ' ' + parts.joins + ' WHERE ' + parts.whereClause;
         return sql;
+    }
+
+    private buildChildQuery(prefix: string, steps: Step[]): string {
+        const final = steps.reduce((state, step) => {
+            return state.transition(step);
+        }, this.stateSubquery(prefix));
+        return this.assembleChildQueryString(final.parts);
     }
 
     private assembleChildQueryString(parts: QueryParts): string {
@@ -83,6 +85,36 @@ class QueryBuilder {
         return this.stateMatched(parts);
     }
 
+    private stateSubquery(prefix: string): State {
+        return {
+            parts: null,
+            transition: (step: Step) => this.transitionFromSubquery(prefix, step)
+        };
+    }
+
+    private transitionFromSubquery(prefix: string, step: Step): State {
+        if (step instanceof Join) {
+            if (step.direction === Direction.Successor) {
+                return this.handleSubquerySuccessor(prefix, step.role);
+            }
+        }
+    
+        throw new Error("Cannot yet handle this query.");
+    }
+
+    private handleSubquerySuccessor(outerPrefix: string, role: string): State {
+        const alias = this.allocateAlias();
+        const fromClause = 'FROM public.edge ' + alias;
+        const joins = '';
+        const prefix = alias + '.successor_';
+        const whereClause = alias + '.predecessor_type = ' + outerPrefix + 'type' +
+            ' AND ' + alias + '.predecessor_hash = ' + outerPrefix + 'hash' +
+            ' AND ' + alias + '.role = ' + this.addParameter(role);
+        const parts = { prefix, fromClause, joins, whereClause };
+
+        return this.stateMatched(parts);
+    }
+
     private stateMatched(parts: QueryParts): State {
         return {
             parts,
@@ -114,15 +146,7 @@ class QueryBuilder {
 
     private handleMatchedExistentialCondition(parts: QueryParts, quantifier: Quantifier, steps: Step[]): State {
         const existence = quantifier === Quantifier.Exists ? 'EXISTS' : 'NOT EXISTS';
-        const alias = this.allocateAlias();
-        const fromClause = 'FROM public.edge ' + alias;
-        const joins = parts.joins;
-        const prefix = alias + '.predecessor_';
-        const childWhereClause = prefix + 'type = ' + parts.prefix + 'type' +
-            ' AND ' + prefix + 'hash = ' + parts.prefix + 'hash';
-        const childQuery = this.assembleChildQueryString(
-            { prefix, fromClause, joins, whereClause: childWhereClause }
-        );
+        const childQuery = this.buildChildQuery(parts.prefix, steps);
         const whereClause = parts.whereClause +
             ' AND ' + existence + ' (' + childQuery + ')';
         return this.stateMatched({
