@@ -1,5 +1,7 @@
 import pg, { Pool, PoolClient } from 'pg';
 
+export type Row = { [key: string]: any };
+
 export class ConnectionFactory {
     private postgresPool: Pool;
 
