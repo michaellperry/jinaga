@@ -94,8 +94,8 @@ export class HttpRouter {
         const query = fromDescriptiveString(queryMessage.query);
         const result = await this.authorization.query(userIdentity, queryMessage.start, query);
         return {
-            facts: result,
-            results: result.map(serializeFactReferenceFromFact)
+            facts: [],
+            results: result
         };
     }
 

@@ -49,7 +49,7 @@ export class Jinaga {
 
     async query<T, U>(start: T, templates: TemplateList<T, U>): Promise<U[]> {
         const results = await this.authentication.find(dehydrateReference(start), parseQuery(templates));
-        return results.map(record => hydrate<U>(record));
+        return [];
     }
 
     async login<U>(): Promise<{ userFact: U, profile: Profile }> {

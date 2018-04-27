@@ -1,4 +1,4 @@
-import { Direction, Join, PropertyCondition, Step, ExistentialCondition, Quantifier } from '../query/steps';
+import { Direction, ExistentialCondition, Join, PropertyCondition, Quantifier, Step } from '../query/steps';
 import { FactReference } from '../storage';
 
 export type SqlQuery = {
