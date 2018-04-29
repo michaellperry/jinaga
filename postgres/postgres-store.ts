@@ -62,26 +62,35 @@ export class PostgresStore implements Storage {
         if (facts.length > 0) {
             const edgeRecords = flatmap(facts, makeEdgeRecords);
             const edgeValues = edgeRecords.map((e, i) => '($' + (i*5 + 1) + ', $' + (i*5 + 2) + ', $' + (i*5 + 3) + ', $' + (i*5 + 4) + ', $' + (i*5 + 5) + ')');
-            const parameters = flatmap(edgeRecords, (e) => [e.predecessor_hash, e.predecessor_type, e.successor_hash, e.successor_type, e.role]);
-            console.log(parameters);
+            const edgeParameters = flatmap(edgeRecords, (e) => [e.predecessor_hash, e.predecessor_type, e.successor_hash, e.successor_type, e.role]);
+            const factValues = facts.map((f, i) => '($' + (i*4 + 1) + ', $' + (i*4 + 2) + ', $' + (i*4 + 3) + ', $' + (i*4 + 4) + ')');
+            const factParameters = flatmap(facts, (f) => [f.hash, f.type, JSON.stringify(f.fields), JSON.stringify(f.predecessors)]);
+            console.log(factParameters);
             await this.connectionFactory.withTransaction(async (connection) => {
                 await connection.query('INSERT INTO public.edge' +
                     ' (predecessor_hash, predecessor_type, successor_hash, successor_type, role)' +
-                    ' VALUES ' + edgeValues.join(', '), parameters);
+                    ' (SELECT predecessor_hash, predecessor_type, successor_hash, successor_type, role' +
+                    '  FROM (VALUES ' + edgeValues.join(', ') + ') AS v(predecessor_hash, predecessor_type, successor_hash, successor_type, role)' +
+                    '  WHERE NOT EXISTS (SELECT 1 FROM public.edge' +
+                    '   WHERE edge.predecessor_hash = v.predecessor_hash AND edge.predecessor_type = v.predecessor_type AND edge.successor_hash = v.successor_hash AND edge.successor_type = v.successor_type AND edge.role = v.role))',
+                    edgeParameters);
+                await connection.query('INSERT INTO public.fact' +
+                    ' (hash, type, fields, predecessors)' +
+                    ' (SELECT hash, type, to_jsonb(fields), to_jsonb(predecessors)' +
+                    '  FROM (VALUES ' + factValues.join(', ') + ') AS v(hash, type, fields, predecessors)' +
+                    '  WHERE NOT EXISTS (SELECT 1 FROM public.fact' +
+                    '   WHERE fact.hash = v.hash AND fact.type = v.type))',
+                    factParameters);
             });
         }
         return true;
     }
 
     async find(start: FactReference, query: Query): Promise<FactReference[]> {
-        console.log(query.toDescriptiveString());
         const sqlQuery = sqlFromSteps(start, query.steps);
-        console.log(sqlQuery.sql);
-        console.log(sqlQuery.parameters);
         const { rows } = await this.connectionFactory.with(async (connection) => {
             return await connection.query(sqlQuery.sql, sqlQuery.parameters);
         });
-        console.log(rows);
         return rows.map(loadFactReference);
     }
 
