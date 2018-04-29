@@ -16,7 +16,7 @@ function serializeQuery(start: FactReference, query: Query) : QueryMessage {
     };
 }
 
-function findFact(reference: FactReference, facts: FactRecord[]) : FactRecord {
+function findFact(reference: FactReference, facts: FactRecord[]) : FactReference {
     return facts.find(message =>
         message.hash == reference.hash &&
         message.type == reference.type);
@@ -40,5 +40,9 @@ export class Fork implements Storage {
         const facts = response.results.map(factReference =>
             findFact(factReference, response.facts));
         return facts;
+    }
+
+    load(references: FactReference[]): Promise<FactRecord[]> {
+        throw new Error('Not implemented');
     }
 }

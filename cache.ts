@@ -13,4 +13,8 @@ export class Cache implements Storage {
     find(start: FactReference, query: Query): Promise<FactReference[]> {
         return this.inner.find(start, query);
     }
+
+    load(references: FactReference[]): Promise<FactRecord[]> {
+        return this.inner.load(references);
+    }
 }

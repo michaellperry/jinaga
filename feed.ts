@@ -28,6 +28,10 @@ export class Feed implements Storage {
         return this.inner.find(start, query);
     }
 
+    load(references: FactReference[]): Promise<FactRecord[]> {
+        return this.inner.load(references);
+    }
+
     from(fact: FactReference, query: Query): Observable {
         throw new Error('Not implemented');
     }

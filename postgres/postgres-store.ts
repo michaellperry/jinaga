@@ -3,12 +3,19 @@ import { sqlFromSteps } from './sql';
 import { Query } from '../query/query';
 import { FactRecord, FactReference, Storage } from '../storage';
 
-function loadRecord(r: Row): FactRecord {
+function loadFactRecord(r: Row): FactRecord {
     return {
         type: r.type,
         hash: r.hash,
         predecessors: r.predecessors,
         fields: r.fields
+    };
+}
+
+function loadFactReference(r: Row): FactReference {
+    return {
+        type: r.type,
+        hash: r.hash
     };
 }
 
@@ -53,11 +60,9 @@ export class PostgresStore implements Storage {
     
     async save(facts: FactRecord[]): Promise<boolean> {
         if (facts.length > 0) {
-            const edgeRecords = facts.map(f => makeEdgeRecords(f))
-                .reduce((a,b) => a.concat(b));
+            const edgeRecords = flatmap(facts, makeEdgeRecords);
             const edgeValues = edgeRecords.map((e, i) => '($' + (i*5 + 1) + ', $' + (i*5 + 2) + ', $' + (i*5 + 3) + ', $' + (i*5 + 4) + ', $' + (i*5 + 5) + ')');
-            const parameters = edgeRecords.map((e) => [e.predecessor_hash, e.predecessor_type, e.successor_hash, e.successor_type, e.role])
-                .reduce((a,b) => a.concat(b));
+            const parameters = flatmap(edgeRecords, (e) => [e.predecessor_hash, e.predecessor_type, e.successor_hash, e.successor_type, e.role]);
             console.log(parameters);
             await this.connectionFactory.withTransaction(async (connection) => {
                 await connection.query('INSERT INTO public.edge' +
@@ -68,7 +73,7 @@ export class PostgresStore implements Storage {
         return true;
     }
 
-    async find(start: FactReference, query: Query): Promise<FactRecord[]> {
+    async find(start: FactReference, query: Query): Promise<FactReference[]> {
         console.log(query.toDescriptiveString());
         const sqlQuery = sqlFromSteps(start, query.steps);
         console.log(sqlQuery.sql);
@@ -77,6 +82,24 @@ export class PostgresStore implements Storage {
             return await connection.query(sqlQuery.sql, sqlQuery.parameters);
         });
         console.log(rows);
-        return rows.map(r => loadRecord(r));
+        return rows.map(loadFactReference);
     }
+
+    async load(references: FactReference[]): Promise<FactRecord[]> {
+        const tuples = references.map((r, i) => '($' + (i*2 + 1) + ', $' + (i*2 + 2) + ')');
+        const parameters = flatmap(references, (r) => [r.type, r.hash]);
+        const sql =
+            'SELECT fact.type, fact.hash, fields, predecessors' +
+            ' FROM (VALUES ' + tuples.join(', ') + ') AS v (type, hash)' +
+            ' JOIN public.ancestor ON ancestor.type = v.type AND ancestor.hash = v.hash' +
+            ' JOIN public.fact ON ancestor_type = fact.type AND ancestor_hash = fact.hash';
+        const { rows } = await this.connectionFactory.with(async (connection) => {
+            return await connection.query(sql, parameters);
+        })
+        return rows.map(loadFactRecord);
+    }
+}
+
+function flatmap<T, U>(source: T[], projection: (t: T) => U[]) {
+    return source.map(projection).reduce((a,b) => a.concat(b));
 }

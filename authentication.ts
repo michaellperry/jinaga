@@ -24,4 +24,8 @@ export class Authentication implements Storage {
     find(start: FactReference, query: Query) {
         return this.inner.find(start, query);
     }
+
+    load(references: FactReference[]): Promise<FactRecord[]> {
+        return this.inner.load(references);
+    }
 }
