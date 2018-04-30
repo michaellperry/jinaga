@@ -7,8 +7,8 @@ function loadFactRecord(r: Row): FactRecord {
     return {
         type: r.type,
         hash: r.hash,
-        predecessors: r.predecessors,
-        fields: r.fields
+        predecessors: JSON.parse(r.predecessors),
+        fields: JSON.parse(r.fields)
     };
 }
 
@@ -95,6 +95,10 @@ export class PostgresStore implements Storage {
     }
 
     async load(references: FactReference[]): Promise<FactRecord[]> {
+        if (references.length === 0) {
+            return [];
+        }
+
         const tuples = references.map((r, i) => '($' + (i*2 + 1) + ', $' + (i*2 + 2) + ')');
         const parameters = flatmap(references, (r) => [r.type, r.hash]);
         const sql =
@@ -110,5 +114,9 @@ export class PostgresStore implements Storage {
 }
 
 function flatmap<T, U>(source: T[], projection: (t: T) => U[]) {
+    if (source.length === 0) {
+        return [];
+    }
+
     return source.map(projection).reduce((a,b) => a.concat(b));
 }

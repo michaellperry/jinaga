@@ -68,10 +68,65 @@ class Dehydration {
     }
 }
 
+type HydrationEntry = {
+    record: FactRecord,
+    fact: HashMap
+}
+
+class Hydration {
+    private entries: HydrationEntry[];
+
+    constructor(records: FactRecord[]) {
+        this.entries = records.map(r => {
+            return {
+                record: r,
+                fact: null
+            };
+        });
+    }
+
+    hydrate(reference: FactReference): HashMap {
+        const entry = this.entries.find(r => r.record.hash === reference.hash && r.record.type === reference.type);
+        if (!entry) {
+            throw new Error('Referenced fact not found in tree');
+        }
+
+        if (entry.fact) {
+            return entry.fact;
+        }
+
+        const fact: HashMap = entry.record.fields;
+        fact.type = entry.record.type;
+    
+        for (const role in entry.record.predecessors) {
+            const value = entry.record.predecessors[role];
+            fact[role] = this.hydratePredecessors(value);
+        }
+
+        entry.fact = fact;
+
+        return fact;
+    }
+
+    private hydratePredecessors(references: FactReference | FactReference[]): HashMap | HashMap[] {
+        if (Array.isArray(references)) {
+            return references.map(p => this.hydrate(p));
+        }
+        else {
+            return this.hydrate(references);
+        }
+    }
+}
+
 export function hydrate<T>(record: FactRecord) {
     const fact: any = record.fields;
     fact.type = record.type;
     return <T>fact;
+}
+
+export function hydrateFromTree<T>(references: FactReference[], records: FactRecord[]) {
+    const hydration = new Hydration(records);
+    return references.map(r => <T>hydration.hydrate(r));
 }
 
 export function dehydrateFact(fact: HashMap): FactRecord[] {

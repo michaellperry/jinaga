@@ -1,10 +1,10 @@
 import { Authentication } from './authentication';
 import { BrowserStore } from './browser-store';
 import { Cache } from './cache';
+import { dehydrateFact, dehydrateReference, hydrate, hydrateFromTree } from './fact/hydrate';
 import { Feed } from './feed';
 import { Fork } from './fork';
 import { WebClient } from './http/web-client';
-import { dehydrateFact, dehydrateReference, hydrate } from './fact/hydrate';
 import {
     Clause,
     ConditionalSpecification,
@@ -49,8 +49,12 @@ export class Jinaga {
 
     async query<T, U>(start: T, templates: TemplateList<T, U>): Promise<U[]> {
         const results = await this.authentication.find(dehydrateReference(start), parseQuery(templates));
+        if (results.length === 0) {
+            return [];
+        }
+        
         const facts = await this.authentication.load(results);
-        return [];
+        return hydrateFromTree(results, facts);
     }
 
     async login<U>(): Promise<{ userFact: U, profile: Profile }> {
