@@ -1,4 +1,4 @@
-import { LoginResponse, QueryMessage, QueryResponse, SaveMessage, SaveResponse } from './messages';
+import { LoginResponse, QueryMessage, QueryResponse, SaveMessage, SaveResponse, LoadMessage, LoadResponse } from './messages';
 
 function createXHR(method: string, path: string, resolve: (result: any) => void, reject: (reason: any) => void) {
     const xhr = new XMLHttpRequest();
@@ -37,6 +37,10 @@ export class WebClient {
 
     async save(save: SaveMessage) {
         return <SaveResponse> await this.post('/save', save);
+    }
+
+    async load(load: LoadMessage) {
+        return <LoadResponse> await this.post('/load', load);
     }
 
     private async get(path: string) {

@@ -15,7 +15,6 @@ export type QueryMessage = {
 };
 
 export type QueryResponse = {
-    facts: FactRecord[],
     results: FactReference[]
 };
 
@@ -25,4 +24,12 @@ export type SaveMessage = {
 
 export type SaveResponse = {
 
+};
+
+export type LoadMessage = {
+    references: FactReference[]
+};
+
+export type LoadResponse = {
+    facts: FactRecord[]
 };

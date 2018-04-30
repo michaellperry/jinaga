@@ -1,4 +1,4 @@
-import { QueryMessage, SaveMessage } from './http/messages';
+import { LoadMessage, QueryMessage, SaveMessage } from './http/messages';
 import { WebClient } from './http/web-client';
 import { Query } from './query/query';
 import { FactRecord, FactReference, Storage } from './storage';
@@ -16,10 +16,10 @@ function serializeQuery(start: FactReference, query: Query) : QueryMessage {
     };
 }
 
-function findFact(reference: FactReference, facts: FactRecord[]) : FactReference {
-    return facts.find(message =>
-        message.hash == reference.hash &&
-        message.type == reference.type);
+function serializeLoad(references: FactReference[]) : LoadMessage {
+    return {
+        references: references
+    };
 }
 
 export class Fork implements Storage {
@@ -37,12 +37,11 @@ export class Fork implements Storage {
 
     async find(start: FactReference, query: Query) {
         const response = await this.client.query(serializeQuery(start, query));
-        const facts = response.results.map(factReference =>
-            findFact(factReference, response.facts));
-        return facts;
+        return response.results;
     }
 
-    load(references: FactReference[]): Promise<FactRecord[]> {
-        throw new Error('Not implemented');
+    async load(references: FactReference[]): Promise<FactRecord[]> {
+        const response = await this.client.load(serializeLoad(references));
+        return response.facts;
     }
 }

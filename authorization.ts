@@ -16,6 +16,10 @@ export class Authorization {
         return this.feed.find(start, query);
     }
 
+    load(userIdentity: UserIdentity, references: FactReference[]) {
+        return this.feed.load(references);
+    }
+
     save(userIdentity: UserIdentity, facts: FactRecord[]) {
         return this.feed.save(facts);
     }

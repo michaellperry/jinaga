@@ -4,7 +4,15 @@ import { Authorization } from '../authorization';
 import { computeHash } from '../fact/hash';
 import { fromDescriptiveString } from '../query/descriptive-string';
 import { FactRecord, FactReference } from '../storage';
-import { ProfileMessage, QueryMessage, QueryResponse, SaveMessage, SaveResponse } from './messages';
+import {
+    LoadMessage,
+    LoadResponse,
+    ProfileMessage,
+    QueryMessage,
+    QueryResponse,
+    SaveMessage,
+    SaveResponse,
+} from './messages';
 import { UserIdentity } from '../keystore';
 
 function get<U>(method: ((req: RequestUser) => Promise<U>)): Handler {
@@ -74,6 +82,7 @@ export class HttpRouter {
         const router = express.Router();
         router.get('/login', get(user => this.login(user)));
         router.post('/query', post((user, queryMessage: QueryMessage) => this.query(user, queryMessage)));
+        router.post('/load', post((user, loadMessage: LoadMessage) => this.load(user, loadMessage)));
         router.post('/save', post((user, saveMessage: SaveMessage) => this.save(user, saveMessage)));
         this.handler = router;
     }
@@ -94,8 +103,15 @@ export class HttpRouter {
         const query = fromDescriptiveString(queryMessage.query);
         const result = await this.authorization.query(userIdentity, queryMessage.start, query);
         return {
-            facts: [],
             results: result
+        };
+    }
+
+    private async load(user: RequestUser, loadMessage: LoadMessage) : Promise<LoadResponse> {
+        const userIdentity = serializeUserIdentity(user);
+        const result = await this.authorization.load(userIdentity, loadMessage.references);
+        return {
+            facts: result
         };
     }
 
