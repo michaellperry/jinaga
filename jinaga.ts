@@ -19,6 +19,10 @@ export interface Profile {
     displayName: string;
 }
 
+export interface Watch {
+
+}
+
 export class Jinaga {
     private authentication: Authentication;
 
@@ -65,6 +69,10 @@ export class Jinaga {
         };
     }
 
+    watch<T, U>(start: T, templates: TemplateList<T, U>, resultAdded: (result: U) => void, resultRemoved: (result: U) => void): Watch {
+        throw new Error('Not implemented');
+    }
+    
     async fact<T>(prototype: T) : Promise<T> {
         try {
             const fact = JSON.parse(JSON.stringify(prototype));
