@@ -14,13 +14,13 @@ import {
     Proxy,
     TemplateList,
 } from './query/query-parser';
+import { Watch } from './watch/watch';
+import { WatchImpl } from './watch/watch-impl';
+
+export { Watch } from './watch/watch';
 
 export interface Profile {
     displayName: string;
-}
-
-export interface Watch {
-
 }
 
 export class Jinaga {
@@ -52,7 +52,9 @@ export class Jinaga {
     }
 
     async query<T, U>(start: T, templates: TemplateList<T, U>): Promise<U[]> {
-        const results = await this.authentication.find(dehydrateReference(start), parseQuery(templates));
+        const reference = dehydrateReference(start);
+        const query = parseQuery(templates);
+        const results = await this.authentication.find(reference, query);
         if (results.length === 0) {
             return [];
         }
@@ -69,8 +71,25 @@ export class Jinaga {
         };
     }
 
-    watch<T, U>(start: T, templates: TemplateList<T, U>, resultAdded: (result: U) => void, resultRemoved: (result: U) => void): Watch {
-        throw new Error('Not implemented');
+    watch<T, U, V>(start: T, templates: TemplateList<T, U>, resultAdded: (result: U) => V, resultRemoved: (model: V) => void): Watch {
+        const reference = dehydrateReference(start);
+        const query = parseQuery(templates);
+        const watch = new WatchImpl<U, V>(reference, query, resultAdded, resultRemoved);
+        this.authentication.find(reference, query)
+            .then(async results => {
+                if (results.length === 0) {
+                    watch.onResults([]);
+                }
+                else {
+                    const records = await this.authentication.load(results);
+                    const facts = hydrateFromTree<U>(results, records);
+                    watch.onResults(facts);
+                }
+            })
+            .catch(reason => {
+                watch.onError(reason);
+            });
+        return watch;
     }
     
     async fact<T>(prototype: T) : Promise<T> {
