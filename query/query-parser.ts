@@ -133,7 +133,7 @@ function parse(templates: Array<(target: Proxy) => Object>): Query {
     return new Query(steps);
 }
 
-export type TemplateList<T, U> = Clause<T, U> | Array<(target: T) => U> | ((target: T) => U);
+export type TemplateList<T, U> = Clause<T, U> | ((target: T) => U);
 
 export function getTemplates<T, U>(templates: TemplateList<T, U>): ((target: Proxy) => Object)[] {
     if (Array.isArray(templates)) {

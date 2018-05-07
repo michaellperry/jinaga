@@ -12,7 +12,9 @@ export class WatchImpl<Fact, Model> implements Watch {
     }
 
     public onResults(facts: Fact[]) {
-
+        facts.forEach(fact => {
+            this.resultAdded(fact);
+        });
     }
 
     public onError(reason: any) {
