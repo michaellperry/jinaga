@@ -5,19 +5,9 @@ import { dehydrateFact, dehydrateReference, hydrate, hydrateFromTree } from './f
 import { FeedImpl } from './feed/feed-impl';
 import { Fork } from './fork';
 import { WebClient } from './http/web-client';
-import {
-    Clause,
-    ConditionalSpecification,
-    getTemplates,
-    InverseSpecification,
-    parseQuery,
-    Proxy,
-    TemplateList,
-} from './query/query-parser';
+import { Clause, ConditionalSpecification, InverseSpecification, parseQuery, Proxy } from './query/query-parser';
 import { Watch } from './watch/watch';
 import { WatchImpl } from './watch/watch-impl';
-
-export { Watch } from './watch/watch';
 
 export interface Profile {
     displayName: string;
@@ -51,9 +41,9 @@ export class Jinaga {
         this.progressHandlers.push(handler);
     }
 
-    async query<T, U>(start: T, templates: TemplateList<T, U>): Promise<U[]> {
+    async query<T, U>(start: T, clause: Clause<T, U>): Promise<U[]> {
         const reference = dehydrateReference(start);
-        const query = parseQuery(templates);
+        const query = parseQuery(clause);
         const results = await this.authentication.query(reference, query);
         if (results.length === 0) {
             return [];
@@ -71,9 +61,9 @@ export class Jinaga {
         };
     }
 
-    watch<T, U, V>(start: T, templates: TemplateList<T, U>, resultAdded: (result: U) => V, resultRemoved: (model: V) => void): Watch {
+    watch<T, U, V>(start: T, clause: Clause<T, U>, resultAdded: (result: U) => V, resultRemoved: (model: V) => void): Watch {
         const reference = dehydrateReference(start);
-        const query = parseQuery(templates);
+        const query = parseQuery(clause);
         const watch = new WatchImpl<U, V>(reference, query, resultAdded, resultRemoved, this.authentication);
         watch.begin();
         return watch;
@@ -89,11 +79,12 @@ export class Jinaga {
             this.errorHandlers.forEach((errorHandler) => {
                 errorHandler(error);
             });
+            throw error;
         }
     }
     
-    where<T, U>(specification: Object, templates: TemplateList<T, U>): T {
-        return new ConditionalSpecification(specification, getTemplates(templates), true) as any;
+    where<T, U>(specification: Object, clause: Clause<T, U>): T {
+        return new ConditionalSpecification(specification, clause.templates, true) as any;
     }
 
     suchThat<T, U>(template: ((target: T) => U)): Clause<T, U> {

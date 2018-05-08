@@ -1,31 +1,30 @@
-import { Authentication } from '../authentication';
 import { hydrateFromTree } from '../fact/hydrate';
-import { Observable } from '../feed/feed';
-import { Watch } from '../jinaga';
+import { Feed, Observable, Subscription } from '../feed/feed';
 import { Query } from '../query/query';
 import { FactReference } from '../storage';
+import { Watch } from './watch';
 
 export class WatchImpl<Fact, Model> implements Watch {
-    private subscription: Observable;
+    private subscription: Subscription;
 
     constructor(
         private start: FactReference,
         private query: Query,
         private resultAdded: (result: Fact) => Model,
         private resultRemoved: (model: Model) => void,
-        private authentication: Authentication
+        private inner: Feed
     ) {
     }
 
     begin() {
-        this.subscription = this.authentication.from(this.start, this.query)
+        this.subscription = this.inner.from(this.start, this.query)
             .subscribe(reference => {
                 this.onReceived([reference])
                     .catch(reason => {
                         this.onError(reason);
                     });
             });
-        this.authentication.query(this.start, this.query)
+        this.inner.query(this.start, this.query)
             .then(async results => {
                 await this.onReceived(results);
             })
@@ -36,7 +35,7 @@ export class WatchImpl<Fact, Model> implements Watch {
 
     private async onReceived(results: FactReference[]) {
         if (results.length !== 0) {
-            const records = await this.authentication.load(results);
+            const records = await this.inner.load(results);
             const facts = hydrateFromTree<Fact>(results, records);
             facts.forEach(fact => {
                 this.resultAdded(fact);

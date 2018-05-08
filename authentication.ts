@@ -17,7 +17,7 @@ export class Authentication implements Feed {
         return this.client.login();
     }
 
-    async save(facts: FactRecord[]): Promise<boolean> {
+    async save(facts: FactRecord[]): Promise<FactRecord[]> {
         const saved = await this.inner.save(facts);
         return saved;
     }

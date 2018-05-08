@@ -31,9 +31,9 @@ export class Fork implements Feed {
         
     }
 
-    async save(facts: FactRecord[]): Promise<boolean> {
+    async save(facts: FactRecord[]): Promise<FactRecord[]> {
         const response = await this.client.save(serializeSave(facts));
-        return true;
+        return facts;
     }
 
     async query(start: FactReference, query: Query) {

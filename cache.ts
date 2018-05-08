@@ -6,7 +6,7 @@ export class Cache implements Storage {
 
     }
 
-    save(facts: FactRecord[]): Promise<boolean> {
+    save(facts: FactRecord[]): Promise<FactRecord[]> {
         return this.inner.save(facts);
     }
 

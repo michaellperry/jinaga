@@ -58,7 +58,7 @@ export class PostgresStore implements Storage {
         this.connectionFactory = new ConnectionFactory(postgresUri);
     }
     
-    async save(facts: FactRecord[]): Promise<boolean> {
+    async save(facts: FactRecord[]): Promise<FactRecord[]> {
         if (facts.length > 0) {
             const edgeRecords = flatmap(facts, makeEdgeRecords);
             const edgeValues = edgeRecords.map((e, i) => '($' + (i*5 + 1) + ', $' + (i*5 + 2) + ', $' + (i*5 + 3) + ', $' + (i*5 + 4) + ', $' + (i*5 + 5) + ')');
@@ -83,7 +83,7 @@ export class PostgresStore implements Storage {
                     factParameters);
             });
         }
-        return true;
+        return facts;
     }
 
     async query(start: FactReference, query: Query): Promise<FactReference[]> {

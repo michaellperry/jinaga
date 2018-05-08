@@ -123,33 +123,15 @@ function findTarget(spec:any): Array<Step> {
 
 function parse(templates: Array<(target: Proxy) => Object>): Query {
     var steps: Array<Step> = [];
-    for (var templateIndex in templates) {
-        var template = templates[templateIndex];
-        var target = new ParserProxy(null, null);
-        var spec = template(target);
-        var targetJoins = findTarget(spec);
+    templates.forEach(template => {
+        const target = new ParserProxy(null, null);
+        const spec = template(target);
+        const targetJoins = findTarget(spec);
         steps = steps.concat(targetJoins);
-    }
+    });
     return new Query(steps);
 }
 
-export type TemplateList<T, U> = Clause<T, U> | ((target: T) => U);
-
-export function getTemplates<T, U>(templates: TemplateList<T, U>): ((target: Proxy) => Object)[] {
-    if (Array.isArray(templates)) {
-        return templates as any;
-    }
-    else if (templates instanceof Clause) {
-        return templates.templates;
-    }
-    else if (typeof(templates) === "function") {
-        return [templates as any];
-    }
-    else {
-        throw new Error('Not a valid template list');
-    }
-}
-
-export function parseQuery<T, U>(templates: TemplateList<T, U>) {
-    return parse(getTemplates(templates));
+export function parseQuery<T, U>(clause: Clause<T, U>) {
+    return parse(clause.templates);
 }
