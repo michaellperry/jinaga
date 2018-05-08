@@ -6,7 +6,7 @@ export class BrowserStore implements Storage {
         throw new Error('Not implemented');
     }
 
-    find(start: FactReference, query: Query): Promise<FactReference[]> {
+    query(start: FactReference, query: Query): Promise<FactReference[]> {
         throw new Error('Not implemented');
     }
 

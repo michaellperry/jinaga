@@ -13,7 +13,7 @@ export class Authorization {
     }
 
     query(userIdentity: UserIdentity, start: FactReference, query: Query) {
-        return this.feed.find(start, query);
+        return this.feed.query(start, query);
     }
 
     load(userIdentity: UserIdentity, references: FactReference[]) {

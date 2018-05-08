@@ -86,7 +86,7 @@ export class PostgresStore implements Storage {
         return true;
     }
 
-    async find(start: FactReference, query: Query): Promise<FactReference[]> {
+    async query(start: FactReference, query: Query): Promise<FactReference[]> {
         const sqlQuery = sqlFromSteps(start, query.steps);
         const { rows } = await this.connectionFactory.with(async (connection) => {
             return await connection.query(sqlQuery.sql, sqlQuery.parameters);

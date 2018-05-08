@@ -35,7 +35,7 @@ export class Fork implements Storage {
         return true;
     }
 
-    async find(start: FactReference, query: Query) {
+    async query(start: FactReference, query: Query) {
         const response = await this.client.query(serializeQuery(start, query));
         return response.results;
     }

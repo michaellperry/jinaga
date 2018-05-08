@@ -24,8 +24,8 @@ export class Feed implements Storage {
         return this.inner.save(facts);
     }
     
-    find(start: FactReference, query: Query): Promise<FactReference[]> {
-        return this.inner.find(start, query);
+    query(start: FactReference, query: Query): Promise<FactReference[]> {
+        return this.inner.query(start, query);
     }
 
     load(references: FactReference[]): Promise<FactRecord[]> {

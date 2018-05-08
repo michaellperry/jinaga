@@ -54,7 +54,7 @@ export class Jinaga {
     async query<T, U>(start: T, templates: TemplateList<T, U>): Promise<U[]> {
         const reference = dehydrateReference(start);
         const query = parseQuery(templates);
-        const results = await this.authentication.find(reference, query);
+        const results = await this.authentication.query(reference, query);
         if (results.length === 0) {
             return [];
         }
@@ -74,21 +74,8 @@ export class Jinaga {
     watch<T, U, V>(start: T, templates: TemplateList<T, U>, resultAdded: (result: U) => V, resultRemoved: (model: V) => void): Watch {
         const reference = dehydrateReference(start);
         const query = parseQuery(templates);
-        const watch = new WatchImpl<U, V>(reference, query, resultAdded, resultRemoved);
-        this.authentication.find(reference, query)
-            .then(async results => {
-                if (results.length === 0) {
-                    watch.onResults([]);
-                }
-                else {
-                    const records = await this.authentication.load(results);
-                    const facts = hydrateFromTree<U>(results, records);
-                    watch.onResults(facts);
-                }
-            })
-            .catch(reason => {
-                watch.onError(reason);
-            });
+        const watch = new WatchImpl<U, V>(reference, query, resultAdded, resultRemoved, this.authentication);
+        watch.begin();
         return watch;
     }
     
