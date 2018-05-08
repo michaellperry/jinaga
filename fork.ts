@@ -1,3 +1,4 @@
+import { Feed, Observable } from './feed/feed';
 import { LoadMessage, QueryMessage, SaveMessage } from './http/messages';
 import { WebClient } from './http/web-client';
 import { Query } from './query/query';
@@ -22,9 +23,9 @@ function serializeLoad(references: FactReference[]) : LoadMessage {
     };
 }
 
-export class Fork implements Storage {
+export class Fork implements Feed {
     constructor(
-        storage: Storage,
+        private storage: Feed,
         private client: WebClient
     ) {
         
@@ -43,5 +44,9 @@ export class Fork implements Storage {
     async load(references: FactReference[]): Promise<FactRecord[]> {
         const response = await this.client.load(serializeLoad(references));
         return response.facts;
+    }
+
+    from(fact: FactReference, query: Query): Observable {
+        return this.storage.from(fact, query);
     }
 }

@@ -2,7 +2,7 @@ import { Authentication } from './authentication';
 import { BrowserStore } from './browser-store';
 import { Cache } from './cache';
 import { dehydrateFact, dehydrateReference, hydrate, hydrateFromTree } from './fact/hydrate';
-import { Feed } from './feed';
+import { FeedImpl } from './feed/feed-impl';
 import { Fork } from './fork';
 import { WebClient } from './http/web-client';
 import {
@@ -33,7 +33,7 @@ export class Jinaga {
     constructor(url: string) {
         const store = new BrowserStore();
         const cache = new Cache(store);
-        const feed = new Feed(cache);
+        const feed = new FeedImpl(cache);
         const webClient = new WebClient(url);
         const fork = new Fork(feed, webClient);
         this.authentication = new Authentication(fork, webClient);

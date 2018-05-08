@@ -1,8 +1,9 @@
-import { Query } from './query/query';
-import { FactRecord, FactReference, Storage } from './storage';
+import { Query } from '../query/query';
+import { FactRecord, FactReference, Storage } from '../storage';
+import { Feed, Observable } from './feed';
 
-export class Observable {
-    subscribe(handler: (fact: FactRecord) => void): Observable {
+export class ObservableImpl implements Observable {
+    subscribe(handler: (fact: FactReference) => void): Observable {
         throw new Error('Not implemented');
     }
 
@@ -15,7 +16,7 @@ export class Observable {
     }
 }
 
-export class Feed implements Storage {
+export class FeedImpl implements Feed {
     constructor(private inner: Storage) {
 
     }

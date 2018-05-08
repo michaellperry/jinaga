@@ -1,7 +1,7 @@
-import { Feed } from './feed';
+import { Feed, Observable } from './feed/feed';
 import { Keystore, UserIdentity } from './keystore';
 import { Query } from './query/query';
-import { FactReference, FactRecord } from './storage';
+import { FactRecord, FactReference } from './storage';
 
 export class Authorization {
     constructor(private feed: Feed, private keystore: Keystore) {
