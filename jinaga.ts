@@ -8,6 +8,7 @@ import { WebClient } from './http/web-client';
 import { Clause, ConditionalSpecification, InverseSpecification, parseQuery, Proxy } from './query/query-parser';
 import { Watch } from './watch/watch';
 import { WatchImpl } from './watch/watch-impl';
+import { MemoryStore } from './memory-store';
 
 export interface Profile {
     displayName: string;
@@ -21,9 +22,8 @@ export class Jinaga {
     private progressHandlers: ((count: number) => void)[] = [];
     
     constructor(url: string) {
-        const store = new BrowserStore();
-        const cache = new Cache(store);
-        const feed = new FeedImpl(cache);
+        const store = new MemoryStore();
+        const feed = new FeedImpl(store);
         const webClient = new WebClient(url);
         const fork = new Fork(feed, webClient);
         this.authentication = new Authentication(fork, webClient);

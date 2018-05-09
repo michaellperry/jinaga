@@ -65,7 +65,6 @@ export class PostgresStore implements Storage {
             const edgeParameters = flatmap(edgeRecords, (e) => [e.predecessor_hash, e.predecessor_type, e.successor_hash, e.successor_type, e.role]);
             const factValues = facts.map((f, i) => '($' + (i*4 + 1) + ', $' + (i*4 + 2) + ', $' + (i*4 + 3) + ', $' + (i*4 + 4) + ')');
             const factParameters = flatmap(facts, (f) => [f.hash, f.type, JSON.stringify(f.fields), JSON.stringify(f.predecessors)]);
-            console.log(factParameters);
             await this.connectionFactory.withTransaction(async (connection) => {
                 await connection.query('INSERT INTO public.edge' +
                     ' (predecessor_hash, predecessor_type, successor_hash, successor_type, role)' +
