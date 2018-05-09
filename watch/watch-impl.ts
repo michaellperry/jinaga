@@ -1,7 +1,7 @@
 import { hydrateFromTree, Hydration } from '../fact/hydrate';
 import { Feed, Observable, Subscription } from '../feed/feed';
 import { Query } from '../query/query';
-import { FactReference } from '../storage';
+import { FactReference, factReferenceEquals } from '../storage';
 import { Watch } from './watch';
 
 export class WatchImpl<Fact, Model> implements Watch {
@@ -20,27 +20,20 @@ export class WatchImpl<Fact, Model> implements Watch {
     begin() {
         this.subscription = this.inner.from(this.start, this.query)
             .subscribe(reference => {
-                this.onAdded([reference])
+                this.onAdded(reference)
                     .catch(reason => {
                         this.onError(reason);
                     });
             }, reference => {
                 this.onRemoved(reference);
             });
-        this.inner.query(this.start, this.query)
-            .then(async results => {
-                await this.onAdded(results);
-            })
-            .catch(reason => {
-                this.onError(reason);
-            });
     }
 
-    private async onAdded(results: FactReference[]) {
-        if (results.length !== 0) {
-            const records = await this.inner.load(results);
+    private async onAdded(references: FactReference[]) {
+        if (references.length !== 0) {
+            const records = await this.inner.load(references);
             const hydration = new Hydration(records);
-            results.forEach(factReference => {
+            references.forEach(factReference => {
                 const fact = <Fact>hydration.hydrate(factReference);
                 const model = this.resultAdded(fact);
                 this.modelByFactReference.push({ factReference, model });
@@ -48,9 +41,9 @@ export class WatchImpl<Fact, Model> implements Watch {
         }
     }
 
-    private onRemoved(factReference: FactReference) {
+    private onRemoved(references: FactReference[]) {
         const removedIndex = this.modelByFactReference.findIndex(pair => {
-            return pair.factReference.hash === factReference.hash && pair.factReference.type === factReference.type;
+            return !!references.find(factReferenceEquals(pair.factReference));
         });
         if (removedIndex >= 0) {
             this.resultRemoved(this.modelByFactReference[removedIndex].model);

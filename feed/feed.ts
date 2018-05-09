@@ -5,7 +5,7 @@ export interface Subscription {
     dispose(): void;
 }
 
-export type Handler = (fact: FactReference) => void;
+export type Handler = (facts: FactReference[]) => void;
 
 export interface Observable {
     subscribe(added: Handler, removed: Handler): Subscription;

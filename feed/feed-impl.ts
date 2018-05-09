@@ -44,12 +44,15 @@ class SubscriptionImpl implements Subscription {
 class ObservableImpl implements Observable {
     constructor(
         public start: FactReference,
+        public query: Query,
         public inverses: Inverse[],
+        public results: Promise<FactReference[]>,
         public addListener: (subscription: Listener) => void,
         public removeListener: (subscription: Listener) => void) {}
 
     subscribe(added: Handler, removed: Handler): Subscription {
         const subscription = new SubscriptionImpl(this, added, removed);
+        this.results.then(references => added(references));
         subscription.add();
         return subscription;
     }
@@ -84,9 +87,11 @@ export class FeedImpl implements Feed {
 
     from(fact: FactReference, query: Query): Observable {
         const inverses = invertQuery(query);
-        return new ObservableImpl(fact, inverses,
+        const observable = new ObservableImpl(fact, query, inverses,
+            this.inner.query(fact, query),
             listener => { this.addListener(listener); },
             listener => { this.removeListener(listener); });
+        return observable;
     }
 
     private addListener(listener: Listener) {
@@ -141,11 +146,11 @@ export class FeedImpl implements Feed {
     private async notifyListener(fact: FactReference, listener: Listener) {
         if (listener.inverse.added && listener.added) {
             const added = await this.inner.query(fact, listener.inverse.added);
-            added.forEach(listener.added);
+            listener.added(added);
         }
         if (listener.inverse.removed && listener.removed) {
             const removed = await this.inner.query(fact, listener.inverse.removed);
-            removed.forEach(listener.removed);
+            listener.removed(removed);
         }
     }
 }
