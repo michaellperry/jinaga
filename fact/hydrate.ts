@@ -73,7 +73,7 @@ type HydrationEntry = {
     fact: HashMap
 }
 
-class Hydration {
+export class Hydration {
     private entries: HydrationEntry[];
 
     constructor(records: FactRecord[]) {
