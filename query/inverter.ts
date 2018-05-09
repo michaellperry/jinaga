@@ -3,6 +3,7 @@ import { Direction, ExistentialCondition, Join, PropertyCondition, Quantifier, S
 
 export class Inverse {
     constructor(
+        public appliedToType: string,
         public affected: Query,
         public added: Query,
         public removed: Query
@@ -46,11 +47,15 @@ function invertSteps(steps: Array<Step>): { inverses: Array<Inverse>, oppositeSt
     var inverses:Array<Inverse> = [];
 
     var oppositeSteps:Array<Step> = [];
+    var appliedToType:string = null;
     for (var stepIndex = 0; stepIndex < steps.length; ++stepIndex) {
         var step = steps[stepIndex];
 
         if (step instanceof PropertyCondition) {
             oppositeSteps.unshift(step);
+            if (step.name === 'type') {
+                appliedToType = step.value;
+            }
         }
         else if (step instanceof Join) {
             var join = <Join>step;
@@ -58,6 +63,7 @@ function invertSteps(steps: Array<Step>): { inverses: Array<Inverse>, oppositeSt
                 join.direction === Direction.Predecessor ? Direction.Successor : Direction.Predecessor,
                 join.role
             ));
+            appliedToType = null;
 
             for (var conditionIndex = stepIndex + 1; conditionIndex < steps.length; ++conditionIndex) {
                 var condition = steps[conditionIndex];
@@ -65,6 +71,9 @@ function invertSteps(steps: Array<Step>): { inverses: Array<Inverse>, oppositeSt
                 if (condition instanceof PropertyCondition) {
                     oppositeSteps.unshift(condition);
                     stepIndex = conditionIndex;
+                    if (condition.name === 'type') {
+                        appliedToType = condition.value;
+                    }
                 }
                 else {
                     break;
@@ -75,6 +84,7 @@ function invertSteps(steps: Array<Step>): { inverses: Array<Inverse>, oppositeSt
                 var rest = optimize(steps.slice(stepIndex + 1));
                 if (rest != null) {
                     inverses.push(new Inverse(
+                        appliedToType,
                         new Query(oppositeSteps.slice(0)),
                         new Query(rest),
                         null
@@ -90,6 +100,7 @@ function invertSteps(steps: Array<Step>): { inverses: Array<Inverse>, oppositeSt
                     subInverse.added != null : subInverse.removed != null;
                 var remainder = new Query(subInverse.affected.steps.concat(steps.slice(stepIndex + 1)));
                 inverses.push(new Inverse(
+                    subInverse.appliedToType,
                     new Query(subInverse.affected.steps.concat(oppositeSteps)),
                     added ? remainder : null,
                     added ? null : remainder

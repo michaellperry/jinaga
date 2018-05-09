@@ -21,3 +21,7 @@ export interface Storage {
     query(start: FactReference, query: Query): Promise<FactReference[]>;
     load(references: FactReference[]): Promise<FactRecord[]>;
 }
+
+export function factReferenceEquals(a: FactReference) {
+    return (r: FactReference) => r.hash === a.hash && r.type === a.type;
+}

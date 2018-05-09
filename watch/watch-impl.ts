@@ -19,21 +19,21 @@ export class WatchImpl<Fact, Model> implements Watch {
     begin() {
         this.subscription = this.inner.from(this.start, this.query)
             .subscribe(reference => {
-                this.onReceived([reference])
+                this.onAdded([reference])
                     .catch(reason => {
                         this.onError(reason);
                     });
-            });
+            }, reference => {});
         this.inner.query(this.start, this.query)
             .then(async results => {
-                await this.onReceived(results);
+                await this.onAdded(results);
             })
             .catch(reason => {
                 this.onError(reason);
             });
     }
 
-    private async onReceived(results: FactReference[]) {
+    private async onAdded(results: FactReference[]) {
         if (results.length !== 0) {
             const records = await this.inner.load(results);
             const facts = hydrateFromTree<Fact>(results, records);

@@ -33,7 +33,8 @@ export class Fork implements Feed {
 
     async save(facts: FactRecord[]): Promise<FactRecord[]> {
         const response = await this.client.save(serializeSave(facts));
-        return facts;
+        const saved = await this.storage.save(facts);
+        return saved;
     }
 
     async query(start: FactReference, query: Query) {
@@ -43,6 +44,7 @@ export class Fork implements Feed {
 
     async load(references: FactReference[]): Promise<FactRecord[]> {
         const response = await this.client.load(serializeLoad(references));
+        await this.storage.save(response.facts);
         return response.facts;
     }
 

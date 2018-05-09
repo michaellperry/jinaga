@@ -5,8 +5,10 @@ export interface Subscription {
     dispose(): void;
 }
 
+export type Handler = (fact: FactReference) => void;
+
 export interface Observable {
-    subscribe(handler: (fact: FactReference) => void): Subscription;
+    subscribe(added: Handler, removed: Handler): Subscription;
 }
 
 export interface Feed extends Storage {
