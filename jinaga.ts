@@ -9,6 +9,7 @@ import { Clause, ConditionalSpecification, InverseSpecification, parseQuery, Pro
 import { Watch } from './watch/watch';
 import { WatchImpl } from './watch/watch-impl';
 import { MemoryStore } from './memory-store';
+import { FactReference } from './storage';
 
 export interface Profile {
     displayName: string;
@@ -61,10 +62,13 @@ export class Jinaga {
         };
     }
 
-    watch<T, U, V>(start: T, clause: Clause<T, U>, resultAdded: (result: U) => V, resultRemoved: (model: V) => void): Watch {
+    watch<T, U, V>(start: T, clause: Clause<T, U>, resultAdded: (result: U) => V, resultRemoved: (model: V) => void): Watch<U, V> {
         const reference = dehydrateReference(start);
         const query = parseQuery(clause);
-        const watch = new WatchImpl<U, V>(reference, query, resultAdded, resultRemoved, this.authentication);
+        const onResultAdded = async (factReference: FactReference, model: U) => {
+            return resultAdded(model);
+        };
+        const watch = new WatchImpl<U, V>(reference, query, onResultAdded, resultRemoved, this.authentication);
         watch.begin();
         return watch;
     }
