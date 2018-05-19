@@ -18,6 +18,20 @@ function getPredecessors(fact: FactRecord, role: string) {
     }
 }
 
+function loadAll(references: FactReference[], source: FactRecord[], target: FactRecord[]) {
+    references.forEach(reference => {
+        const predicate = factReferenceEquals(reference);
+        if (!target.some(predicate)) {
+            const record = source.find(predicate);
+            target.push(record);
+            for (const role in record.predecessors) {
+                const predecessors = getPredecessors(record, role);
+                loadAll(predecessors, source, target);
+            }
+        }
+    });
+}
+
 export class MemoryStore implements Storage {
     private factRecords: FactRecord[] = [];
 
@@ -38,7 +52,9 @@ export class MemoryStore implements Storage {
     }
 
     async load(references: FactReference[]): Promise<FactRecord[]> {
-        return this.factRecords.filter(fact => references.some(factReferenceEquals(fact)));
+        let target: FactRecord[] = [];
+        loadAll(references, this.factRecords, target);
+        return target;
     }
 
     private executeQuery(start: FactReference, steps: Step[]) {
