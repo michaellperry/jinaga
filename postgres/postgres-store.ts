@@ -101,7 +101,7 @@ export class PostgresStore implements Storage {
         const tuples = references.map((r, i) => '($' + (i*2 + 1) + ', $' + (i*2 + 2) + ')');
         const parameters = flatmap(references, (r) => [r.type, r.hash]);
         const sql =
-            'SELECT fact.type, fact.hash, fields, predecessors' +
+            'SELECT DISTINCT fact.type, fact.hash, fields, predecessors' +
             ' FROM (VALUES ' + tuples.join(', ') + ') AS v (type, hash)' +
             ' JOIN public.ancestor ON ancestor.type = v.type AND ancestor.hash = v.hash' +
             ' JOIN public.fact ON ancestor_type = fact.type AND ancestor_hash = fact.hash';

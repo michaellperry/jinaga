@@ -43,8 +43,14 @@ export class Fork implements Feed {
     }
 
     async query(start: FactReference, query: Query) {
-        const response = await this.client.query(serializeQuery(start, query));
-        return response.results;
+        if (query.isDeterministic()) {
+            const results = await this.storage.query(start, query);
+            return results;
+        }
+        else {
+            const response = await this.client.query(serializeQuery(start, query));
+            return response.results;
+        }
     }
 
     async load(references: FactReference[]): Promise<FactRecord[]> {
