@@ -37,8 +37,8 @@ export class MemoryStore implements Storage {
         return Promise.resolve(results);
     }
 
-    load(references: FactReference[]): Promise<FactRecord[]> {
-        throw new Error('Not implemented');
+    async load(references: FactReference[]): Promise<FactRecord[]> {
+        return this.factRecords.filter(fact => references.some(factReferenceEquals(fact)));
     }
 
     private executeQuery(start: FactReference, steps: Step[]) {
