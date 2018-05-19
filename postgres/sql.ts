@@ -159,6 +159,9 @@ class QueryBuilder {
             if (step.direction === Direction.Successor) {
                 return this.handleMatchedSuccessor(parts, step.role);
             }
+            else if (step.direction === Direction.Predecessor) {
+                return this.handleMatchedPredecessor(parts, step.role);
+            }
         }
         else if (step instanceof ExistentialCondition) {
             return this.handleMatchedExistentialCondition(parts, step.quantifier, step.steps);
@@ -187,6 +190,23 @@ class QueryBuilder {
             ' AND ' + alias + '.predecessor_type = ' + priorPrefix + 'type';
         const whereClause = parts.whereClause + ' AND ' + alias + '.role = ' + roleParameter;
         const prefix = alias + '.successor_';
+        return this.stateMatched({
+            prefix,
+            fromClause: parts.fromClause,
+            joins,
+            whereClause
+        });
+    }
+
+    private handleMatchedPredecessor(parts: QueryParts, role: string): State {
+        const roleParameter = this.addParameter(role);
+        const priorPrefix = parts.prefix;
+        const alias = this.allocateAlias();
+        const joins = parts.joins + ' JOIN public.edge ' + alias +
+            ' ON ' + alias + '.successor_hash = ' + priorPrefix + 'hash' +
+            ' AND ' + alias + '.successor_type = ' + priorPrefix + 'type';
+        const whereClause = parts.whereClause + ' AND ' + alias + '.role = ' + roleParameter;
+        const prefix = alias + '.predecessor_';
         return this.stateMatched({
             prefix,
             fromClause: parts.fromClause,
