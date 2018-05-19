@@ -3,7 +3,7 @@ import { BrowserStore } from './browser-store';
 import { Cache } from './cache';
 import { dehydrateFact, dehydrateReference, hydrate, hydrateFromTree } from './fact/hydrate';
 import { FeedImpl } from './feed/feed-impl';
-import { Fork } from './fork';
+import { Fork } from './fork/fork';
 import { WebClient } from './http/web-client';
 import { Clause, ConditionalSpecification, InverseSpecification, parseQuery, Proxy } from './query/query-parser';
 import { Watch } from './watch/watch';
