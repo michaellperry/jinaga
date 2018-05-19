@@ -2,7 +2,7 @@ import { Feed, Observable } from './feed/feed';
 import { LoadMessage, QueryMessage, SaveMessage } from './http/messages';
 import { WebClient } from './http/web-client';
 import { Query } from './query/query';
-import { FactRecord, FactReference } from './storage';
+import { FactRecord, FactReference, factReferenceEquals } from './storage';
 import { flattenAsync } from './util/fn';
 
 function serializeSave(facts: FactRecord[]) : SaveMessage {
@@ -54,9 +54,16 @@ export class Fork implements Feed {
     }
 
     async load(references: FactReference[]): Promise<FactRecord[]> {
-        const response = await this.client.load(serializeLoad(references));
-        await this.storage.save(response.facts);
-        return response.facts;
+        const known = await this.storage.load(references);
+        const remaining = references.filter(reference => !known.some(factReferenceEquals(reference)));
+        if (remaining.length === 0) {
+            return known;
+        }
+        else {
+            const response = await this.client.load(serializeLoad(remaining));
+            await this.storage.save(response.facts);
+            return response.facts.concat(known);
+        }
     }
 
     from(fact: FactReference, query: Query): Observable {
