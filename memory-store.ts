@@ -108,4 +108,26 @@ export class MemoryStore implements Storage {
     private findFact(reference: FactReference): FactRecord {
         return this.factRecords.find(factReferenceEquals(reference));
     }
+
+    debug(): string[] {
+        const prefix = [
+            'digraph {',
+            'rankdir=BT'
+        ];
+        const arrows = flatten(this.factRecords, record => {
+            const node = ['"' + record.hash + '" [label="' + JSON.stringify(record.fields).replace(/"/g, "'") + '"]'];
+            let edges: string[] = [];
+            for (const role in record.predecessors) {
+                const predecessors = getPredecessors(record, role);
+                const roleEdges = predecessors.map(predecessor =>
+                    '"' + record.hash + '" -> "' + predecessor.hash + '" [label="' + role + '"]');
+                edges = edges.concat(roleEdges);
+            }
+            return node.concat(edges);
+        });
+        const suffix = [
+            '}'
+        ];
+        return prefix.concat(arrows, suffix);
+    }
 }

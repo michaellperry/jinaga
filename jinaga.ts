@@ -17,6 +17,7 @@ export interface Profile {
 
 export class Jinaga {
     private authentication: Authentication;
+    private store: MemoryStore;
 
     private errorHandlers: ((message: string) => void)[] = [];
     private loadingHandlers: ((loading: boolean) => void)[] = [];
@@ -28,6 +29,7 @@ export class Jinaga {
         const webClient = new WebClient(url);
         const fork = new Fork(feed, webClient);
         this.authentication = new Authentication(fork, webClient);
+        this.store = store;
     }
 
     onError(handler: (message: string) => void) {
@@ -106,5 +108,9 @@ export class Jinaga {
             const specification = <{}>conditionOrSpecification;
             return new InverseSpecification(specification) as any;
         }
+    }
+
+    debug(): string {
+        return this.store.debug().join('\n');
     }
 }
