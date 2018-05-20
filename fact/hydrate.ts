@@ -95,7 +95,11 @@ export class Hydration {
             return entry.fact;
         }
 
-        const fact: HashMap = entry.record.fields;
+        const fields: HashMap = entry.record.fields;
+        let fact: HashMap = {};
+        for (const field in fields) {
+            fact[field] = fields[field];
+        }
         fact.type = entry.record.type;
     
         for (const role in entry.record.predecessors) {
