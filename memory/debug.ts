@@ -1,3 +1,6 @@
+import tweetnacl from 'tweetnacl';
+import tweetnaclutil from 'tweetnacl-util';
+
 import { HashMap } from '../fact/hydrate';
 import { FactRecord } from '../storage';
 import { flatten } from '../util/fn';
@@ -43,7 +46,13 @@ function fieldRow(name: string, value: any) {
 }
 
 function shorten(value: string) {
-    if (value.length > 100) {
+    if (value.startsWith('"-----BEGIN RSA PUBLIC KEY-----')) {
+        const bytes = tweetnaclutil.decodeUTF8(value);
+        const result = tweetnacl.hash(bytes);
+        const b64 = tweetnaclutil.encodeBase64(result);
+        return b64.substr(0, 16);
+    }
+    else if (value.length > 100) {
         return value.substr(0, 50) + '...' + value.substr(value.length - 47);
     }
     else {
