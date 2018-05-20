@@ -1,9 +1,10 @@
-import { Join, PropertyCondition, Step, Direction, ExistentialCondition, Quantifier } from './query/steps';
-import { Query } from './query/query';
-import { FactRecord, FactReference, Storage, factReferenceEquals } from './storage';
-import { flatten } from './util/fn';
+import { Join, PropertyCondition, Step, Direction, ExistentialCondition, Quantifier } from '../query/steps';
+import { Query } from '../query/query';
+import { FactRecord, FactReference, Storage, factReferenceEquals } from '../storage';
+import { flatten } from '../util/fn';
+import { formatDot } from './debug';
 
-function getPredecessors(fact: FactRecord, role: string) {
+export function getPredecessors(fact: FactRecord, role: string) {
     const predecessors = fact.predecessors[role];
     if (predecessors) {
         if (Array.isArray(predecessors)) {
@@ -110,24 +111,6 @@ export class MemoryStore implements Storage {
     }
 
     debug(): string[] {
-        const prefix = [
-            'digraph {',
-            'rankdir=BT'
-        ];
-        const arrows = flatten(this.factRecords, record => {
-            const node = ['"' + record.hash + '" [label="' + JSON.stringify(record.fields).replace(/"/g, "'") + '"]'];
-            let edges: string[] = [];
-            for (const role in record.predecessors) {
-                const predecessors = getPredecessors(record, role);
-                const roleEdges = predecessors.map(predecessor =>
-                    '"' + record.hash + '" -> "' + predecessor.hash + '" [label="' + role + '"]');
-                edges = edges.concat(roleEdges);
-            }
-            return node.concat(edges);
-        });
-        const suffix = [
-            '}'
-        ];
-        return prefix.concat(arrows, suffix);
+        return formatDot(this.factRecords);
     }
 }

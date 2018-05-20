@@ -1,15 +1,13 @@
 import { Authentication } from './authentication';
-import { BrowserStore } from './browser-store';
-import { Cache } from './cache';
 import { dehydrateFact, dehydrateReference, hydrate, hydrateFromTree } from './fact/hydrate';
 import { FeedImpl } from './feed/feed-impl';
 import { Fork } from './fork/fork';
 import { WebClient } from './http/web-client';
+import { MemoryStore } from './memory/memory-store';
 import { Clause, ConditionalSpecification, InverseSpecification, parseQuery, Proxy } from './query/query-parser';
+import { FactReference } from './storage';
 import { Watch } from './watch/watch';
 import { WatchImpl } from './watch/watch-impl';
-import { MemoryStore } from './memory-store';
-import { FactReference } from './storage';
 
 export interface Profile {
     displayName: string;
