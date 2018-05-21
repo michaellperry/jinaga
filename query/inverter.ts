@@ -8,6 +8,9 @@ export class Inverse {
         public added: Query,
         public removed: Query
     ) {
+        if (!appliedToType) {
+            throw new Error('Inverse is not applied to a specific type.');
+        }
     }
 }
 

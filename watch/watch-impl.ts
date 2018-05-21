@@ -75,6 +75,6 @@ export class WatchImpl<Fact, Model> implements Watch<Fact, Model> {
     }
 
     private onError(reason: any) {
-
+        throw new Error(reason);
     }
 }

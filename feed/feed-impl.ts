@@ -52,9 +52,15 @@ class ObservableImpl implements Observable {
 
     subscribe(added: Handler, removed: Handler): Subscription {
         const subscription = new SubscriptionImpl(this, added, removed);
-        this.results.then(references => added(references));
         subscription.add();
+        this.results
+            .then(references => added(references))
+            .catch(reason => this.onError(reason));
         return subscription;
+    }
+
+    private onError(reason: any) {
+        throw new Error(reason);
     }
 }
 
@@ -126,6 +132,7 @@ export class FeedImpl implements Feed {
     }
 
     private async notifyFactSaved(fact: FactRecord) {
+        console.log('Fact saved: ' + fact.hash);
         const listenersByQuery = this.listenersByTypeAndQuery[fact.type];
         if (listenersByQuery) {
             for (const queryKey in listenersByQuery) {
@@ -144,6 +151,14 @@ export class FeedImpl implements Feed {
     }
 
     private async notifyListener(fact: FactReference, listener: Listener) {
+        let description = 'Notify listener of ' + fact.hash + ', affecting: ' + listener.inverse.affected.toDescriptiveString();
+        if (listener.inverse.added) {
+            description = description + ', adding: ' + listener.inverse.added.toDescriptiveString();
+        }
+        if (listener.inverse.removed) {
+            description = description + ', removing: ' + listener.inverse.removed.toDescriptiveString();
+        }
+        console.log(description);
         if (listener.inverse.added && listener.added) {
             const added = await this.inner.query(fact, listener.inverse.added);
             listener.added(added);
