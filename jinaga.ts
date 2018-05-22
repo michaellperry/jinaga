@@ -5,7 +5,7 @@ import { Fork } from './fork/fork';
 import { WebClient } from './http/web-client';
 import { MemoryStore } from './memory/memory-store';
 import { Clause, ConditionalSpecification, InverseSpecification, parseQuery, Proxy } from './query/query-parser';
-import { FactReference } from './storage';
+import { FactReference, FactPath } from './storage';
 import { Watch } from './watch/watch';
 import { WatchImpl } from './watch/watch-impl';
 
@@ -49,9 +49,10 @@ export class Jinaga {
         if (results.length === 0) {
             return [];
         }
+        const references = results.map(r => r[r.length - 1]);
         
-        const facts = await this.authentication.load(results);
-        return hydrateFromTree(results, facts);
+        const facts = await this.authentication.load(references);
+        return hydrateFromTree(references, facts);
     }
 
     async login<U>(): Promise<{ userFact: U, profile: Profile }> {
@@ -65,7 +66,7 @@ export class Jinaga {
     watch<T, U, V>(start: T, clause: Clause<T, U>, resultAdded: (result: U) => V, resultRemoved: (model: V) => void): Watch<U, V> {
         const reference = dehydrateReference(start);
         const query = parseQuery(clause);
-        const onResultAdded = async (factReference: FactReference, model: U) => {
+        const onResultAdded = async (path: FactPath, model: U) => {
             return resultAdded(model);
         };
         const watch = new WatchImpl<U, V>(reference, query, onResultAdded, resultRemoved, this.authentication);

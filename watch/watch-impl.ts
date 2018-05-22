@@ -2,9 +2,8 @@ import { Hydration } from '../fact/hydrate';
 import { Feed, Subscription } from '../feed/feed';
 import { Query } from '../query/query';
 import { Clause, parseQuery } from '../query/query-parser';
-import { FactReference, factReferenceEquals } from '../storage';
+import { FactReference, factReferenceEquals, FactPath } from '../storage';
 import { Watch } from './watch';
-import { completeInvertQuery } from '../query/inverter';
 import { flattenAsync, mapAsync } from '../util/fn';
 
 export class WatchImpl<Fact, Model> implements Watch<Fact, Model> {
@@ -14,7 +13,7 @@ export class WatchImpl<Fact, Model> implements Watch<Fact, Model> {
     constructor(
         private start: FactReference,
         private query: Query,
-        private resultAdded: (factReference: FactReference, result: Fact) => Promise<Model>,
+        private resultAdded: (path: FactPath, result: Fact) => Promise<Model>,
         private resultRemoved: (model: Model) => void,
         private inner: Feed
     ) {
@@ -39,12 +38,11 @@ export class WatchImpl<Fact, Model> implements Watch<Fact, Model> {
     ) : Watch<U, V> {
         const query = parseQuery(clause);
         const fullQuery = this.query.concat(query);
-        const backtrack = completeInvertQuery(query);
-        const onResultAdded = async (factReference: FactReference, result: U) => {
-            const origin = await this.inner.query(factReference, backtrack);
-            const parent = this.modelByFactReference.find(pair => {
-                return origin.some(factReferenceEquals(pair.factReference));
-            });
+        const onResultAdded = async (path: FactPath, result: U) => {
+            const factReference = path[path.length - 1];
+            const origin = path[path.length - 2];
+            const parent = this.modelByFactReference.find(pair =>
+                pair.factReference.hash === origin.hash && pair.factReference.type === origin.type);
             return resultAdded(parent.model, result);
         }
         const watch = new WatchImpl<U, V>(this.start, fullQuery, onResultAdded, resultRemoved, this.inner);
@@ -52,21 +50,26 @@ export class WatchImpl<Fact, Model> implements Watch<Fact, Model> {
         return watch;
     }
 
-    private async onAdded(references: FactReference[]) {
-        if (references.length !== 0) {
+    private async onAdded(paths: FactPath[]) {
+        if (paths.length !== 0) {
+            const references = paths.map(path => path[path.length - 1]);
             const records = await this.inner.load(references);
             const hydration = new Hydration(records);
-            await mapAsync(references, async factReference => {
+            await mapAsync(paths, async path => {
+                const factReference = path[path.length - 1];
                 const fact = <Fact>hydration.hydrate(factReference);
-                const model = await this.resultAdded(factReference, fact);
+                const model = await this.resultAdded(path, fact);
                 this.modelByFactReference.push({ factReference, model });
             });
         }
     }
 
-    private onRemoved(references: FactReference[]) {
+    private onRemoved(paths: FactPath[]) {
         const removedIndex = this.modelByFactReference.findIndex(pair => {
-            return references.some(factReferenceEquals(pair.factReference));
+            return paths.some(path => {
+                const last = path[path.length - 1];
+                return last.hash === pair.factReference.hash && last.type === pair.factReference.type;
+            });
         });
         if (removedIndex >= 0) {
             this.resultRemoved(this.modelByFactReference[removedIndex].model);

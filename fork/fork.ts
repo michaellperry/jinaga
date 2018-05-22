@@ -3,7 +3,7 @@ import { LoadMessage, QueryMessage, SaveMessage } from '../http/messages';
 import { WebClient } from '../http/web-client';
 import { Query } from '../query/query';
 import { FactRecord, FactReference, factReferenceEquals } from '../storage';
-import { flattenAsync } from '../util/fn';
+import { flatten, flattenAsync } from '../util/fn';
 import { segmentQuery } from './segmenter';
 
 function serializeSave(facts: FactRecord[]) : SaveMessage {
@@ -76,10 +76,11 @@ export class Fork implements Feed {
 
     private async initiateQuery(start: FactReference, query: Query) {
         const segments = segmentQuery(query);
-        const references = await flattenAsync(segments, async segment => {
+        const paths = await flattenAsync(segments, async segment => {
             const response = await this.client.query(serializeQuery(start, segment));
             return response.results;
         });
+        const references = flatten(paths, p => p);
         const response = await this.client.load(serializeLoad(references));
         await this.storage.save(response.facts);
     }

@@ -6,15 +6,15 @@ export class Cache implements Storage {
 
     }
 
-    save(facts: FactRecord[]): Promise<FactRecord[]> {
+    save(facts: FactRecord[]) {
         return this.inner.save(facts);
     }
 
-    query(start: FactReference, query: Query): Promise<FactReference[]> {
+    query(start: FactReference, query: Query) {
         return this.inner.query(start, query);
     }
 
-    load(references: FactReference[]): Promise<FactRecord[]> {
+    load(references: FactReference[]) {
         return this.inner.load(references);
     }
 }

@@ -5,6 +5,8 @@ export type FactReference = {
     hash: string;
 };
 
+export type FactPath = FactReference[];
+
 export type PredecessorCollection = {
     [role: string]: FactReference[] | FactReference
 };
@@ -18,7 +20,7 @@ export type FactRecord = {
 
 export interface Storage {
     save(facts: FactRecord[]): Promise<FactRecord[]>;
-    query(start: FactReference, query: Query): Promise<FactReference[]>;
+    query(start: FactReference, query: Query): Promise<FactPath[]>;
     load(references: FactReference[]): Promise<FactRecord[]>;
 }
 

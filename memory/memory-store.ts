@@ -1,6 +1,6 @@
-import { Join, PropertyCondition, Step, Direction, ExistentialCondition, Quantifier } from '../query/steps';
 import { Query } from '../query/query';
-import { FactRecord, FactReference, Storage, factReferenceEquals } from '../storage';
+import { Direction, ExistentialCondition, Join, PropertyCondition, Quantifier, Step } from '../query/steps';
+import { FactPath, FactRecord, FactReference, factReferenceEquals, Storage } from '../storage';
 import { flatten } from '../util/fn';
 import { formatDot } from './debug';
 
@@ -47,7 +47,7 @@ export class MemoryStore implements Storage {
         return Promise.resolve(added);
     }
 
-    query(start: FactReference, query: Query): Promise<FactReference[]> {
+    query(start: FactReference, query: Query): Promise<FactPath[]> {
         const results = this.executeQuery(start, query.steps);
         return Promise.resolve(results);
     }
@@ -59,43 +59,49 @@ export class MemoryStore implements Storage {
     }
 
     private executeQuery(start: FactReference, steps: Step[]) {
-        return steps.reduce((facts, step) => {
-            return this.executeStep(facts, step);
-        }, [start]);
+        return steps.reduce((paths, step) => {
+            return this.executeStep(paths, step);
+        }, [[start]]);
     }
 
-    private executeStep(facts: FactReference[], step: Step): FactReference[] {
+    private executeStep(paths: FactPath[], step: Step): FactPath[] {
         if (step instanceof PropertyCondition) {
             if (step.name === 'type') {
-                return facts.filter(fact => {
+                return paths.filter(path => {
+                    const fact = path[path.length - 1];
                     return fact.type === step.value;
                 });
             }
         }
         else if (step instanceof Join) {
             if (step.direction === Direction.Predecessor) {
-                return flatten(facts, fact => {
+                return flatten(paths, path => {
+                    const fact = path[path.length - 1];
                     const record = this.findFact(fact);
-                    return getPredecessors(record, step.role);
+                    return getPredecessors(record, step.role).map(predecessor =>
+                        path.concat([predecessor])
+                    );
                 });
             }
             else {
-                const successors = this.factRecords.filter(fact => {
-                    const predecessors = getPredecessors(fact, step.role);
-                    return predecessors.find(predecessor => {
-                        return !!facts.find(factReferenceEquals(predecessor));
+                return flatten(paths, path => {
+                    const fact = path[path.length - 1];
+                    const successors = this.factRecords.filter(record => {
+                        const predecessors = getPredecessors(record, step.role);
+                        return predecessors.some(factReferenceEquals(fact));
                     });
-                });
-                return successors.map(successor => {
-                    return {
-                        type: successor.type,
-                        hash: successor.hash
-                    };
+                    return successors.map(successor =>
+                        path.concat([{
+                            type: successor.type,
+                            hash: successor.hash
+                        }])
+                    );
                 });
             }
         }
         else if (step instanceof ExistentialCondition) {
-            return facts.filter(fact => {
+            return paths.filter(path => {
+                const fact = path[path.length - 1];
                 const results = this.executeQuery(fact, step.steps);
                 return step.quantifier === Quantifier.Exists ?
                     results.length > 0 :

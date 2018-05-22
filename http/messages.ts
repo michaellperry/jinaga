@@ -1,4 +1,4 @@
-import { FactRecord, FactReference } from '../storage';
+import { FactPath, FactRecord, FactReference } from '../storage';
 
 export type ProfileMessage = {
     displayName: string;
@@ -15,7 +15,7 @@ export type QueryMessage = {
 };
 
 export type QueryResponse = {
-    results: FactReference[]
+    results: FactPath[]
 };
 
 export type SaveMessage = {

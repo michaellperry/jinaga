@@ -3,7 +3,8 @@ import { FactReference, factReferenceEquals } from '../storage';
 
 export type SqlQuery = {
     sql: string,
-    parameters: any[]
+    parameters: any[],
+    pathLength: number
 };
 
 export function sqlFromSteps(start: FactReference, steps: Step[]) : SqlQuery {
@@ -13,7 +14,7 @@ export function sqlFromSteps(start: FactReference, steps: Step[]) : SqlQuery {
 }
 
 type QueryParts = {
-    prefix: string,
+    prefixes: string[],
     fromClause: string,
     joins: string,
     whereClause: string
@@ -36,11 +37,13 @@ class QueryBuilder {
         const parameters = this.parameters;
         //console.log(sql);
         //console.log(parameters);
-        return { sql, parameters };
+        return { sql, parameters, pathLength: final.parts.prefixes.length };
     }
 
     private assembleQueryString(parts: QueryParts): string {
-        const sql = 'SELECT ' + parts.prefix + 'type AS type, ' + parts.prefix + 'hash AS hash ' +
+        const select = parts.prefixes.map((prefix, i) =>
+            prefix + 'type AS type' + i + ', ' + prefix + 'hash AS hash' + i).join(', ');
+        const sql = 'SELECT ' + select + ' ' +
             parts.fromClause + ' ' + parts.joins + ' WHERE ' + parts.whereClause;
         return sql;
     }
@@ -82,26 +85,26 @@ class QueryBuilder {
 
     private handleStartSuccessor(start: FactReference, role: string): State {
         const alias = this.allocateAlias();
-        const prefix = alias + '.successor_';
+        const prefixes = [alias + '.successor_'];
         const fromClause = 'FROM public.edge ' + alias;
         const joins = '';
         const whereClause = alias + '.predecessor_type = ' + this.addParameter(start.type) +
             ' AND ' + alias + '.predecessor_hash = ' + this.addParameter(start.hash) +
             ' AND ' + alias + '.role = ' + this.addParameter(role);
-        const parts = { prefix, fromClause, joins, whereClause };
+        const parts = { prefixes, fromClause, joins, whereClause };
 
         return this.stateMatched(parts);
     }
 
     private handleStartPredecessor(start: FactReference, role: string): State {
         const alias = this.allocateAlias();
-        const prefix = alias + '.predecessor_';
+        const prefixes = [alias + '.predecessor_'];
         const fromClause = 'FROM public.edge ' + alias;
         const joins = '';
         const whereClause = alias + '.successor_type = ' + this.addParameter(start.type) +
             ' AND ' + alias + '.successor_hash = ' + this.addParameter(start.hash) +
             ' AND ' + alias + '.role = ' + this.addParameter(role);
-        const parts = { prefix, fromClause, joins, whereClause };
+        const parts = { prefixes, fromClause, joins, whereClause };
 
         return this.stateMatched(parts);
     }
@@ -135,11 +138,11 @@ class QueryBuilder {
         const alias = this.allocateAlias();
         const fromClause = 'FROM public.edge ' + alias;
         const joins = '';
-        const prefix = alias + '.successor_';
+        const prefixes = [alias + '.successor_'];
         const whereClause = alias + '.predecessor_type = ' + outerPrefix + 'type' +
             ' AND ' + alias + '.predecessor_hash = ' + outerPrefix + 'hash' +
             ' AND ' + alias + '.role = ' + this.addParameter(role);
-        const parts = { prefix, fromClause, joins, whereClause };
+        const parts = { prefixes, fromClause, joins, whereClause };
 
         return this.stateMatched(parts);
     }
@@ -171,10 +174,11 @@ class QueryBuilder {
     }
 
     private handleMatchedType(parts: QueryParts, type: string): State {
+        const prefix = parts.prefixes[parts.prefixes.length - 1];
         const whereClause = parts.whereClause +
-            ' AND ' + parts.prefix + 'type = ' + this.addParameter(type);
+            ' AND ' + prefix + 'type = ' + this.addParameter(type);
         return this.stateMatched({
-            prefix: parts.prefix,
+            prefixes: parts.prefixes,
             fromClause: parts.fromClause,
             joins: parts.joins,
             whereClause
@@ -183,15 +187,15 @@ class QueryBuilder {
 
     private handleMatchedSuccessor(parts: QueryParts, role: string): State {
         const roleParameter = this.addParameter(role);
-        const priorPrefix = parts.prefix;
+        const priorPrefix = parts.prefixes[parts.prefixes.length - 1];
         const alias = this.allocateAlias();
         const joins = parts.joins + ' JOIN public.edge ' + alias +
             ' ON ' + alias + '.predecessor_hash = ' + priorPrefix + 'hash' +
             ' AND ' + alias + '.predecessor_type = ' + priorPrefix + 'type';
         const whereClause = parts.whereClause + ' AND ' + alias + '.role = ' + roleParameter;
-        const prefix = alias + '.successor_';
+        const prefixes = parts.prefixes.concat([alias + '.successor_']);
         return this.stateMatched({
-            prefix,
+            prefixes,
             fromClause: parts.fromClause,
             joins,
             whereClause
@@ -200,15 +204,15 @@ class QueryBuilder {
 
     private handleMatchedPredecessor(parts: QueryParts, role: string): State {
         const roleParameter = this.addParameter(role);
-        const priorPrefix = parts.prefix;
+        const priorPrefix = parts.prefixes[parts.prefixes.length - 1];
         const alias = this.allocateAlias();
         const joins = parts.joins + ' JOIN public.edge ' + alias +
             ' ON ' + alias + '.successor_hash = ' + priorPrefix + 'hash' +
             ' AND ' + alias + '.successor_type = ' + priorPrefix + 'type';
         const whereClause = parts.whereClause + ' AND ' + alias + '.role = ' + roleParameter;
-        const prefix = alias + '.predecessor_';
+        const prefixes = parts.prefixes.concat([alias + '.predecessor_']);
         return this.stateMatched({
-            prefix,
+            prefixes,
             fromClause: parts.fromClause,
             joins,
             whereClause
@@ -217,11 +221,12 @@ class QueryBuilder {
 
     private handleMatchedExistentialCondition(parts: QueryParts, quantifier: Quantifier, steps: Step[]): State {
         const existence = quantifier === Quantifier.Exists ? 'EXISTS' : 'NOT EXISTS';
-        const childQuery = this.buildChildQuery(parts.prefix, steps);
+        const prefix = parts.prefixes[parts.prefixes.length - 1];
+        const childQuery = this.buildChildQuery(prefix, steps);
         const whereClause = parts.whereClause +
             ' AND ' + existence + ' (' + childQuery + ')';
         return this.stateMatched({
-            prefix: parts.prefix,
+            prefixes: parts.prefixes,
             fromClause: parts.fromClause,
             joins: parts.joins,
             whereClause

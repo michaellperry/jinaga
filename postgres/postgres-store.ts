@@ -1,7 +1,7 @@
 import { ConnectionFactory, Row } from './connection';
 import { sqlFromSteps } from './sql';
 import { Query } from '../query/query';
-import { FactRecord, FactReference, Storage } from '../storage';
+import { FactRecord, FactReference, Storage, FactPath } from '../storage';
 
 function loadFactRecord(r: Row): FactRecord {
     return {
@@ -12,11 +12,15 @@ function loadFactRecord(r: Row): FactRecord {
     };
 }
 
-function loadFactReference(r: Row): FactReference {
-    return {
-        type: r.type,
-        hash: r.hash
-    };
+function loadFactPath(pathLength: number, r: Row): FactPath {
+    let path: FactPath = [];
+    for (let i = 0; i < pathLength; i++) {
+        path.push({
+            type: r['type' + i],
+            hash: r['hash' + i]
+        });
+    }
+    return path;
 }
 
 type EdgeRecord = {
@@ -85,12 +89,12 @@ export class PostgresStore implements Storage {
         return facts;
     }
 
-    async query(start: FactReference, query: Query): Promise<FactReference[]> {
+    async query(start: FactReference, query: Query): Promise<FactPath[]> {
         const sqlQuery = sqlFromSteps(start, query.steps);
         const { rows } = await this.connectionFactory.with(async (connection) => {
             return await connection.query(sqlQuery.sql, sqlQuery.parameters);
         });
-        return rows.map(loadFactReference);
+        return rows.map(row => loadFactPath(sqlQuery.pathLength, row));
     }
 
     async load(references: FactReference[]): Promise<FactRecord[]> {

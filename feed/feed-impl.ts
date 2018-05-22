@@ -1,6 +1,6 @@
 import { Inverse, invertQuery } from '../query/inverter';
 import { Query } from '../query/query';
-import { FactRecord, FactReference, Storage, factReferenceEquals } from '../storage';
+import { FactPath, FactRecord, FactReference, factReferenceEquals, Storage } from '../storage';
 import { Feed, Handler, Observable, Subscription } from './feed';
 
 type Listener = {
@@ -46,7 +46,7 @@ class ObservableImpl implements Observable {
         public start: FactReference,
         public query: Query,
         public inverses: Inverse[],
-        public results: Promise<FactReference[]>,
+        public results: Promise<FactPath[]>,
         public addListener: (subscription: Listener) => void,
         public removeListener: (subscription: Listener) => void) {}
 
@@ -83,7 +83,7 @@ export class FeedImpl implements Feed {
         return saved;
     }
     
-    query(start: FactReference, query: Query): Promise<FactReference[]> {
+    query(start: FactReference, query: Query) {
         return this.inner.query(start, query);
     }
 
@@ -141,7 +141,10 @@ export class FeedImpl implements Feed {
                     const query = listeners[0].inverse.affected;
                     const affected = await this.inner.query(fact, query);
                     await Promise.all(listeners.map(async listener => {
-                        if (affected.find(factReferenceEquals(listener.match))) {
+                        if (affected.some(path => {
+                            const last = path[path.length - 1];
+                            return last.hash === listener.match.hash && last.type === listener.match.type;
+                        })) {
                             await this.notifyListener(fact, listener);
                         }
                     }));
