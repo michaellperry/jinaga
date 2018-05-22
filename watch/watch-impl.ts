@@ -8,7 +8,7 @@ import { flattenAsync, mapAsync } from '../util/fn';
 
 export class WatchImpl<Fact, Model> implements Watch<Fact, Model> {
     private subscription: Subscription;
-    private modelByFactReference: { factReference: FactReference, model: Model }[] = [];
+    private modelByFactPath: { factPath: FactPath, model: Model }[] = [];
 
     constructor(
         private start: FactReference,
@@ -40,9 +40,7 @@ export class WatchImpl<Fact, Model> implements Watch<Fact, Model> {
         const fullQuery = this.query.concat(query);
         const onResultAdded = async (path: FactPath, result: U) => {
             const factReference = path[path.length - 1];
-            const origin = path[path.length - 2];
-            const parent = this.modelByFactReference.find(pair =>
-                pair.factReference.hash === origin.hash && pair.factReference.type === origin.type);
+            const parent = this.modelByFactPath.find(this.factPathMatches(path));
             if (!parent) {
                 return null;
             }
@@ -63,26 +61,38 @@ export class WatchImpl<Fact, Model> implements Watch<Fact, Model> {
                 const fact = <Fact>hydration.hydrate(factReference);
                 const model = await this.resultAdded(path, fact);
                 if (model){
-                    this.modelByFactReference.push({ factReference, model });
+                    this.modelByFactPath.push({ factPath: path, model });
                 }
             });
         }
     }
 
     private onRemoved(paths: FactPath[]) {
-        const removedIndex = this.modelByFactReference.findIndex(pair => {
-            return paths.some(path => {
-                const last = path[path.length - 1];
-                return last.hash === pair.factReference.hash && last.type === pair.factReference.type;
-            });
+        paths.forEach(path => {
+            const removedIndex = this.modelByFactPath.findIndex(this.factPathMatches(path));
+            if (removedIndex >= 0) {
+                this.resultRemoved(this.modelByFactPath[removedIndex].model);
+                this.modelByFactPath.splice(removedIndex, 1);
+            }
         });
-        if (removedIndex >= 0) {
-            this.resultRemoved(this.modelByFactReference[removedIndex].model);
-            this.modelByFactReference.splice(removedIndex, 1);
-        }
     }
 
     private onError(reason: any) {
         throw new Error(reason);
+    }
+
+    private factPathMatches(path: FactPath): (pair: { factPath: FactPath, model: Model }) => boolean {
+        return pair => {
+            if (pair.factPath.length <= path.length) {
+                for (let i = 0; i < pair.factPath.length; i++) {
+                    if (pair.factPath[i].hash !== path[i].hash ||
+                        pair.factPath[i].type !== path[i].type) {
+                        return false;
+                    }
+                }
+                return true;
+            }
+            return false;
+        }
     }
 }
