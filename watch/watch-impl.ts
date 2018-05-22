@@ -43,6 +43,9 @@ export class WatchImpl<Fact, Model> implements Watch<Fact, Model> {
             const origin = path[path.length - 2];
             const parent = this.modelByFactReference.find(pair =>
                 pair.factReference.hash === origin.hash && pair.factReference.type === origin.type);
+            if (!parent) {
+                return null;
+            }
             return resultAdded(parent.model, result);
         }
         const watch = new WatchImpl<U, V>(this.start, fullQuery, onResultAdded, resultRemoved, this.inner);
@@ -59,7 +62,9 @@ export class WatchImpl<Fact, Model> implements Watch<Fact, Model> {
                 const factReference = path[path.length - 1];
                 const fact = <Fact>hydration.hydrate(factReference);
                 const model = await this.resultAdded(path, fact);
-                this.modelByFactReference.push({ factReference, model });
+                if (model){
+                    this.modelByFactReference.push({ factReference, model });
+                }
             });
         }
     }

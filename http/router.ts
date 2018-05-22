@@ -63,6 +63,9 @@ function serializeFactReferenceFromFact(factRecord: FactRecord) : FactReference 
 }
 
 function serializeUserIdentity(user: RequestUser) : UserIdentity {
+    if (!user) {
+        return null;
+    }
     return {
         provider: user.provider,
         id: user.id

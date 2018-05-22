@@ -1,6 +1,7 @@
 import { Inverse, invertQuery } from '../query/inverter';
 import { Query } from '../query/query';
-import { FactPath, FactRecord, FactReference, factReferenceEquals, Storage } from '../storage';
+import { FactPath, FactRecord, FactReference, Storage } from '../storage';
+import { mapAsync } from '../util/fn';
 import { Feed, Handler, Observable, Subscription } from './feed';
 
 type Listener = {
@@ -54,7 +55,7 @@ class ObservableImpl implements Observable {
         const subscription = new SubscriptionImpl(this, added, removed);
         subscription.add();
         this.results
-            .then(references => added(references))
+            .then(paths => added(paths))
             .catch(reason => this.onError(reason));
         return subscription;
     }
@@ -77,9 +78,9 @@ export class FeedImpl implements Feed {
 
     async save(facts: FactRecord[]): Promise<FactRecord[]> {
         const saved = await this.inner.save(facts);
-        await Promise.all(saved.map(async fact => {
+        await mapAsync(saved, async fact => {
             await this.notifyFactSaved(fact);
-        }));
+        });
         return saved;
     }
     
@@ -87,7 +88,7 @@ export class FeedImpl implements Feed {
         return this.inner.query(start, query);
     }
 
-    load(references: FactReference[]): Promise<FactRecord[]> {
+    load(references: FactReference[]) {
         return this.inner.load(references);
     }
 
@@ -140,21 +141,24 @@ export class FeedImpl implements Feed {
                 if (listeners && listeners.length > 0) {
                     const query = listeners[0].inverse.affected;
                     const affected = await this.inner.query(fact, query);
-                    await Promise.all(listeners.map(async listener => {
-                        if (affected.some(path => {
+                    await mapAsync(listeners, async listener => {
+                        const found = affected.find(path => {
                             const last = path[path.length - 1];
                             return last.hash === listener.match.hash && last.type === listener.match.type;
-                        })) {
-                            await this.notifyListener(fact, listener);
+                        });
+                        if (found) {
+                            await this.notifyListener(found.slice().reverse(), listener);
                         }
-                    }));
+                    });
                 }
             }
         }
     }
 
-    private async notifyListener(fact: FactReference, listener: Listener) {
-        let description = 'Notify listener of ' + fact.hash + ', affecting: ' + listener.inverse.affected.toDescriptiveString();
+    private async notifyListener(prefix: FactPath, listener: Listener) {
+        const fact = prefix[prefix.length - 1];
+        const affected = prefix[0];
+        let description = 'Notify listener of ' + fact.hash + ', affecting: ' + affected.hash;
         if (listener.inverse.added) {
             description = description + ', adding: ' + listener.inverse.added.toDescriptiveString();
         }
@@ -164,11 +168,19 @@ export class FeedImpl implements Feed {
         console.log(description);
         if (listener.inverse.added && listener.added) {
             const added = await this.inner.query(fact, listener.inverse.added);
-            listener.added(added);
+            if (added.length > 0) {
+                const path = added.map(path => prefix.concat(path.slice(1)));
+                console.log('Added ' + JSON.stringify(path));
+                listener.added(path);
+            }
         }
         if (listener.inverse.removed && listener.removed) {
             const removed = await this.inner.query(fact, listener.inverse.removed);
-            listener.removed(removed);
+            if (removed.length > 0) {
+                const path = removed.map(path => prefix.concat(path.slice(1)));
+                console.log('Removed ' + JSON.stringify(path));
+                listener.removed(path);
+            }
         }
     }
 }
