@@ -142,16 +142,16 @@ export class FeedImpl implements Feed {
                     const query = listeners[0].inverse.affected;
                     const affected = await this.inner.query(fact, query);
                     await mapAsync(listeners, async listener => {
-                        const found = affected.find(path => {
+                        const matching = affected.filter(path => {
                             const last = path[path.length - 1];
                             return last.hash === listener.match.hash && last.type === listener.match.type;
                         });
-                        if (found) {
+                        await mapAsync(matching, async backtrack => {
                             await this.notifyListener([{
                                 type: fact.type,
                                 hash: fact.hash
-                            }].concat(found).reverse().slice(1), listener);
-                        }
+                            }].concat(backtrack).reverse().slice(1), listener);
+                        })
                     });
                 }
             }
