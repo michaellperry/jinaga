@@ -147,7 +147,10 @@ export class FeedImpl implements Feed {
                             return last.hash === listener.match.hash && last.type === listener.match.type;
                         });
                         if (found) {
-                            await this.notifyListener(found.slice().reverse(), listener);
+                            await this.notifyListener([{
+                                type: fact.type,
+                                hash: fact.hash
+                            }].concat(found).reverse().slice(1), listener);
                         }
                     });
                 }
@@ -157,29 +160,20 @@ export class FeedImpl implements Feed {
 
     private async notifyListener(prefix: FactPath, listener: Listener) {
         const fact = prefix[prefix.length - 1];
-        const affected = prefix[0];
-        let description = 'Notify listener of ' + fact.hash + ', affecting: ' + affected.hash;
-        if (listener.inverse.added) {
-            description = description + ', adding: ' + listener.inverse.added.toDescriptiveString();
-        }
-        if (listener.inverse.removed) {
-            description = description + ', removing: ' + listener.inverse.removed.toDescriptiveString();
-        }
-        console.log(description);
         if (listener.inverse.added && listener.added) {
             const added = await this.inner.query(fact, listener.inverse.added);
             if (added.length > 0) {
-                const path = added.map(path => prefix.concat(path.slice(1)));
-                console.log('Added ' + JSON.stringify(path));
-                listener.added(path);
+                const paths = added.map(path => prefix.concat(path));
+                console.log('Added ' + JSON.stringify(paths));
+                listener.added(paths);
             }
         }
         if (listener.inverse.removed && listener.removed) {
             const removed = await this.inner.query(fact, listener.inverse.removed);
             if (removed.length > 0) {
-                const path = removed.map(path => prefix.concat(path.slice(1)));
-                console.log('Removed ' + JSON.stringify(path));
-                listener.removed(path);
+                const paths = removed.map(path => prefix.concat(path));
+                console.log('Removed ' + JSON.stringify(paths));
+                listener.removed(paths);
             }
         }
     }

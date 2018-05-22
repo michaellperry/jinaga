@@ -48,7 +48,7 @@ export class MemoryStore implements Storage {
     }
 
     query(start: FactReference, query: Query): Promise<FactPath[]> {
-        const results = this.executeQuery(start, query.steps);
+        const results = this.executeQuery(start, query.steps).map(path => path.slice(1));
         return Promise.resolve(results);
     }
 
