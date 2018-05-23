@@ -88,18 +88,16 @@ export class WatchImpl<Fact, Model> implements Watch<Fact, Model> {
     }
 
     private async onAdded(paths: FactPath[]) {
-        if (paths.length !== 0) {
-            const references = paths.map(path => path[path.length - 1]);
-            const records = await this.inner.load(references);
-            const hydration = new Hydration(records);
-            paths.forEach(path => {
-                const factReference = path[path.length - 1];
-                const fact = <Fact>hydration.hydrate(factReference);
-                this.resultAdded(path, fact, (model: Model) => {
-                    this.setModel(path, model);
-                });
+        const references = paths.map(path => path[path.length - 1]);
+        const records = await this.inner.load(references);
+        const hydration = new Hydration(records);
+        paths.forEach(path => {
+            const factReference = path[path.length - 1];
+            const fact = <Fact>hydration.hydrate(factReference);
+            this.resultAdded(path, fact, (model: Model) => {
+                this.setModel(path, model);
             });
-        }
+        });
     }
 
     private onRemoved(paths: FactPath[]) {
