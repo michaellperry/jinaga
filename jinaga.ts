@@ -63,11 +63,12 @@ export class Jinaga {
         };
     }
 
-    watch<T, U, V>(start: T, clause: Clause<T, U>, resultAdded: (result: U) => V, resultRemoved: (model: V) => void): Watch<U, V> {
+    watch<T, U, V>(start: T, clause: Clause<T, U>, resultAdded: (fact: U) => V, resultRemoved: (model: V) => void): Watch<U, V> {
         const reference = dehydrateReference(start);
         const query = parseQuery(clause);
-        const onResultAdded = async (path: FactPath, model: U) => {
-            return resultAdded(model);
+        const onResultAdded = (path: FactPath, fact: U, take: ((model: V) => void)) => {
+            const model = resultAdded(fact);
+            take(model);
         };
         const watch = new WatchImpl<U, V>(reference, query, onResultAdded, resultRemoved, this.authentication);
         watch.begin();

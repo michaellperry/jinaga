@@ -8,9 +8,13 @@ function hasSuccessor(steps: Step[]): boolean {
 }
 
 export class Query {
+    private pathLength: number;
+
     constructor(
         public steps: Array<Step>
-    ) {}
+    ) {
+        this.pathLength = this.steps.filter(step => step instanceof Join).length;
+    }
 
     public concat(other: Query): Query {
         return new Query(this.steps.concat(other.steps));
@@ -22,5 +26,9 @@ export class Query {
 
     public isDeterministic() {
         return !hasSuccessor(this.steps);
+    }
+
+    public getPathLength() {
+        return this.pathLength;
     }
 }

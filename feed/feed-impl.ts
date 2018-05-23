@@ -55,7 +55,11 @@ class ObservableImpl implements Observable {
         const subscription = new SubscriptionImpl(this, added, removed);
         subscription.add();
         this.results
-            .then(paths => added(paths))
+            .then(paths => {
+                if (paths.length > 0) {
+                    added(paths);
+                }
+            })
             .catch(reason => this.onError(reason));
         return subscription;
     }

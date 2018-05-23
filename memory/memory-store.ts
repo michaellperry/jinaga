@@ -52,10 +52,10 @@ export class MemoryStore implements Storage {
         return Promise.resolve(results);
     }
 
-    async load(references: FactReference[]): Promise<FactRecord[]> {
+    load(references: FactReference[]): Promise<FactRecord[]> {
         let target: FactRecord[] = [];
         loadAll(references, this.factRecords, target);
-        return target;
+        return Promise.resolve(target);
     }
 
     private executeQuery(start: FactReference, steps: Step[]) {
