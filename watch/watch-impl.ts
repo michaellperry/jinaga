@@ -81,10 +81,14 @@ export class WatchImpl<Fact, Model> implements Watch<Fact, Model> {
                 prior(model);
             }
             else {
-                //throw new Error('Setting the model twice?');
-                console.log('Setting the model twice on path ' + JSON.stringify(path));
+                throw new Error('Setting the model twice on path ' + JSON.stringify(path));
             }
         }
+    }
+
+    private hasModel(path: FactPath) {
+        const pair = this.modelOrActionByFactPath.find(factPathMatches(path));
+        return pair && typeof(pair.modelOrAction) !== 'function';
     }
 
     private async onAdded(paths: FactPath[]) {
@@ -92,11 +96,13 @@ export class WatchImpl<Fact, Model> implements Watch<Fact, Model> {
         const records = await this.inner.load(references);
         const hydration = new Hydration(records);
         paths.forEach(path => {
-            const factReference = path[path.length - 1];
-            const fact = <Fact>hydration.hydrate(factReference);
-            this.resultAdded(path, fact, (model: Model) => {
-                this.setModel(path, model);
-            });
+            if (!this.hasModel(path)) {
+                const factReference = path[path.length - 1];
+                const fact = <Fact>hydration.hydrate(factReference);
+                this.resultAdded(path, fact, (model: Model) => {
+                    this.setModel(path, model);
+                });
+            }
         });
     }
 

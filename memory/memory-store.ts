@@ -24,10 +24,12 @@ function loadAll(references: FactReference[], source: FactRecord[], target: Fact
         const predicate = factReferenceEquals(reference);
         if (!target.some(predicate)) {
             const record = source.find(predicate);
-            target.push(record);
-            for (const role in record.predecessors) {
-                const predecessors = getPredecessors(record, role);
-                loadAll(predecessors, source, target);
+            if (record) {
+                target.push(record);
+                for (const role in record.predecessors) {
+                    const predecessors = getPredecessors(record, role);
+                    loadAll(predecessors, source, target);
+                }
             }
         }
     });
