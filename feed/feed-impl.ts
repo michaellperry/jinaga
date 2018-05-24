@@ -173,11 +173,10 @@ export class FeedImpl implements Feed {
             }
         }
         if (listener.inverse.removed && listener.removed) {
-            const removed = await this.inner.query(fact, listener.inverse.removed);
+            const removed = prefix.slice(0, prefix.length - listener.inverse.removed.getPathLength());
             if (removed.length > 0) {
-                const paths = removed.map(path => prefix.concat(path));
-                console.log('Removed ' + JSON.stringify(paths));
-                listener.removed(paths);
+                console.log('Removed ' + JSON.stringify(removed));
+                listener.removed([removed]);
             }
         }
     }
