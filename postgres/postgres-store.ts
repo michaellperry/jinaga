@@ -1,7 +1,9 @@
-import { ConnectionFactory, Row } from './connection';
-import { sqlFromSteps } from './sql';
 import { Query } from '../query/query';
-import { FactRecord, FactReference, Storage, FactPath } from '../storage';
+import { FactPath, FactRecord, FactReference, Storage } from '../storage';
+import { flatten } from '../util/fn';
+import { ConnectionFactory, Row } from './connection';
+import { makeEdgeRecords } from './edge-record';
+import { sqlFromSteps } from './sql';
 
 function loadFactRecord(r: Row): FactRecord {
     return {
@@ -23,38 +25,6 @@ function loadFactPath(pathLength: number, r: Row): FactPath {
     return path;
 }
 
-type EdgeRecord = {
-    predecessor_hash: string,
-    predecessor_type: string,
-    successor_hash: string,
-    successor_type: string,
-    role: string
-};
-
-function makeEdgeRecord(predecessor: FactReference, successor: FactRecord, role: string): EdgeRecord {
-    return {
-        predecessor_hash: predecessor.hash,
-        predecessor_type: predecessor.type,
-        successor_hash: successor.hash,
-        successor_type: successor.type,
-        role
-    };
-}
-
-function makeEdgeRecords(fact: FactRecord): EdgeRecord[] {
-    let records: EdgeRecord[] = [];
-    for (const role in fact.predecessors) {
-        const predecessor = fact.predecessors[role];
-        if (Array.isArray(predecessor)) {
-            records = records.concat(predecessor.map(p => makeEdgeRecord(p, fact, role)));
-        }
-        else {
-            records.push(makeEdgeRecord(predecessor, fact, role));
-        }
-    }
-    return records;
-}
-
 export class PostgresStore implements Storage {
     private connectionFactory: ConnectionFactory;
 
@@ -64,11 +34,11 @@ export class PostgresStore implements Storage {
     
     async save(facts: FactRecord[]): Promise<FactRecord[]> {
         if (facts.length > 0) {
-            const edgeRecords = flatmap(facts, makeEdgeRecords);
+            const edgeRecords = flatten(facts, makeEdgeRecords);
             const edgeValues = edgeRecords.map((e, i) => '($' + (i*5 + 1) + ', $' + (i*5 + 2) + ', $' + (i*5 + 3) + ', $' + (i*5 + 4) + ', $' + (i*5 + 5) + ')');
-            const edgeParameters = flatmap(edgeRecords, (e) => [e.predecessor_hash, e.predecessor_type, e.successor_hash, e.successor_type, e.role]);
+            const edgeParameters = flatten(edgeRecords, (e) => [e.predecessor_hash, e.predecessor_type, e.successor_hash, e.successor_type, e.role]);
             const factValues = facts.map((f, i) => '($' + (i*4 + 1) + ', $' + (i*4 + 2) + ', $' + (i*4 + 3) + ', $' + (i*4 + 4) + ')');
-            const factParameters = flatmap(facts, (f) => [f.hash, f.type, JSON.stringify(f.fields), JSON.stringify(f.predecessors)]);
+            const factParameters = flatten(facts, (f) => [f.hash, f.type, JSON.stringify(f.fields), JSON.stringify(f.predecessors)]);
             await this.connectionFactory.withTransaction(async (connection) => {
                 await connection.query('INSERT INTO public.edge' +
                     ' (predecessor_hash, predecessor_type, successor_hash, successor_type, role)' +
@@ -103,7 +73,7 @@ export class PostgresStore implements Storage {
         }
 
         const tuples = references.map((r, i) => '($' + (i*2 + 1) + ', $' + (i*2 + 2) + ')');
-        const parameters = flatmap(references, (r) => [r.type, r.hash]);
+        const parameters = flatten(references, (r) => [r.type, r.hash]);
         const sql =
             'SELECT DISTINCT fact.type, fact.hash, fields, predecessors' +
             ' FROM (VALUES ' + tuples.join(', ') + ') AS v (type, hash)' +
@@ -114,12 +84,4 @@ export class PostgresStore implements Storage {
         })
         return rows.map(loadFactRecord);
     }
-}
-
-function flatmap<T, U>(source: T[], projection: (t: T) => U[]) {
-    if (source.length === 0) {
-        return [];
-    }
-
-    return source.map(projection).reduce((a,b) => a.concat(b));
 }

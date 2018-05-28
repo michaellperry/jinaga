@@ -9,8 +9,6 @@ export enum Quantifier {
 }
 
 export class Step {
-    construtor() {}
-
     public toDeclarativeString(): string {
         throw Error("Abstract");
     }

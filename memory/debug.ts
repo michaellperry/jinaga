@@ -67,5 +67,3 @@ function escapeHTML(value: string) {
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;');
 }
-
-// [label=< <table BORDER="0" CELLBORDER="1" CELLSPACING="0"><tr><td COLSPAN="2">ImprovingGame.Domain</td></tr><tr><td>identifier</td><td>'improving'</td></tr><tr><td>b</td><td>2</td></tr></table> >]

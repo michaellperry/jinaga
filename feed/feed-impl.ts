@@ -137,7 +137,6 @@ export class FeedImpl implements Feed {
     }
 
     private async notifyFactSaved(fact: FactRecord) {
-        console.log('Fact saved: ' + fact.hash);
         const listenersByQuery = this.listenersByTypeAndQuery[fact.type];
         if (listenersByQuery) {
             for (const queryKey in listenersByQuery) {
@@ -168,14 +167,12 @@ export class FeedImpl implements Feed {
             const added = await this.inner.query(fact, listener.inverse.added);
             if (added.length > 0) {
                 const paths = added.map(path => prefix.concat(path));
-                console.log('Added ' + JSON.stringify(paths));
                 listener.added(paths);
             }
         }
         if (listener.inverse.removed && listener.removed) {
             const removed = prefix.slice(0, prefix.length - listener.inverse.removed.getPathLength());
             if (removed.length > 0) {
-                console.log('Removed ' + JSON.stringify(removed));
                 listener.removed([removed]);
             }
         }

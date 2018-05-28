@@ -1,29 +1,9 @@
 import { Feed, Observable } from '../feed/feed';
-import { LoadMessage, QueryMessage, SaveMessage } from '../http/messages';
 import { WebClient } from '../http/web-client';
 import { Query } from '../query/query';
 import { FactRecord, FactReference, factReferenceEquals } from '../storage';
-import { flatten, flattenAsync } from '../util/fn';
-import { segmentQuery } from './segmenter';
-
-function serializeSave(facts: FactRecord[]) : SaveMessage {
-    return {
-        facts: facts
-    };
-}
-
-function serializeQuery(start: FactReference, query: Query) : QueryMessage {
-    return {
-        start: start,
-        query: query.toDescriptiveString()
-    };
-}
-
-function serializeLoad(references: FactReference[]) : LoadMessage {
-    return {
-        references: references
-    };
-}
+import { flatten } from '../util/fn';
+import { serializeLoad, serializeQuery, serializeSave } from './serialize';
 
 export class Fork implements Feed {
     constructor(
@@ -75,13 +55,20 @@ export class Fork implements Feed {
     }
 
     private async initiateQuery(start: FactReference, query: Query) {
-        const segments = segmentQuery(query);
-        const paths = await flattenAsync(segments, async segment => {
-            const response = await this.client.query(serializeQuery(start, segment));
-            return response.results;
-        });
-        const references = flatten(paths, p => p);
+        const queryResponse = await this.client.query(serializeQuery(start, query));
+        const paths = queryResponse.results;
+        const references = distinct(flatten(paths, p => p));
         const response = await this.client.load(serializeLoad(references));
         await this.storage.save(response.facts);
     }
+}
+
+function distinct(references: FactReference[]) {
+    const result: FactReference[] = [];
+    references.forEach(reference => {
+        if (!result.some(r => r.hash === reference.hash && r.type === reference.type)) {
+            result.push(reference);
+        }
+    })
+    return result;
 }
