@@ -1,0 +1,21 @@
+{
+    "compilerOptions": {
+        "module": "commonjs",
+        "target": "es6",
+        "noImplicitAny": true,
+        "moduleResolution": "node",
+        "declaration": true,
+        "outDir": "./dist",
+        "baseUrl": ".",
+        "lib": [ "dom", "es2015" ],
+        "paths": {
+            "*": [
+                "../node_modules/*",
+                "../types/*"
+            ]
+        }
+    },
+    "include": [
+        "src/**/*.ts"
+    ]
+}
