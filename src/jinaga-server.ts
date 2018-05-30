@@ -1,4 +1,4 @@
-import express, { Handler } from 'express';
+import * as express from 'express';
 
 import { Authorization } from './authorization';
 import { Cache } from './cache';
@@ -8,7 +8,7 @@ import { PostgresKeystore } from './postgres/postgres-keystore';
 import { PostgresStore } from './postgres/postgres-store';
 
 export class JinagaServer {
-    handler: Handler;
+    handler: express.Handler;
 
     constructor(postgresUri: string) {
         const store = new PostgresStore(postgresUri);

@@ -34,6 +34,7 @@
     "gulp-sass": "^3.2.1",
     "gulp-sourcemaps": "^2.6.4",
     "gulp-typescript": "^4.0.1",
+    "merge2": "^1.2.2",
     "typescript": "^2.7.2"
   },
   "dependencies": {
