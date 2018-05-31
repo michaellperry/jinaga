@@ -3,7 +3,7 @@ var typescript = require('gulp-typescript');
 var merge = require('merge2');
 
 gulp.task('compile-client', function() {
-  var tsResult = gulp.src('./src/jinaga.ts')
+  var tsResult = gulp.src('./src/index.ts')
       .pipe(typescript({
         module: "system",
         target: "es6",
