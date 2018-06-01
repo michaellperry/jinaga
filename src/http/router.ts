@@ -1,7 +1,8 @@
-import express, { Handler } from 'express';
+import { Handler, Router } from 'express';
 
 import { Authorization } from '../authorization';
 import { computeHash } from '../fact/hash';
+import { UserIdentity } from '../keystore';
 import { fromDescriptiveString } from '../query/descriptive-string';
 import { FactRecord, FactReference } from '../storage';
 import {
@@ -13,7 +14,6 @@ import {
     SaveMessage,
     SaveResponse,
 } from './messages';
-import { UserIdentity } from '../keystore';
 
 function get<U>(method: ((req: RequestUser) => Promise<U>)): Handler {
     return (req, res, next) => {
@@ -82,7 +82,7 @@ export class HttpRouter {
     handler: Handler;
 
     constructor(private authorization: Authorization) {
-        const router = express.Router();
+        const router = Router();
         router.get('/login', get(user => this.login(user)));
         router.post('/query', post((user, queryMessage: QueryMessage) => this.query(user, queryMessage)));
         router.post('/load', post((user, loadMessage: LoadMessage) => this.load(user, loadMessage)));

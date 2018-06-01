@@ -1,10 +1,11 @@
-import Keypair from 'keypair';
+import Keypair = require('keypair');
 import { PoolClient } from 'pg';
 
 import { computeHash } from '../fact/hash';
 import { Keystore, UserIdentity } from '../keystore';
 import { FactRecord, PredecessorCollection } from '../storage';
 import { ConnectionFactory } from './connection';
+
 
 export class PostgresKeystore implements Keystore {
     private connectionFactory: ConnectionFactory;

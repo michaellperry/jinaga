@@ -3,16 +3,16 @@ var typescript = require('gulp-typescript');
 var merge = require('merge2');
 
 gulp.task('compile-server', function() {
-  var tsResult = gulp.src('./src/jinaga-server.ts')
+  var tsResult = gulp.src('./src/**/*.ts')
       .pipe(typescript({
-        module: "system",
+        module: "commonjs",
         target: "es6",
         moduleResolution: "node",
         noImplicitAny: true,
         declaration: true,
-        outFile: "server.js",
+        outDir: "./dist/server",
         baseUrl: ".",
-        lib: [ "es2015" ],
+        lib: [ "dom", "es2015" ],
         paths: {
           "*": [
             "./node_modules/*",
@@ -22,7 +22,7 @@ gulp.task('compile-server', function() {
       }));
 
   return merge[
-    tsResult.dts.pipe(gulp.dest('./dist/')),
-    tsResult.js.pipe(gulp.dest('./dist/'))
+    tsResult.dts.pipe(gulp.dest('./dist/server')),
+    tsResult.js.pipe(gulp.dest('./dist/server'))
   ]
 });

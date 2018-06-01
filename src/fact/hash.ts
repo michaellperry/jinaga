@@ -1,5 +1,5 @@
-import tweetnacl from 'tweetnacl';
-import tweetnaclutil from 'tweetnacl-util';
+import { hash } from 'tweetnacl';
+import { decodeUTF8, encodeBase64 } from 'tweetnacl-util';
 
 import { FactReference, PredecessorCollection } from '../storage';
 import { HashMap } from './hydrate';
@@ -45,9 +45,9 @@ function computeObjectHash(obj: {}) {
         return '';
 
     const str = canonicalize(obj);
-    const bytes = tweetnaclutil.decodeUTF8(str);
-    const result = tweetnacl.hash(bytes);
-    const b64 = tweetnaclutil.encodeBase64(result);
+    const bytes = decodeUTF8(str);
+    const result = hash(bytes);
+    const b64 = encodeBase64(result);
     return b64;
 }
 

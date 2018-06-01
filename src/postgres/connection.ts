@@ -1,4 +1,4 @@
-import pg, { Pool, PoolClient } from 'pg';
+import { Pool, PoolClient } from 'pg';
 
 export type Row = { [key: string]: any };
 
@@ -6,7 +6,7 @@ export class ConnectionFactory {
     private postgresPool: Pool;
 
     constructor (postgresUri: string) {
-        this.postgresPool = new pg.Pool({
+        this.postgresPool = new Pool({
             connectionString: postgresUri
         });
     }

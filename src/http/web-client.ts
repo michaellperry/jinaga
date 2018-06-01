@@ -1,4 +1,12 @@
-import { LoginResponse, QueryMessage, QueryResponse, SaveMessage, SaveResponse, LoadMessage, LoadResponse } from './messages';
+import {
+    LoadMessage,
+    LoadResponse,
+    LoginResponse,
+    QueryMessage,
+    QueryResponse,
+    SaveMessage,
+    SaveResponse,
+} from './messages';
 
 function createXHR(method: string, path: string, resolve: (result: any) => void, reject: (reason: any) => void) {
     const xhr = new XMLHttpRequest();

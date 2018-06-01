@@ -1,5 +1,5 @@
-import tweetnacl from 'tweetnacl';
-import tweetnaclutil from 'tweetnacl-util';
+import { hash } from 'tweetnacl';
+import { decodeUTF8, encodeBase64 } from 'tweetnacl-util';
 
 import { HashMap } from '../fact/hydrate';
 import { FactRecord } from '../storage';
@@ -47,9 +47,9 @@ function fieldRow(name: string, value: any) {
 
 function shorten(value: string) {
     if (value.startsWith('"-----BEGIN RSA PUBLIC KEY-----')) {
-        const bytes = tweetnaclutil.decodeUTF8(value);
-        const result = tweetnacl.hash(bytes);
-        const b64 = tweetnaclutil.encodeBase64(result);
+        const bytes = decodeUTF8(value);
+        const result = hash(bytes);
+        const b64 = encodeBase64(result);
         return b64.substr(0, 16);
     }
     else if (value.length > 100) {
