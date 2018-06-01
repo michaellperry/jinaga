@@ -5,7 +5,7 @@
         "noImplicitAny": true,
         "moduleResolution": "node",
         "declaration": true,
-        "outDir": "./dist",
+        "outDir": "./types",
         "baseUrl": ".",
         "lib": [ "dom", "es2015" ],
         "paths": {

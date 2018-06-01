@@ -2,8 +2,8 @@
   "name": "jinaga",
   "version": "2.0.0-beta.0",
   "description": "Browser-Server-Browser Synchroninzation",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "main": "dist/jinaga.js",
+  "types": "dist/types/index.d.ts",
   "scripts": {
     "start": "gulp",
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -33,9 +33,10 @@
     "gulp-rename": "^1.2.2",
     "gulp-sass": "^3.2.1",
     "gulp-sourcemaps": "^2.6.4",
-    "gulp-typescript": "^4.0.1",
-    "merge2": "^1.2.2",
-    "typescript": "^2.7.2"
+    "ts-loader": "^4.3.0",
+    "typescript": "^2.7.2",
+    "webpack": "^4.10.2",
+    "webpack-stream": "^4.0.3"
   },
   "dependencies": {
     "body-parser": "^1.18.2",
@@ -44,7 +45,6 @@
     "keypair": "^1.0.1",
     "passport": "^0.3.2",
     "pg": "^7.4.1",
-    "systemjs": "^0.21.0",
     "tweetnacl": "^1.0.0",
     "tweetnacl-util": "^0.15.0"
   }
