@@ -13,19 +13,11 @@ var webpackConfig = {
         }]
     },
     resolve: {
-        extensions: [ '.ts' ]
+        extensions: [ '.ts', '.js' ]
     },
     output: {
         path: path.resolve(__dirname, '../dist'),
         filename: 'jinaga.js'
-    },
-    externals: {
-        tweetnacl: {
-            amd: 'tweetnacl'
-        },
-        'tweetnacl-util': {
-            amd: 'tweetnacl-util'
-        }
     }
 };
 
