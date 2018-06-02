@@ -16,8 +16,25 @@ var webpackConfig = {
         extensions: [ '.ts' ]
     },
     output: {
-        path: path.resolve(__dirname, 'dist'),
+        path: path.resolve(__dirname, '../dist'),
         filename: 'index.js'
+    },
+    externals: {
+        express: {
+            commonjs: 'express'
+        },
+        pg: {
+            commonjs: 'pg'
+        },
+        keypair: {
+            amd: 'keypair'
+        },
+        tweetnacl: {
+            amd: 'tweetnacl'
+        },
+        'tweetnacl-util': {
+            amd: 'tweetnacl-util'
+        }
     }
 };
 
