@@ -1,11 +1,8 @@
 import { Authentication } from './authentication';
 import { dehydrateFact, dehydrateReference, hydrate, hydrateFromTree } from './fact/hydrate';
-import { FeedImpl } from './feed/feed-impl';
-import { Fork } from './fork/fork';
-import { WebClient } from './http/web-client';
 import { MemoryStore } from './memory/memory-store';
 import { Clause, ConditionalSpecification, InverseSpecification, parseQuery, Proxy } from './query/query-parser';
-import { FactReference, FactPath } from './storage';
+import { FactPath } from './storage';
 import { Watch } from './watch/watch';
 import { WatchImpl } from './watch/watch-impl';
 
@@ -21,12 +18,8 @@ export class Jinaga {
     private loadingHandlers: ((loading: boolean) => void)[] = [];
     private progressHandlers: ((count: number) => void)[] = [];
     
-    constructor(url: string) {
-        const store = new MemoryStore();
-        const feed = new FeedImpl(store);
-        const webClient = new WebClient(url);
-        const fork = new Fork(feed, webClient);
-        this.authentication = new Authentication(fork, webClient);
+    constructor(authentication: Authentication, store: MemoryStore) {
+        this.authentication = authentication;
         this.store = store;
     }
 

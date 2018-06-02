@@ -1,10 +1,11 @@
 var gulp = require('gulp');
 var del = require('del');
 
-require('./tasks/compile');
+require('./tasks/client');
+require('./tasks/server');
 
 gulp.task('clean', function() {
     return del([ './dist/' ]);
 });
 
-gulp.task('default', [ 'compile' ]);
+gulp.task('default', [ 'compile-client', 'compile-server' ]);

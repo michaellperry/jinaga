@@ -17,11 +17,11 @@ var webpackConfig = {
     },
     output: {
         path: path.resolve(__dirname, 'dist'),
-        filename: 'jinaga.js'
+        filename: 'index.js'
     }
 };
 
-gulp.task('compile', function() {
+gulp.task('compile-server', function() {
     return gulp.src('./src/index.ts')
         .pipe(webpackStream(webpackConfig, webpack))
         .pipe(gulp.dest('./dist'));
