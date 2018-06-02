@@ -7,9 +7,9 @@ import { Jinaga } from './jinaga';
 import { MemoryStore } from './memory/memory-store';
 
 export type JinagaBrowserConfig = {
-    httpEndpoint: string,
-    wsEndpoint: string,
-    indexedDb: string
+    httpEndpoint?: string,
+    wsEndpoint?: string,
+    indexedDb?: string
 }
 
 export class JinagaBrowser {

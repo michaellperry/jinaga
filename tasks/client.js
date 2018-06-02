@@ -16,6 +16,8 @@ var webpackConfig = {
         extensions: [ '.ts', '.js' ]
     },
     output: {
+        library: 'jinaga',
+        libraryTarget: 'amd',
         path: path.resolve(__dirname, '../dist'),
         filename: 'jinaga.js'
     }

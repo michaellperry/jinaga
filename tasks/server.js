@@ -16,6 +16,8 @@ var webpackConfig = {
         extensions: [ '.ts' ]
     },
     output: {
+        library: 'jinaga',
+        libraryTarget: 'commonjs',
         path: path.resolve(__dirname, '../dist'),
         filename: 'index.js'
     },
