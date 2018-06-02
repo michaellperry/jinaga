@@ -20,9 +20,6 @@ var webpackConfig = {
         filename: 'jinaga.js'
     },
     externals: {
-        keypair: {
-            amd: 'keypair'
-        },
         tweetnacl: {
             amd: 'tweetnacl'
         },
