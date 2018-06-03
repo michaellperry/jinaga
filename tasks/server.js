@@ -29,13 +29,13 @@ var webpackConfig = {
             commonjs: 'pg'
         },
         keypair: {
-            amd: 'keypair'
+            commonjs: 'keypair'
         },
         tweetnacl: {
-            amd: 'tweetnacl'
+            commonjs: 'tweetnacl'
         },
         'tweetnacl-util': {
-            amd: 'tweetnacl-util'
+            commonjs: 'tweetnacl-util'
         }
     }
 };
