@@ -23,8 +23,12 @@ var webpackConfig = {
     }
 };
 
-gulp.task('compile-client', function() {
+function compileClient() {
     return gulp.src('./src/jinaga-browser.ts')
         .pipe(webpackStream(webpackConfig, webpack))
         .pipe(gulp.dest('./dist'));
-});
+}
+
+module.exports = {
+    compileClient
+};

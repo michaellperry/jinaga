@@ -1,11 +1,13 @@
-var gulp = require('gulp');
 var del = require('del');
+var gulp = require('gulp');
 
-require('./tasks/client');
-require('./tasks/server');
+var { compileClient } = require('./tasks/client');
+var { compileServer } = require('./tasks/server');
 
-gulp.task('clean', function() {
+function clean() {
     return del([ './dist/' ]);
-});
+}
 
-gulp.task('default', [ 'compile-client', 'compile-server' ]);
+gulp.task('clean', clean);
+
+gulp.task('default', gulp.parallel([ compileClient, compileServer ]));

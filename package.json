@@ -22,14 +22,14 @@
   },
   "homepage": "http://jinaga.com",
   "devDependencies": {
-    "@types/express": "^4.11.1",
+    "@types/express": "^4.16.0",
     "@types/passport": "^0.3.2",
     "@types/pg": "^7.4.6",
     "del": "^3.0.0",
-    "gulp": "^3.9.1",
-    "ts-loader": "^4.3.0",
-    "typescript": "^2.7.2",
-    "webpack": "^4.10.2",
+    "gulp": "^4.0.0",
+    "ts-loader": "^4.4.1",
+    "typescript": "^2.9.1",
+    "webpack": "^4.12.0",
     "webpack-stream": "^4.0.3"
   },
   "dependencies": {

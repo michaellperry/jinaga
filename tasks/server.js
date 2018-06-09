@@ -39,8 +39,12 @@ var webpackConfig = {
     }
 };
 
-gulp.task('compile-server', function() {
+function compileServer() {
     return gulp.src('./src/index.ts')
         .pipe(webpackStream(webpackConfig, webpack))
         .pipe(gulp.dest('./dist'));
-});
+}
+
+module.exports = {
+    compileServer
+};
