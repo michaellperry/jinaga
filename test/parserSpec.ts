@@ -143,4 +143,35 @@ describe('Query parser', () => {
         var query = parseQuery(j.suchThat(completedTasksInListWithArray));
         expect(query.toDescriptiveString()).to.equal('F.type="List" S.list F.type="Task" E(S.task F.type="Completion")');
     });
+
+    it('should allow conjunction', () => {
+        type S = {};
+        type A = {};
+        type B = {};
+        type C = {};
+
+        function conjoin(s: S): A {
+            return j.where({
+                type: "A",
+                x: s
+            }, j.suchThat(j.not(con1)).suchThat(j.not(con2)));
+        }
+
+        function con1(a: A): B {
+            return {
+                type: "B",
+                y: a
+            }
+        }
+
+        function con2(b: B): C {
+            return {
+                type: "C",
+                z: b
+            };
+        }
+
+        var query = parseQuery(j.suchThat(conjoin));
+        expect(query.toDescriptiveString()).to.equal('S.x F.type="A" N(S.y F.type="B" N(S.z F.type="C"))');
+    })
 });
