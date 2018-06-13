@@ -38,8 +38,18 @@ function runTest() {
         }));
 }
 
+var test = gulp.series(
+    gulp.parallel(compileForTest, compileTest),
+    runTest);
+
+gulp.task('test', test);
+
+function waitForTestChanges() {
+    return gulp.watch(['./src/**.*.ts', './test/**/*.ts'], test);
+}
+
+gulp.task('watch', gulp.series(test, waitForTestChanges));
+
 module.exports = {
-    compileForTest,
-    compileTest,
-    runTest
+    test
 };
