@@ -39,22 +39,22 @@ class ParserProxy implements Proxy {
     [key:string]: any;
 
     has(name:string):Proxy {
-        var proxy = new ParserProxy(this, name);
+        const proxy = new ParserProxy(this, name);
         this[name] = proxy;
         return proxy;
     }
 
     public createQuery(): Array<Step> {
-        var currentSteps: Array<Step> = [];
-        for (var name in this) {
-            var value: any = this[name];
+        const currentSteps: Array<Step> = [];
+        for (const name in this) {
+            const value: any = this[name];
             if (name[0] != "_" && typeof this[name] !== "function" && !(value instanceof ParserProxy)) {
                 currentSteps.push(new PropertyCondition(name, value));
             }
         }
         if (this.__parent) {
-            var steps = this.__parent.createQuery();
-            var step: Step = new Join(Direction.Predecessor, this.__role);
+            const steps = this.__parent.createQuery();
+            const step: Step = new Join(Direction.Predecessor, this.__role);
             steps.push(step);
             return steps.concat(currentSteps);
         }
@@ -69,8 +69,8 @@ function findTarget(spec:any): Array<Step> {
         return (<ParserProxy>spec).createQuery();
     }
     if (spec instanceof ConditionalSpecification) {
-        var head = findTarget(spec.specification);
-        var tail = parse(spec.conditions);
+        const head = findTarget(spec.specification);
+        const tail = parse(spec.conditions);
         if (tail.steps.length === 1 && tail.steps[0] instanceof ExistentialCondition) {
             return head.concat(tail.steps);
         }
@@ -79,9 +79,9 @@ function findTarget(spec:any): Array<Step> {
         }
     }
     if (spec instanceof InverseSpecification) {
-        var steps = findTarget(spec.specification);
+        const steps = findTarget(spec.specification);
         if (steps.length === 1 && steps[0] instanceof ExistentialCondition) {
-            var inner = <ExistentialCondition>steps[0];
+            const inner = <ExistentialCondition>steps[0];
             return [new ExistentialCondition(
                 inner.quantifier === Quantifier.Exists ? Quantifier.NotExists : Quantifier.Exists,
                 inner.steps
@@ -95,20 +95,20 @@ function findTarget(spec:any): Array<Step> {
         return findTarget(spec[0]);
     }
     if (spec instanceof Object) {
-        var steps: Array<Step> = [];
-        var targetQuery: Array<Step> = null;
-        for (var field in spec) {
+        const steps: Array<Step> = [];
+        let targetQuery: Array<Step> = null;
+        for (const field in spec) {
             if (!targetQuery) {
-                var targetQuery = findTarget(spec[field]);
+                targetQuery = findTarget(spec[field]);
                 if (targetQuery) {
-                    var join = new Join(Direction.Successor, field);
+                    const join = new Join(Direction.Successor, field);
                     targetQuery.push(join);
                 }
             }
             if (typeof spec[field] === "string"||
                 typeof spec[field] === "number"||
                 typeof spec[field] === "boolean") {
-                var step = new PropertyCondition(field, spec[field]);
+                const step = new PropertyCondition(field, spec[field]);
                 steps.push(step);
             }
         }
@@ -122,7 +122,7 @@ function findTarget(spec:any): Array<Step> {
 }
 
 function parse(templates: Array<(target: Proxy) => Object>): Query {
-    var steps: Array<Step> = [];
+    let steps: Array<Step> = [];
     templates.forEach(template => {
         const target = new ParserProxy(null, null);
         const spec = template(target);
