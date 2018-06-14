@@ -10,7 +10,7 @@ var config = {
     moduleResolution: "node",
     rootDir: "..",
     baseUrl: "..",
-    lib: [ "dom", "es2015" ],
+    lib: ["dom", "es2015"],
     paths: {
         "*": [
             path.join(__dirname, "../node_modules/*"),
@@ -31,11 +31,17 @@ function compileTest() {
         .pipe(gulp.dest('./dist/test/test'));
 }
 
+function handleError(err) {
+    console.log(err.toString());
+    this.emit('end');
+}
+
 function runTest() {
     return gulp.src('./dist/test/**/*.js')
         .pipe(mocha({
             reporter: 'min'
-        }));
+        })
+        .on("error", handleError));
 }
 
 var test = gulp.series(
