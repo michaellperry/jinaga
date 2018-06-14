@@ -1,5 +1,6 @@
 var gulp = require('gulp');
 var ts = require('gulp-typescript');
+var sourcemaps = require('gulp-sourcemaps');
 var mocha = require('gulp-mocha');
 var path = require('path');
 
@@ -8,6 +9,7 @@ var config = {
     target: "es6",
     noImplicitAny: true,
     moduleResolution: "node",
+    sourceMap: true,
     rootDir: "..",
     baseUrl: "..",
     lib: ["dom", "es2015"],
@@ -21,13 +23,17 @@ var config = {
 
 function compileForTest() {
     return gulp.src('./src/**/*.ts')
+        .pipe(sourcemaps.init())
         .pipe(ts(config))
+        .pipe(sourcemaps.write())
         .pipe(gulp.dest('./dist/test/src'));
 }
 
 function compileTest() {
     return gulp.src('./test/**/*.ts')
+        .pipe(sourcemaps.init())
         .pipe(ts(config))
+        .pipe(sourcemaps.write())
         .pipe(gulp.dest('./dist/test/test'));
 }
 
@@ -51,7 +57,7 @@ var test = gulp.series(
 gulp.task('test', test);
 
 function waitForTestChanges() {
-    return gulp.watch(['./src/**.*.ts', './test/**/*.ts'], test);
+    return gulp.watch(['./src/**/*.ts', './test/**/*.ts'], test);
 }
 
 gulp.task('watch', gulp.series(test, waitForTestChanges));
