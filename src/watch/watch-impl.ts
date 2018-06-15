@@ -1,10 +1,9 @@
 import { Hydration } from '../fact/hydrate';
 import { Feed, Subscription } from '../feed/feed';
 import { Query } from '../query/query';
-import { Clause, parseQuery, parseQuery1, Specification } from '../query/query-parser';
-import { FactReference, factReferenceEquals, FactPath } from '../storage';
+import { Preposition } from '../query/query-parser';
+import { FactPath, FactReference } from '../storage';
 import { Watch } from './watch';
-import { flattenAsync, mapAsync } from '../util/fn';
 
 export class WatchImpl<Fact, Model> implements Watch<Fact, Model> {
     private subscription: Subscription;
@@ -16,8 +15,7 @@ export class WatchImpl<Fact, Model> implements Watch<Fact, Model> {
         private resultAdded: (path: FactPath, result: Fact, take: ((model: Model) => void)) => void,
         private resultRemoved: (model: Model) => void,
         private inner: Feed
-    ) {
-    }
+    ) {}
 
     begin() {
         this.subscription = this.inner.from(this.start, this.query)
@@ -30,19 +28,13 @@ export class WatchImpl<Fact, Model> implements Watch<Fact, Model> {
                 this.onRemoved(reference);
             });
     }
+
     watch<U, V>(
-        specification: (target : Fact) => Specification<U>,
+        preposition: Preposition<U, V>,
         resultAdded: (parent: Model, result: U) => V,
-        resultRemoved: (model: V) => void) : Watch<U, V> {
-        throw new Error('Not yet implemented');
-    }
-    
-    watch1<U, V>(
-        clause: Clause<Fact, U>,
-        resultAdded: (parent: Model, fact: U) => V,
         resultRemoved: (model: V) => void
     ) : Watch<U, V> {
-        const query = parseQuery1(clause);
+        const query = new Query(preposition.steps);
         const fullQuery = this.query.concat(query);
         const onResultAdded = (path: FactPath, fact: U, take: ((model: V) => void)) => {
             const prefix = path.slice(0, this.query.getPathLength());

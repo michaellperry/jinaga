@@ -4,7 +4,8 @@ import { expect } from 'chai';
 import { describe, it } from 'mocha';
 
 import { Jinaga } from '../src/jinaga';
-import { Condition, parseQuery, Specification } from '../src/query/query-parser';
+import { Query } from '../src/query/query';
+import { Condition, Preposition, Specification } from '../src/query/query-parser';
 
 describe('Query parser', () => {
 
@@ -116,6 +117,10 @@ describe('Query parser', () => {
             type: "C",
             z: b
         });
+    }
+
+    function parseQuery<T, U>(preposition: Preposition<T, U>) {
+        return new Query(preposition.steps);
     }
     
     it('should parse to a successor query', function () {

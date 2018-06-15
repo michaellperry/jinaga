@@ -1,17 +1,8 @@
 import { Authentication } from './authentication';
 import { dehydrateFact, dehydrateReference, hydrate, hydrateFromTree } from './fact/hydrate';
 import { MemoryStore } from './memory/memory-store';
-import {
-    Clause,
-    Condition,
-    ConditionalSpecification,
-    InverseSpecification,
-    parseQuery,
-    parseQuery1,
-    Preposition,
-    Proxy,
-    Specification,
-} from './query/query-parser';
+import { Query } from './query/query';
+import { Condition, Preposition, Specification } from './query/query-parser';
 import { FactPath } from './storage';
 import { Watch } from './watch/watch';
 import { WatchImpl } from './watch/watch-impl';
@@ -67,22 +58,9 @@ export class Jinaga {
         }
     }
 
-    query<T, U>(start: T, preposition: Preposition<T, U>) : Promise<U[]> {
-        throw new Error('Not yet implemented');
-    }
-
-    watch<T, U, V>(start: T, preposition: Preposition<T, U>,
-        resultAdded: (fact: U) => V, resultRemoved: (model: V) => void) : Watch<U, V> {
-        throw new Error('Not yet implemented');
-    }
-
-    for<T, U>(specification: (target : T) => Specification<U>) : Preposition<T, U> {
-        return Preposition.for(specification);
-    }
-
-    async query1<T, U>(start: T, clause: Clause<T, U>): Promise<U[]> {
+    async query<T, U>(start: T, preposition: Preposition<T, U>) : Promise<U[]> {
         const reference = dehydrateReference(start);
-        const query = parseQuery1(clause);
+        const query = new Query(preposition.steps);
         const results = await this.authentication.query(reference, query);
         if (results.length === 0) {
             return [];
@@ -93,9 +71,11 @@ export class Jinaga {
         return hydrateFromTree(references, facts);
     }
 
-    watch1<T, U, V>(start: T, clause: Clause<T, U>, resultAdded: (fact: U) => V, resultRemoved: (model: V) => void): Watch<U, V> {
+    watch<T, U, V>(start: T, preposition: Preposition<T, U>,
+        resultAdded: (fact: U) => V, resultRemoved: (model: V) => void
+    ) : Watch<U, V> {
         const reference = dehydrateReference(start);
-        const query = parseQuery1(clause);
+        const query = new Query(preposition.steps);
         const onResultAdded = (path: FactPath, fact: U, take: ((model: V) => void)) => {
             const model = resultAdded(fact);
             take(model);
@@ -103,6 +83,10 @@ export class Jinaga {
         const watch = new WatchImpl<U, V>(reference, query, onResultAdded, resultRemoved, this.authentication);
         watch.begin();
         return watch;
+    }
+
+    for<T, U>(specification: (target : T) => Specification<U>) : Preposition<T, U> {
+        return Preposition.for(specification);
     }
 
     match<T>(template: T): Specification<T> {
@@ -122,27 +106,6 @@ export class Jinaga {
             const original = condition(target);
             return new Condition<U>(original.template, original.conditions, !original.negative);
         };
-    }
-    
-    where1<T, U>(specification: Object, clause: Clause<T, U>): T {
-        return new ConditionalSpecification(specification, clause.templates, true) as any;
-    }
-
-    suchThat1<T, U>(template: ((target: T) => U)): Clause<T, U> {
-        return new Clause<T, U>([template as any]);
-    }
-
-    not1<T, U>(condition: (target: T) => U): (target: T) => U;
-    not1<T>(specification: T): T;
-    not1<T, U>(conditionOrSpecification: ((target: T) => U) | T): ((target: T) => U) | T {
-        if (typeof(conditionOrSpecification) === "function") {
-            const condition: (target: Proxy) => Object = conditionOrSpecification as any;
-            return ((t: Proxy) => new InverseSpecification(condition(t))) as any;
-        }
-        else {
-            const specification = <{}>conditionOrSpecification;
-            return new InverseSpecification(specification) as any;
-        }
     }
 
     debug(): string {

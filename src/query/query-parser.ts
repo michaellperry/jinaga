@@ -1,19 +1,7 @@
-import { Query } from './query';
 import { Direction, ExistentialCondition, Join, PropertyCondition, Quantifier, Step } from './steps';
 
-export interface Proxy {
+interface Proxy {
     has(name: string): Proxy;
-}
-
-export class Clause<T, U> {
-    constructor(
-        public templates: ((target: Proxy) => Object)[]
-    ) {
-    }
-
-    suchThat<V>(template: (target: U) => V) {
-        return new Clause<T, V>(this.templates.concat([template as any]));
-    }
 }
 
 export class Specification<T> {
@@ -57,20 +45,6 @@ export class Preposition<T, U> {
     }
 }
 
-export class ConditionalSpecification {
-    constructor(
-        public specification: Object,
-        public conditions: Array<(target: Proxy) => Object>,
-        public isAny: boolean
-    ) { }
-}
-
-export class InverseSpecification {
-    constructor(
-        public specification: Object
-    ) { }
-}
-
 class ParserProxy implements Proxy {
     constructor(
         private __parent: ParserProxy,
@@ -108,29 +82,6 @@ class ParserProxy implements Proxy {
 function findTarget(spec:any): Array<Step> {
     if (spec instanceof ParserProxy) {
         return spec.createQuery();
-    }
-    if (spec instanceof ConditionalSpecification) {
-        const head = findTarget(spec.specification);
-        const tail = parse(spec.conditions);
-        if (tail.steps.length === 1 && tail.steps[0] instanceof ExistentialCondition) {
-            return head.concat(tail.steps);
-        }
-        else {
-            return head.concat(<Step>new ExistentialCondition(Quantifier.Exists, tail.steps));
-        }
-    }
-    if (spec instanceof InverseSpecification) {
-        const steps = findTarget(spec.specification);
-        if (steps.length === 1 && steps[0] instanceof ExistentialCondition) {
-            const inner = <ExistentialCondition>steps[0];
-            return [new ExistentialCondition(
-                inner.quantifier === Quantifier.Exists ? Quantifier.NotExists : Quantifier.Exists,
-                inner.steps
-            )]
-        }
-        else {
-            return [new ExistentialCondition(Quantifier.NotExists, steps)];
-        }
     }
     if (Array.isArray(spec) && spec.length === 1) {
         return findTarget(spec[0]);
@@ -172,23 +123,4 @@ function parseTemplate(template: (target: any) => any): Step[] {
         return [ new ExistentialCondition(spec.negative ? Quantifier.NotExists : Quantifier.Exists, steps)];
     }
     return steps;
-}
-
-function parse(templates: Array<(target: Proxy) => Object>): Query {
-    let steps: Array<Step> = [];
-    templates.forEach(template => {
-        const target = new ParserProxy(null, null);
-        const spec = template(target);
-        const targetJoins = findTarget(spec);
-        steps = steps.concat(targetJoins);
-    });
-    return new Query(steps);
-}
-
-export function parseQuery<T, U>(preposition: Preposition<T, U>): Query {
-    return new Query(preposition.steps);
-}
-
-export function parseQuery1<T, U>(clause: Clause<T, U>) {
-    return parse(clause.templates);
 }
