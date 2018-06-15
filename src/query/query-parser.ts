@@ -16,6 +16,36 @@ export class Clause<T, U> {
     }
 }
 
+export class Specification<T> {
+    constructor (
+        public template: T
+    ) {}
+
+    suchThat<U>(condition: ((target: T) => Condition<U>)): Specification<T> {
+        throw new Error('Not yet implemented');
+    }
+}
+
+export class Condition<T> {
+    constructor (
+        public template: T
+    ) {}
+
+    suchThat<U>(condition: ((target: T) => Condition<U>)): Condition<T> {
+        throw new Error('Not yet implemented');
+    }
+}
+
+export class Preposition<T, U> {
+    constructor (
+        specification: (target : T) => Specification<U>
+    ) {}
+
+    then<V>(specification: (target : U) => Specification<V>): Preposition<T, U> {
+        throw new Error('Not yet implemented');
+    }
+}
+
 export class ConditionalSpecification {
     constructor(
         public specification: Object,
@@ -66,7 +96,7 @@ class ParserProxy implements Proxy {
 
 function findTarget(spec:any): Array<Step> {
     if (spec instanceof ParserProxy) {
-        return (<ParserProxy>spec).createQuery();
+        return spec.createQuery();
     }
     if (spec instanceof ConditionalSpecification) {
         const head = findTarget(spec.specification);
@@ -132,6 +162,10 @@ function parse(templates: Array<(target: Proxy) => Object>): Query {
     return new Query(steps);
 }
 
-export function parseQuery<T, U>(clause: Clause<T, U>) {
+export function parseQuery<T, U>(preposition: Preposition<T, U>): Query {
+    throw new Error('Not yet implemented');
+}
+
+export function parseQuery1<T, U>(clause: Clause<T, U>) {
     return parse(clause.templates);
 }

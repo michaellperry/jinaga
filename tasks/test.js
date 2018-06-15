@@ -21,6 +21,11 @@ var config = {
     }
 };
 
+function continueOnError(err) {
+    console.log(err.toString());
+    this.emit('end');
+}
+
 function compileForTest() {
     return gulp.src('./src/**/*.ts')
         .pipe(sourcemaps.init())
@@ -37,17 +42,12 @@ function compileTest() {
         .pipe(gulp.dest('./dist/test/test'));
 }
 
-function handleError(err) {
-    console.log(err.toString());
-    this.emit('end');
-}
-
 function runTest() {
     return gulp.src('./dist/test/**/*.js')
         .pipe(mocha({
             reporter: 'min'
         })
-        .on("error", handleError));
+        .on("error", continueOnError));
 }
 
 var test = gulp.series(

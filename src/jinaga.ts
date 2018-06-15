@@ -1,7 +1,17 @@
 import { Authentication } from './authentication';
 import { dehydrateFact, dehydrateReference, hydrate, hydrateFromTree } from './fact/hydrate';
 import { MemoryStore } from './memory/memory-store';
-import { Clause, ConditionalSpecification, InverseSpecification, parseQuery, Proxy } from './query/query-parser';
+import {
+    Clause,
+    Condition,
+    ConditionalSpecification,
+    InverseSpecification,
+    parseQuery,
+    parseQuery1,
+    Preposition,
+    Proxy,
+    Specification,
+} from './query/query-parser';
 import { FactPath } from './storage';
 import { Watch } from './watch/watch';
 import { WatchImpl } from './watch/watch-impl';
@@ -35,37 +45,12 @@ export class Jinaga {
         this.progressHandlers.push(handler);
     }
 
-    async query<T, U>(start: T, clause: Clause<T, U>): Promise<U[]> {
-        const reference = dehydrateReference(start);
-        const query = parseQuery(clause);
-        const results = await this.authentication.query(reference, query);
-        if (results.length === 0) {
-            return [];
-        }
-        const references = results.map(r => r[r.length - 1]);
-        
-        const facts = await this.authentication.load(references);
-        return hydrateFromTree(references, facts);
-    }
-
     async login<U>(): Promise<{ userFact: U, profile: Profile }> {
         const { userFact, profile } = await this.authentication.login();
         return {
             userFact: hydrate<U>(userFact),
             profile
         };
-    }
-
-    watch<T, U, V>(start: T, clause: Clause<T, U>, resultAdded: (fact: U) => V, resultRemoved: (model: V) => void): Watch<U, V> {
-        const reference = dehydrateReference(start);
-        const query = parseQuery(clause);
-        const onResultAdded = (path: FactPath, fact: U, take: ((model: V) => void)) => {
-            const model = resultAdded(fact);
-            take(model);
-        };
-        const watch = new WatchImpl<U, V>(reference, query, onResultAdded, resultRemoved, this.authentication);
-        watch.begin();
-        return watch;
     }
     
     async fact<T>(prototype: T) : Promise<T> {
@@ -81,18 +66,72 @@ export class Jinaga {
             throw error;
         }
     }
+
+    query<T, U>(start: T, preposition: Preposition<T, U>) : Promise<U[]> {
+        throw new Error('Not yet implemented');
+    }
+
+    watch<T, U, V>(start: T, preposition: Preposition<T, U>,
+        resultAdded: (fact: U) => V, resultRemoved: (model: V) => void) : Watch<U, V> {
+        throw new Error('Not yet implemented');
+    }
+
+    for<T, U>(specification: (target : T) => Specification<U>) : Preposition<T, U> {
+        throw new Error('Not yet implemented');
+    }
+
+    async query1<T, U>(start: T, clause: Clause<T, U>): Promise<U[]> {
+        const reference = dehydrateReference(start);
+        const query = parseQuery1(clause);
+        const results = await this.authentication.query(reference, query);
+        if (results.length === 0) {
+            return [];
+        }
+        const references = results.map(r => r[r.length - 1]);
+        
+        const facts = await this.authentication.load(references);
+        return hydrateFromTree(references, facts);
+    }
+
+    watch1<T, U, V>(start: T, clause: Clause<T, U>, resultAdded: (fact: U) => V, resultRemoved: (model: V) => void): Watch<U, V> {
+        const reference = dehydrateReference(start);
+        const query = parseQuery1(clause);
+        const onResultAdded = (path: FactPath, fact: U, take: ((model: V) => void)) => {
+            const model = resultAdded(fact);
+            take(model);
+        };
+        const watch = new WatchImpl<U, V>(reference, query, onResultAdded, resultRemoved, this.authentication);
+        watch.begin();
+        return watch;
+    }
+
+    match<T>(template: T): Specification<T> {
+        throw new Error('Not yet implemented');
+    }
+
+    exists<T>(template: T): Condition<T> {
+        throw new Error('Not yet implemented');
+    }
+
+    notExists<T>(template: T): Condition<T> {
+        throw new Error('Not yet implemented');
+    }
+
+    not<T, U>(fn: ((target: T) => Condition<U>)) : (target: T) => Condition<U> {
+        throw new Error('Not yet implemented');
+    }
     
-    where<T, U>(specification: Object, clause: Clause<T, U>): T {
+    where1<T, U>(specification: Object, clause: Clause<T, U>): T {
         return new ConditionalSpecification(specification, clause.templates, true) as any;
     }
 
-    suchThat<T, U>(template: ((target: T) => U)): Clause<T, U> {
+    suchThat1<T, U>(template: ((target: T) => U)): Clause<T, U> {
         return new Clause<T, U>([template as any]);
     }
 
-    not<T, U>(condition: (target: T) => U): (target: T) => U;
-    not<T>(specification: T): T;
-    not<T, U>(conditionOrSpecification: ((target: T) => U) | T): ((target: T) => U) | T {
+    not1<T, U>(condition: (target: T) => U): (target: T) => U;
+    not1<T>(specification: T): T;
+    not1<T, U>(conditionOrSpecification: ((target: T) => U) | T): ((target: T) => U) | T {
         if (typeof(conditionOrSpecification) === "function") {
             const condition: (target: Proxy) => Object = conditionOrSpecification as any;
             return ((t: Proxy) => new InverseSpecification(condition(t))) as any;
