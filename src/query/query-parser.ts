@@ -5,7 +5,8 @@ interface Proxy {
 }
 
 export class Specification<T> {
-    public existential: boolean = false;
+    public existential = false;
+    public specification = true;
 
     constructor (
         public template: T,
@@ -18,7 +19,7 @@ export class Specification<T> {
 }
 
 export class Condition<T> {
-    public existential: boolean = true;
+    public existential = true;
 
     constructor (
         public template: T,
@@ -27,7 +28,7 @@ export class Condition<T> {
     ) {}
 
     suchThat<U>(condition: ((target: T) => Condition<U>)): Condition<T> {
-        throw new Error('Not yet implemented');
+        return new Condition<T>(this.template, this.conditions.concat(parseTemplate(condition)), this.negative);
     }
 }
 

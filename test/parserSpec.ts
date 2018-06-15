@@ -50,6 +50,27 @@ describe('Query parser', () => {
         });
     }
 
+    function stillCompletedTasksInList(l: List) {
+        return j.match({
+            type: 'Task',
+            list: l
+        }).suchThat(taskIsStillCompleted);
+    }
+
+    function taskIsStillCompleted(t: Task) {
+        return j.notExists({
+            type: 'Completion',
+            task: t
+        }).suchThat(completionIsNotRevoked);
+    }
+
+    function completionIsNotRevoked(c: Completion) {
+        return j.notExists({
+            type: 'Revocation',
+            completion: c
+        });
+    }
+
     function taskIsCompleted(t: Task): Condition<Completion> {
         return j.exists({
             type: 'Completion',
@@ -172,6 +193,11 @@ describe('Query parser', () => {
         var query = parseQuery(j.for(completedTasksInListWithArray));
         expect(query.toDescriptiveString()).to.equal('F.type="List" S.list F.type="Task" E(S.task F.type="Completion")');
     });
+
+    it('should parse nested conditions', function() {
+        const query = parseQuery(j.for(stillCompletedTasksInList));
+        expect(query.toDescriptiveString()).to.equal('S.list F.type="Task" N(S.task F.type="Completion" N(S.completion F.type="Revocation"))');
+    })
 
     it('should allow positive conjunction', () => {
         function conjoin(s: S) {
