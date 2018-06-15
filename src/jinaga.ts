@@ -77,7 +77,7 @@ export class Jinaga {
     }
 
     for<T, U>(specification: (target : T) => Specification<U>) : Preposition<T, U> {
-        throw new Error('Not yet implemented');
+        return Preposition.for(specification);
     }
 
     async query1<T, U>(start: T, clause: Clause<T, U>): Promise<U[]> {
@@ -106,19 +106,22 @@ export class Jinaga {
     }
 
     match<T>(template: T): Specification<T> {
-        throw new Error('Not yet implemented');
+        return new Specification<T>(template,[]);
     }
 
     exists<T>(template: T): Condition<T> {
-        throw new Error('Not yet implemented');
+        return new Condition<T>(template, [], false);
     }
 
     notExists<T>(template: T): Condition<T> {
-        throw new Error('Not yet implemented');
+        return new Condition<T>(template, [], true);
     }
 
-    not<T, U>(fn: ((target: T) => Condition<U>)) : (target: T) => Condition<U> {
-        throw new Error('Not yet implemented');
+    not<T, U>(condition: (target: T) => Condition<U>) : (target: T) => Condition<U> {
+        return target => {
+            const original = condition(target);
+            return new Condition<U>(original.template, original.conditions, !original.negative);
+        };
     }
     
     where1<T, U>(specification: Object, clause: Clause<T, U>): T {

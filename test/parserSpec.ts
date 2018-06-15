@@ -177,7 +177,7 @@ describe('Query parser', () => {
         }
 
         var query = parseQuery(j.for(conjoin));
-        expect(query.toDescriptiveString()).to.equal('S.x F.type="A" E(S.y F.type="B" E(S.z F.type="C"))');
+        expect(query.toDescriptiveString()).to.equal('S.x F.type="A" E(S.y F.type="B") E(S.z F.type="C")');
     });
 
     it('should allow positive with negative conjunction', () => {
@@ -189,7 +189,7 @@ describe('Query parser', () => {
         }
 
         var query = parseQuery(j.for(conjoin));
-        expect(query.toDescriptiveString()).to.equal('S.x F.type="A" E(S.y F.type="B" N(S.z F.type="C"))');
+        expect(query.toDescriptiveString()).to.equal('S.x F.type="A" E(S.y F.type="B") N(S.z F.type="C")');
     });
 
     it('should allow negative conjunction', () => {
@@ -201,7 +201,7 @@ describe('Query parser', () => {
         }
 
         var query = parseQuery(j.for(conjoin));
-        expect(query.toDescriptiveString()).to.equal('S.x F.type="A" N(S.y F.type="B" N(S.z F.type="C"))');
+        expect(query.toDescriptiveString()).to.equal('S.x F.type="A" N(S.y F.type="B") N(S.z F.type="C")');
     });
 
     it('should allow condition', () => {

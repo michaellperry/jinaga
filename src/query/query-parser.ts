@@ -17,18 +17,25 @@ export class Clause<T, U> {
 }
 
 export class Specification<T> {
+    public existential: boolean = false;
+
     constructor (
-        public template: T
+        public template: T,
+        public conditions: Step[]
     ) {}
 
-    suchThat<U>(condition: ((target: T) => Condition<U>)): Specification<T> {
-        throw new Error('Not yet implemented');
+    suchThat<U>(condition: (target: T) => Condition<U>): Specification<T> {
+        return new Specification<T>(this.template, this.conditions.concat(parseTemplate(condition)));
     }
 }
 
 export class Condition<T> {
+    public existential: boolean = true;
+
     constructor (
-        public template: T
+        public template: T,
+        public conditions: Step[],
+        public negative: boolean
     ) {}
 
     suchThat<U>(condition: ((target: T) => Condition<U>)): Condition<T> {
@@ -38,11 +45,15 @@ export class Condition<T> {
 
 export class Preposition<T, U> {
     constructor (
-        specification: (target : T) => Specification<U>
+        public steps: Step[]
     ) {}
 
     then<V>(specification: (target : U) => Specification<V>): Preposition<T, U> {
-        throw new Error('Not yet implemented');
+        return new Preposition<T, U>(this.steps.concat(parseTemplate(specification)));
+    }
+
+    static for<T, U>(specification: (target : T) => Specification<U>): Preposition<T, U> {
+        return new Preposition<T, U>(parseTemplate(specification));
     }
 }
 
@@ -151,6 +162,18 @@ function findTarget(spec:any): Array<Step> {
     return null;
 }
 
+function parseTemplate(template: (target: any) => any): Step[] {
+    const target = new ParserProxy(null, null);
+    const spec = template(target);
+    const targetJoins = findTarget(spec.template);
+    const steps = targetJoins.concat(spec.conditions);
+
+    if (spec.existential) {
+        return [ new ExistentialCondition(spec.negative ? Quantifier.NotExists : Quantifier.Exists, steps)];
+    }
+    return steps;
+}
+
 function parse(templates: Array<(target: Proxy) => Object>): Query {
     let steps: Array<Step> = [];
     templates.forEach(template => {
@@ -163,7 +186,7 @@ function parse(templates: Array<(target: Proxy) => Object>): Query {
 }
 
 export function parseQuery<T, U>(preposition: Preposition<T, U>): Query {
-    throw new Error('Not yet implemented');
+    return new Query(preposition.steps);
 }
 
 export function parseQuery1<T, U>(clause: Clause<T, U>) {
