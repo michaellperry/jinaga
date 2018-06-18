@@ -33,10 +33,12 @@ class QueryBuilder {
         const final = steps.reduce((state, step) => {
             return state.transition(step);
         }, this.stateStart(start));
+        if (!final.parts) {
+            return null;
+        }
+
         const sql = this.assembleQueryString(final.parts);
         const parameters = this.parameters;
-        //console.log(sql);
-        //console.log(parameters);
         return { sql, parameters, pathLength: final.parts.prefixes.length };
     }
 
