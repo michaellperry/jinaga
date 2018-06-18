@@ -52,7 +52,7 @@ class Dehydration {
             else if (typeof(value) === 'object') {
                 if (Array.isArray(value)) {
                     predecessors[field] = value.map(element => {
-                        return this.dehydrate(value);
+                        return this.dehydrate(element);
                     });
                 }
                 else {
