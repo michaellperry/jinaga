@@ -131,6 +131,9 @@ class QueryBuilder {
             if (step.direction === Direction.Successor) {
                 return this.handleSubquerySuccessor(prefix, step.role);
             }
+            else if (step.direction === Direction.Predecessor) {
+                return this.handleSubqueryPredecessor(prefix, step.role);
+            }
         }
     
         throw new Error("Cannot yet handle this query: " + step.toDeclarativeString());
@@ -143,6 +146,19 @@ class QueryBuilder {
         const prefixes = [alias + '.successor_'];
         const whereClause = alias + '.predecessor_type = ' + outerPrefix + 'type' +
             ' AND ' + alias + '.predecessor_hash = ' + outerPrefix + 'hash' +
+            ' AND ' + alias + '.role = ' + this.addParameter(role);
+        const parts = { prefixes, fromClause, joins, whereClause };
+
+        return this.stateMatched(parts);
+    }
+
+    private handleSubqueryPredecessor(outerPrefix: string, role: string): State {
+        const alias = this.allocateAlias();
+        const fromClause = 'FROM public.edge ' + alias;
+        const joins = '';
+        const prefixes = [alias + '.predecessor_'];
+        const whereClause = alias + '.successor_type = ' + outerPrefix + 'type' +
+            ' AND ' + alias + '.successor_hash = ' + outerPrefix + 'hash' +
             ' AND ' + alias + '.role = ' + this.addParameter(role);
         const parts = { prefixes, fromClause, joins, whereClause };
 
