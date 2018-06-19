@@ -47,6 +47,22 @@ describe('ModelMap', () => {
         expect(model.field).to.equal('test');
     });
 
+    it('should handle model before and after setting', () => {
+        let model1: TestModel = null;
+        let model2: TestModel = null;
+        map.withModel(path, m => {
+            model1 = m;
+        });
+        map.setModel(path, new TestModel('test'));
+        map.withModel(path, m => {
+            model2 = m;
+        });
+        expect(model1).to.not.be.null;
+        expect(model1.field).to.equal('test');
+        expect(model2).to.not.be.null;
+        expect(model2.field).to.equal('test');
+    });
+
     it('should remove model', () => {
         map.setModel(path, new TestModel('test'));
         const model = map.removeModel(path);

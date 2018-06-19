@@ -47,6 +47,7 @@ export class ModelMap<Model> {
             if (!pair.satisfied) {
                 const prior = <(model: Model) => void>pair.modelOrAction;
                 pair.modelOrAction = model;
+                pair.satisfied = true;
                 prior(model);
             }
             else {
