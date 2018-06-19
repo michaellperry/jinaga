@@ -57,9 +57,11 @@ export class Fork implements Feed {
     private async initiateQuery(start: FactReference, query: Query) {
         const queryResponse = await this.client.query(serializeQuery(start, query));
         const paths = queryResponse.results;
-        const references = distinct(flatten(paths, p => p));
-        const response = await this.client.load(serializeLoad(references));
-        await this.storage.save(response.facts);
+        if (paths.length > 0) {
+            const references = distinct(flatten(paths, p => p));
+            const response = await this.client.load(serializeLoad(references));
+            await this.storage.save(response.facts);
+        }
     }
 }
 
