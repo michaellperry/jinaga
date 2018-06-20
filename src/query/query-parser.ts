@@ -37,8 +37,8 @@ export class Preposition<T, U> {
         public steps: Step[]
     ) {}
 
-    then<V>(specification: (target : U) => Specification<V>): Preposition<T, U> {
-        return new Preposition<T, U>(this.steps.concat(parseTemplate(specification)));
+    then<V>(specification: (target : U) => Specification<V>): Preposition<U, V> {
+        return new Preposition<U, V>(this.steps.concat(parseTemplate(specification)));
     }
 
     static for<T, U>(specification: (target : T) => Specification<U>): Preposition<T, U> {
