@@ -5,4 +5,7 @@ export interface Watch<Fact, Model> {
         preposition: Preposition<Fact, U>,
         resultAdded: (parent: Model, result: U) => V,
         resultRemoved: (model: V) => void) : Watch<U, V>;
+    watch<U, V>(
+        preposition: Preposition<Fact, U>,
+        resultAdded: (parent: Model, result: U) => void) : Watch<U, V>;
 }

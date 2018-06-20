@@ -33,7 +33,14 @@ export class WatchImpl<Fact, Model> implements Watch<Fact, Model> {
     watch<U, V>(
         preposition: Preposition<Fact, U>,
         resultAdded: (parent: Model, result: U) => V,
-        resultRemoved: (model: V) => void
+        resultRemoved: (model: V) => void) : Watch<U, V>;
+    watch<U, V>(
+        preposition: Preposition<Fact, U>,
+        resultAdded: (parent: Model, result: U) => void) : Watch<U, V>;
+    watch<U, V>(
+        preposition: Preposition<Fact, U>,
+        resultAdded: (parent: Model, result: U) => (V | void),
+        resultRemoved?: (model: V) => void
     ) : Watch<U, V> {
         const query = new Query(preposition.steps);
         const fullQuery = this.query.concat(query);
@@ -41,7 +48,7 @@ export class WatchImpl<Fact, Model> implements Watch<Fact, Model> {
             const prefix = path.slice(0, this.query.getPathLength());
             this.modelMap.withModel(prefix, (parent: Model) => {
                 const model = resultAdded(parent, fact);
-                take(model)
+                take(resultAdded ? <V>model : null);
             });
         }
         const watch = new WatchImpl<U, V>(this.start, fullQuery, onResultAdded, resultRemoved, this.inner);
