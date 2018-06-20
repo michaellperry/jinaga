@@ -71,14 +71,26 @@ export class Jinaga {
         return hydrateFromTree(references, facts);
     }
 
-    watch<T, U, V>(start: T, preposition: Preposition<T, U>,
-        resultAdded: (fact: U) => V, resultRemoved: (model: V) => void
+    watch<T, U, V>(
+        start: T,
+        preposition: Preposition<T, U>,
+        resultAdded: (result: U) => V,
+        resultRemoved: (model: V) => void) : Watch<U, V>;
+    watch<T, U, V>(
+        start: T,
+        preposition: Preposition<T, U>,
+        resultAdded: (result: U) => void) : Watch<U, V>;
+    watch<T, U, V>(
+        start: T,
+        preposition: Preposition<T, U>,
+        resultAdded: (fact: U) => (V | void),
+        resultRemoved?: (model: V) => void
     ) : Watch<U, V> {
         const reference = dehydrateReference(start);
         const query = new Query(preposition.steps);
         const onResultAdded = (path: FactPath, fact: U, take: ((model: V) => void)) => {
             const model = resultAdded(fact);
-            take(model);
+            take(resultRemoved ? <V>model : null);
         };
         const watch = new WatchImpl<U, V>(reference, query, onResultAdded, resultRemoved, this.authentication);
         watch.begin();

@@ -61,15 +61,22 @@ function nameIsCurrent(n: any) {
   });
 }
 
+function setValue(observable: any) {
+    return (v: any) => {
+        observable(v);
+    }
+}
+
 function setChildValue(observableName: any) {
   return function (parent: any, v: any) {
       parent[observableName](v);
   }
 }
 
-export function watchSemester(viewModel: any, company: any) {
-  var coordinatorsWatch = j.watch(company, j.for(accessInCompany).then(userForAccess),
-      addTo(viewModel.coordinators, function (coordinator: any) { return new CoordinatorViewModel(coordinator); }),
-      removeFrom(viewModel.coordinators));
-  coordinatorsWatch.watch(j.for(namesForUser), setChildValue('nameFact'));
+export function watchSemester(viewModel: any, company: any, user: any, observable: any) {
+    const nameWatch = j.watch(user, j.for(namesForUser), setValue(observable));
+    var coordinatorsWatch = j.watch(company, j.for(accessInCompany).then(userForAccess),
+        addTo(viewModel.coordinators, function (coordinator: any) { return new CoordinatorViewModel(coordinator); }),
+        removeFrom(viewModel.coordinators));
+    coordinatorsWatch.watch(j.for(namesForUser), setChildValue('nameFact'));
 }

@@ -48,7 +48,7 @@ export class WatchImpl<Fact, Model> implements Watch<Fact, Model> {
             const prefix = path.slice(0, this.query.getPathLength());
             this.modelMap.withModel(prefix, (parent: Model) => {
                 const model = resultAdded(parent, fact);
-                take(resultAdded ? <V>model : null);
+                take(resultRemoved ? <V>model : null);
             });
         }
         const watch = new WatchImpl<U, V>(this.start, fullQuery, onResultAdded, resultRemoved, this.inner);
@@ -75,7 +75,8 @@ export class WatchImpl<Fact, Model> implements Watch<Fact, Model> {
         paths.forEach(path => {
             if (this.modelMap.hasModel(path)) {
                 const model = this.modelMap.removeModel(path);
-                this.resultRemoved(model);
+                if (this.resultRemoved)
+                    this.resultRemoved(model);
             }
         });
     }
