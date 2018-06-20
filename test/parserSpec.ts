@@ -246,4 +246,19 @@ describe('Query parser', () => {
         var query = parseQuery(j.for(conjoin));
         expect(query.toDescriptiveString()).to.equal('S.x F.type="A" N(S.y F.type="B")');
     });
+
+    it('should parse nested predecessors', () => {
+        function grandchildren(s: any) {
+            return j.match({
+                type: 'Child',
+                parent: {
+                    type: 'Parent',
+                    grandparent: s
+                }
+            });
+        }
+
+        const query = parseQuery(j.for(grandchildren));
+        expect(query.toDescriptiveString()).to.equal('S.grandparent F.type="Parent" S.parent F.type="Child"');
+    });
 });

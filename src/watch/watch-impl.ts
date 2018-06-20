@@ -31,7 +31,7 @@ export class WatchImpl<Fact, Model> implements Watch<Fact, Model> {
     }
 
     watch<U, V>(
-        preposition: Preposition<U, V>,
+        preposition: Preposition<Fact, U>,
         resultAdded: (parent: Model, result: U) => V,
         resultRemoved: (model: V) => void
     ) : Watch<U, V> {
