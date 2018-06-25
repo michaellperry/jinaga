@@ -35,18 +35,20 @@ export class PostgresStore implements Storage {
     async save(facts: FactRecord[]): Promise<FactRecord[]> {
         if (facts.length > 0) {
             const edgeRecords = flatten(facts, makeEdgeRecords);
-            const edgeValues = edgeRecords.map((e, i) => '($' + (i*5 + 1) + ', $' + (i*5 + 2) + ', $' + (i*5 + 3) + ', $' + (i*5 + 4) + ', $' + (i*5 + 5) + ')');
-            const edgeParameters = flatten(edgeRecords, (e) => [e.predecessor_hash, e.predecessor_type, e.successor_hash, e.successor_type, e.role]);
             const factValues = facts.map((f, i) => '($' + (i*4 + 1) + ', $' + (i*4 + 2) + ', $' + (i*4 + 3) + ', $' + (i*4 + 4) + ')');
             const factParameters = flatten(facts, (f) => [f.hash, f.type, JSON.stringify(f.fields), JSON.stringify(f.predecessors)]);
             await this.connectionFactory.withTransaction(async (connection) => {
-                await connection.query('INSERT INTO public.edge' +
-                    ' (predecessor_hash, predecessor_type, successor_hash, successor_type, role)' +
-                    ' (SELECT predecessor_hash, predecessor_type, successor_hash, successor_type, role' +
-                    '  FROM (VALUES ' + edgeValues.join(', ') + ') AS v(predecessor_hash, predecessor_type, successor_hash, successor_type, role)' +
-                    '  WHERE NOT EXISTS (SELECT 1 FROM public.edge' +
-                    '   WHERE edge.predecessor_hash = v.predecessor_hash AND edge.predecessor_type = v.predecessor_type AND edge.successor_hash = v.successor_hash AND edge.successor_type = v.successor_type AND edge.role = v.role))',
-                    edgeParameters);
+                if (edgeRecords.length > 0) {
+                    const edgeValues = edgeRecords.map((e, i) => '($' + (i*5 + 1) + ', $' + (i*5 + 2) + ', $' + (i*5 + 3) + ', $' + (i*5 + 4) + ', $' + (i*5 + 5) + ')');
+                    const edgeParameters = flatten(edgeRecords, (e) => [e.predecessor_hash, e.predecessor_type, e.successor_hash, e.successor_type, e.role]);
+                    await connection.query('INSERT INTO public.edge' +
+                        ' (predecessor_hash, predecessor_type, successor_hash, successor_type, role)' +
+                        ' (SELECT predecessor_hash, predecessor_type, successor_hash, successor_type, role' +
+                        '  FROM (VALUES ' + edgeValues.join(', ') + ') AS v(predecessor_hash, predecessor_type, successor_hash, successor_type, role)' +
+                        '  WHERE NOT EXISTS (SELECT 1 FROM public.edge' +
+                        '   WHERE edge.predecessor_hash = v.predecessor_hash AND edge.predecessor_type = v.predecessor_type AND edge.successor_hash = v.successor_hash AND edge.successor_type = v.successor_type AND edge.role = v.role))',
+                        edgeParameters);
+                }
                 await connection.query('INSERT INTO public.fact' +
                     ' (hash, type, fields, predecessors)' +
                     ' (SELECT hash, type, to_jsonb(fields), to_jsonb(predecessors)' +
