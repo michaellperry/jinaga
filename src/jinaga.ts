@@ -3,7 +3,7 @@ import { dehydrateFact, dehydrateReference, hydrate, hydrateFromTree } from './f
 import { MemoryStore } from './memory/memory-store';
 import { Query } from './query/query';
 import { Condition, Preposition, Specification } from './query/query-parser';
-import { FactPath } from './storage';
+import { FactPath, uniqueFactReferences } from './storage';
 import { Watch } from './watch/watch';
 import { WatchImpl } from './watch/watch-impl';
 
@@ -66,9 +66,10 @@ export class Jinaga {
             return [];
         }
         const references = results.map(r => r[r.length - 1]);
-        
-        const facts = await this.authentication.load(references);
-        return hydrateFromTree(references, facts);
+        const uniqueReferences = uniqueFactReferences(references);
+
+        const facts = await this.authentication.load(uniqueReferences);
+        return hydrateFromTree(uniqueReferences, facts);
     }
 
     watch<T, U, V>(

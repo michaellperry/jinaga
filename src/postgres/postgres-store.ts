@@ -77,10 +77,16 @@ export class PostgresStore implements Storage {
         const tuples = references.map((r, i) => '($' + (i*2 + 1) + ', $' + (i*2 + 2) + ')');
         const parameters = flatten(references, (r) => [r.type, r.hash]);
         const sql =
-            'SELECT DISTINCT fact.type, fact.hash, fields, predecessors' +
+            'WITH RECURSIVE a(ancestor_hash, ancestor_type, hash, type) AS (' +
+            ' SELECT v.hash AS ancestor_hash, v.type AS ancestor_type, v.hash, v.type' +
             ' FROM (VALUES ' + tuples.join(', ') + ') AS v (type, hash)' +
-            ' JOIN public.ancestor ON ancestor.type = v.type AND ancestor.hash = v.hash' +
-            ' JOIN public.fact ON ancestor_type = fact.type AND ancestor_hash = fact.hash';
+            ' UNION ALL' +
+            ' SELECT e.predecessor_hash AS ancestor_hash, e.predecessor_type AS ancestor_type, a.hash, a.type' +
+            ' FROM a' +
+            ' JOIN public.edge e ON e.successor_hash = a.ancestor_hash AND e.successor_type = a.ancestor_type)' +
+            ' SELECT fact.type, fact.hash, fact.fields, fact.predecessors' +
+            ' FROM (SELECT DISTINCT a.ancestor_hash, a.ancestor_type FROM a) AS d' +
+            ' JOIN public.fact ON d.ancestor_type = fact.type AND d.ancestor_hash = fact.hash;';
         const { rows } = await this.connectionFactory.with(async (connection) => {
             return await connection.query(sql, parameters);
         })

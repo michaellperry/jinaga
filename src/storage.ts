@@ -27,3 +27,9 @@ export interface Storage {
 export function factReferenceEquals(a: FactReference) {
     return (r: FactReference) => r.hash === a.hash && r.type === a.type;
 }
+
+export function uniqueFactReferences(references: FactReference[]): FactReference[] {
+    return references.filter((value, index, array) => {
+        return array.findIndex(factReferenceEquals(value)) === index;
+    });
+}

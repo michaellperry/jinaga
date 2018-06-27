@@ -2,7 +2,7 @@ import { Hydration } from '../fact/hydrate';
 import { Feed, Subscription } from '../feed/feed';
 import { Query } from '../query/query';
 import { Preposition } from '../query/query-parser';
-import { FactPath, FactReference } from '../storage';
+import { FactPath, FactReference, uniqueFactReferences } from '../storage';
 import { ModelMap } from './model-map';
 import { Watch } from './watch';
 
@@ -58,7 +58,8 @@ export class WatchImpl<Fact, Model> implements Watch<Fact, Model> {
 
     private async onAdded(paths: FactPath[]) {
         const references = paths.map(path => path[path.length - 1]);
-        const records = await this.inner.load(references);
+        const uniqueReferences = uniqueFactReferences(references);
+        const records = await this.inner.load(uniqueReferences);
         const hydration = new Hydration(records);
         paths.forEach(path => {
             if (!this.modelMap.hasModel(path)) {
