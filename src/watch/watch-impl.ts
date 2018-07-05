@@ -56,6 +56,10 @@ export class WatchImpl<Fact, Model> implements Watch<Fact, Model> {
         return watch;
     }
 
+    stop() {
+        this.subscription.dispose();
+    }
+
     private async onAdded(paths: FactPath[]) {
         const references = paths.map(path => path[path.length - 1]);
         const uniqueReferences = uniqueFactReferences(references);

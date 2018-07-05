@@ -8,4 +8,5 @@ export interface Watch<Fact, Model> {
     watch<U, V>(
         preposition: Preposition<Fact, U>,
         resultAdded: (parent: Model, result: U) => void) : Watch<U, V>;
+    stop(): void;
 }
