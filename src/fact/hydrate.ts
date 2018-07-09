@@ -88,7 +88,10 @@ export class Hydration {
     hydrate(reference: FactReference): HashMap {
         const entry = this.entries.find(r => r.record.hash === reference.hash && r.record.type === reference.type);
         if (!entry) {
-            throw new Error('Referenced fact not found in tree');
+            return {
+                __error: 'Referenced fact not found in tree',
+                __reference: reference
+            };
         }
 
         if (entry.fact) {
