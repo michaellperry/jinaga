@@ -6,6 +6,7 @@ var path = require('path');
 var webpackConfig = {
     mode: 'production',
     entry: './src/jinaga-browser.ts',
+    devtool: 'source-map',
     module: {
         rules: [{
             test: /\.ts$/,
