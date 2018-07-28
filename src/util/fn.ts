@@ -25,3 +25,13 @@ export async function mapAsync<T, U>(collection: T[], action: (element: T) => Pr
         return await Promise.all(collection.map(action));
     }
 }
+
+export function findIndex<T>(array: T[], predicate: ((element: T) => boolean)): number {
+    for (let index = 0; index < array.length; index++) {
+        if (predicate(array[index])) {
+            return index;
+        }
+    }
+
+    return -1;
+}

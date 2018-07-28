@@ -1,4 +1,5 @@
 import { FactPath } from '../storage';
+import { findIndex } from '../util/fn';
 
 function factPathMatches(path: FactPath): (pair: { factPath: FactPath }) => boolean {
     return pair => {
@@ -62,7 +63,7 @@ export class ModelMap<Model> {
     }
 
     removeModel(path: FactPath): Model {
-        const removedIndex = this.modelOrActionByFactPath.findIndex(factPathMatches(path));
+        const removedIndex = findIndex(this.modelOrActionByFactPath, factPathMatches(path));
         if (removedIndex >= 0) {
             const pair = this.modelOrActionByFactPath[removedIndex];
             this.modelOrActionByFactPath.splice(removedIndex, 1);

@@ -1,4 +1,5 @@
 import { Query } from './query/query';
+import { findIndex } from './util/fn';
 
 export type FactReference = {
     type: string;
@@ -30,6 +31,6 @@ export function factReferenceEquals(a: FactReference) {
 
 export function uniqueFactReferences(references: FactReference[]): FactReference[] {
     return references.filter((value, index, array) => {
-        return array.findIndex(factReferenceEquals(value)) === index;
+        return findIndex(array, factReferenceEquals(value)) === index;
     });
 }
