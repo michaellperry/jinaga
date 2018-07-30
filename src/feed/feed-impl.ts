@@ -13,11 +13,13 @@ type Listener = {
 
 class SubscriptionImpl implements Subscription {
     private listeners: Listener[];
+    private loading: Promise<void>;
 
     constructor(
         private observable: ObservableImpl,
-        added: Handler,
-        removed: Handler
+        private added: Handler,
+        private removed: Handler,
+        private results: Promise<FactPath[]>
     ) {
         this.listeners = observable.inverses.map(inverse => {
             return {
@@ -27,6 +29,7 @@ class SubscriptionImpl implements Subscription {
                 removed: removed
             }
         });
+        this.loading = this.beginLoading();
     }
 
     add() {
@@ -35,10 +38,22 @@ class SubscriptionImpl implements Subscription {
         });
     }
 
+    load() {
+        return this.loading;
+    }
+
     dispose() {
         this.listeners.forEach(listener => {
             this.observable.removeListener(listener);
         });
+    }
+
+    private async beginLoading() {
+        const paths = await this.results;
+
+        if (paths.length > 0) {
+            this.added(paths);
+        }
     }
 }
 
@@ -52,20 +67,9 @@ class ObservableImpl implements Observable {
         public removeListener: (subscription: Listener) => void) {}
 
     subscribe(added: Handler, removed: Handler): Subscription {
-        const subscription = new SubscriptionImpl(this, added, removed);
+        const subscription = new SubscriptionImpl(this, added, removed, this.results);
         subscription.add();
-        this.results
-            .then(paths => {
-                if (paths.length > 0) {
-                    added(paths);
-                }
-            })
-            .catch(reason => this.onError(reason));
         return subscription;
-    }
-
-    private onError(reason: any) {
-        throw new Error(reason);
     }
 }
 

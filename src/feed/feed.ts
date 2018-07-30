@@ -2,6 +2,7 @@ import { Query } from '../query/query';
 import { FactPath, FactReference, Storage } from '../storage';
 
 export interface Subscription {
+    load(): Promise<void>;
     dispose(): void;
 }
 

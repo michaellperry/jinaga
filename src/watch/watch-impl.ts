@@ -5,10 +5,16 @@ import { Preposition } from '../query/query-parser';
 import { FactPath, FactReference, uniqueFactReferences } from '../storage';
 import { ModelMap } from './model-map';
 import { Watch } from './watch';
+import { mapAsync } from '../util/fn';
 
-export class WatchImpl<Fact, Model> implements Watch<Fact, Model> {
+interface WatchChild {
+    load(): Promise<void>;
+}
+
+export class WatchImpl<Fact, Model> implements Watch<Fact, Model>, WatchChild {
     private subscription: Subscription;
     private modelMap = new ModelMap<Model>();
+    private children: WatchChild[] = [];
 
     constructor(
         private start: FactReference,
@@ -53,7 +59,13 @@ export class WatchImpl<Fact, Model> implements Watch<Fact, Model> {
         }
         const watch = new WatchImpl<U, V>(this.start, fullQuery, onResultAdded, resultRemoved, this.inner);
         watch.begin();
+        this.children.push(watch);
         return watch;
+    }
+
+    async load() {
+        await this.subscription.load();
+        await mapAsync(this.children, child => child.load());
     }
 
     stop() {
