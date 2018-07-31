@@ -1,9 +1,36 @@
-import { Feed, Observable } from '../feed/feed';
+import { Feed, Handler, Observable, Subscription } from '../feed/feed';
 import { WebClient } from '../http/web-client';
 import { Query } from '../query/query';
 import { FactRecord, FactReference, factReferenceEquals } from '../storage';
 import { flatten } from '../util/fn';
 import { serializeLoad, serializeQuery, serializeSave } from './serialize';
+
+class ForkSubscription implements Subscription {
+    constructor(
+        private inner: Subscription,
+        private loaded: Promise<void>
+    ) {}
+
+    async load(): Promise<void> {
+        await this.inner.load();
+        await this.loaded;
+    }
+
+    dispose(): void {
+        return this.inner.dispose();
+    }
+}
+
+class ForkObservable implements Observable {
+    constructor(
+        private inner: Observable,
+        private loaded: Promise<void>
+    ) {}
+
+    subscribe(added: Handler, removed: Handler): Subscription {
+        return new ForkSubscription(this.inner.subscribe(added, removed), this.loaded);
+    }
+}
 
 export class Fork implements Feed {
     constructor(
@@ -45,13 +72,8 @@ export class Fork implements Feed {
 
     from(fact: FactReference, query: Query): Observable {
         const observable = this.storage.from(fact, query);
-        this.initiateQuery(fact, query)
-            .catch(reason => {
-                // TODO: What do I do with this error?
-                throw new Error(reason);
-                // observable.notifyError(reason);
-            });
-        return observable;
+        const loaded = this.initiateQuery(fact, query);
+        return new ForkObservable(observable, loaded);
     }
 
     private async initiateQuery(start: FactReference, query: Query) {
