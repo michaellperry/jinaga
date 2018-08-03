@@ -64,9 +64,8 @@ export class Fork implements Feed {
             return known;
         }
         else {
-            const response = await this.client.load(serializeLoad(remaining));
-            await this.storage.save(response.facts);
-            return response.facts.concat(known);
+            const records = await this.loadRecords(remaining);
+            return records.concat(known);
         }
     }
 
@@ -81,9 +80,19 @@ export class Fork implements Feed {
         const paths = queryResponse.results;
         if (paths.length > 0) {
             const references = distinct(flatten(paths, p => p));
-            const response = await this.client.load(serializeLoad(references));
-            await this.storage.save(response.facts);
+            await this.loadRecords(references);
         }
+    }
+
+    private async loadRecords(references: FactReference[]) {
+        let records: FactRecord[] = [];
+        for (let start = 0; start < references.length; start += 300) {
+            const chunk = references.slice(start, start + 300);
+            const response = await this.client.load(serializeLoad(chunk));
+            await this.storage.save(response.facts);
+            records = records.concat(response.facts);
+        }
+        return records;
     }
 }
 
