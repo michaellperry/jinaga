@@ -4,6 +4,7 @@ import { Query } from '../query/query';
 import { FactRecord, FactReference, factReferenceEquals } from '../storage';
 import { flatten } from '../util/fn';
 import { serializeLoad, serializeQuery, serializeSave } from './serialize';
+import { TopologicalSorter } from '../fact/sorter';
 
 class ForkSubscription implements Subscription {
     constructor(
@@ -85,12 +86,14 @@ export class Fork implements Feed {
     }
 
     private async loadRecords(references: FactReference[]) {
+        const sorter = new TopologicalSorter();
         let records: FactRecord[] = [];
         for (let start = 0; start < references.length; start += 300) {
             const chunk = references.slice(start, start + 300);
             const response = await this.client.load(serializeLoad(chunk));
-            await this.storage.save(response.facts);
-            records = records.concat(response.facts);
+            const facts = sorter.sort(response.facts);
+            await this.storage.save(facts);
+            records = records.concat(facts);
         }
         return records;
     }
