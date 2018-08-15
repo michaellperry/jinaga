@@ -1,4 +1,4 @@
-import { Authentication } from './authentication';
+import { Authentication } from './authentication/authentication';
 import { dehydrateFact, dehydrateReference, hydrate, hydrateFromTree } from './fact/hydrate';
 import { MemoryStore } from './memory/memory-store';
 import { Query } from './query/query';

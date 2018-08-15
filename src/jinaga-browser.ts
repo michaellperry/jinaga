@@ -1,4 +1,5 @@
-import { Authentication } from './authentication';
+import { Authentication } from './authentication/authentication';
+import { AuthenticationImpl } from './authentication/authentication-impl';
 import { Feed } from './feed/feed';
 import { FeedImpl } from './feed/feed-impl';
 import { Fork } from './fork/fork';
@@ -25,7 +26,7 @@ function createAuthentication(config: JinagaBrowserConfig, feed: Feed): Authenti
     if (config.httpEndpoint) {
         const webClient = new WebClient(config.httpEndpoint);
         const fork = new Fork(feed, webClient);
-        const authentication = new Authentication(fork, webClient);
+        const authentication = new AuthenticationImpl(fork, webClient);
         return authentication;
     }
     else {
