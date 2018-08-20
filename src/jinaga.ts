@@ -98,27 +98,47 @@ export class Jinaga {
         return watch;
     }
 
-    for<T, U>(specification: (target : T) => Specification<U>) : Preposition<T, U> {
+    static for<T, U>(specification: (target : T) => Specification<U>) : Preposition<T, U> {
         return Preposition.for(specification);
     }
 
-    match<T>(template: T): Specification<T> {
+    for<T, U>(specification: (target : T) => Specification<U>) : Preposition<T, U> {
+        return Jinaga.for(specification);
+    }
+
+    static match<T>(template: T): Specification<T> {
         return new Specification<T>(template,[]);
     }
 
-    exists<T>(template: T): Condition<T> {
+    match<T>(template: T): Specification<T> {
+        return Jinaga.match(template);
+    }
+
+    static exists<T>(template: T): Condition<T> {
         return new Condition<T>(template, [], false);
     }
 
-    notExists<T>(template: T): Condition<T> {
+    exists<T>(template: T): Condition<T> {
+        return Jinaga.exists(template);
+    }
+
+    static notExists<T>(template: T): Condition<T> {
         return new Condition<T>(template, [], true);
     }
 
-    not<T, U>(condition: (target: T) => Condition<U>) : (target: T) => Condition<U> {
+    notExists<T>(template: T): Condition<T> {
+        return Jinaga.notExists(template);
+    }
+
+    static not<T, U>(condition: (target: T) => Condition<U>) : (target: T) => Condition<U> {
         return target => {
             const original = condition(target);
             return new Condition<U>(original.template, original.conditions, !original.negative);
         };
+    }
+
+    not<T, U>(condition: (target: T) => Condition<U>) : (target: T) => Condition<U> {
+        return Jinaga.not(condition);
     }
 
     debug(): string {
