@@ -46,6 +46,10 @@ export class Jinaga {
     
     async fact<T>(prototype: T) : Promise<T> {
         try {
+            if (!('type' in prototype)) {
+                throw new Error('Specify the type of the fact.');
+            }
+
             const fact = JSON.parse(JSON.stringify(prototype));
             const factRecords = dehydrateFact(fact);
             const saved = await this.authentication.save(factRecords);
