@@ -3,6 +3,7 @@ import { Direction, ExistentialCondition, Join, PropertyCondition, Quantifier, S
 import { FactPath, FactRecord, FactReference, factReferenceEquals, Storage } from '../storage';
 import { flatten } from '../util/fn';
 import { formatDot } from './debug';
+import { Inspector } from './inspector';
 
 export function getPredecessors(fact: FactRecord, role: string) {
     const predecessors = fact.predecessors[role];
@@ -118,7 +119,11 @@ export class MemoryStore implements Storage {
         return this.factRecords.find(factReferenceEquals(reference));
     }
 
-    debug(): string[] {
+    graphviz(): string[] {
         return formatDot(this.factRecords);
+    }
+
+    inspect() {
+        return new Inspector(this.factRecords).inspect();
     }
 }

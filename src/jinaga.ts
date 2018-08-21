@@ -145,7 +145,11 @@ export class Jinaga {
         return Jinaga.not(condition);
     }
 
-    debug(): string {
-        return this.store.debug().join('\n');
+    graphviz(): string {
+        return this.store.graphviz().join('\n');
+    }
+
+    inspect() {
+        return this.store.inspect();
     }
 }
