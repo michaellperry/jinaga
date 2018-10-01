@@ -5,23 +5,15 @@ import { Query } from '../query/query';
 import { FactRecord, FactReference } from '../storage';
 import { Authentication } from './authentication';
 
-export class AuthenticationSession implements Authentication {
+export class AuthenticationDevice implements Authentication {
     constructor(
         private inner: Feed,
         private keystore: Keystore,
-        private userIdentity: UserIdentity,
-        private displayName: string,
         private localDeviceIdentity: UserIdentity
     ) {}
 
     async login(): Promise<LoginResponse> {
-        const userFact = await this.keystore.getUserFact(this.userIdentity);
-        return {
-            userFact,
-            profile: {
-                displayName: this.displayName
-            }
-        };
+        throw new Error('No logged in user.');
     }
 
     async local(): Promise<FactRecord> {

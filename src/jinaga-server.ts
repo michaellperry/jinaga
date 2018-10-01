@@ -1,5 +1,6 @@
-import { Request, Handler } from 'express';
+import { Handler, Request } from 'express';
 
+import { AuthenticationDevice } from './authentication/authentication-device';
 import { AuthenticationSession } from './authentication/authentication-session';
 import { Authorization } from './authorization';
 import { Cache } from './cache';
@@ -24,6 +25,11 @@ export type JinagaServerInstance = {
     withSession: (req: Request, callback: ((j: Jinaga) => Promise<void>)) => Promise<void>
 };
 
+const localDeviceIdentity = {
+    provider: 'jinaga',
+    id: 'local'
+};
+
 export class JinagaServer {
     static create(config: JinagaServerConfig): JinagaServerInstance {
         const store = createStore(config);
@@ -31,10 +37,7 @@ export class JinagaServer {
         const authorization = createAuthorization(config, feed);
         const router = new HttpRouter(authorization);
         const keystore = new PostgresKeystore(config.pgKeystore);
-        const authentication = new AuthenticationSession(feed, keystore, {
-            provider: 'jinaga',
-            id: 'local'
-        }, '');
+        const authentication = new AuthenticationDevice(feed, keystore, localDeviceIdentity);
         const memory = new MemoryStore();
         const j: Jinaga = new Jinaga(authentication, memory);
         return {
@@ -75,7 +78,7 @@ async function withSession(feed: Feed, keystore: Keystore, req: Request, callbac
         provider: user.provider,
         id: user.id
     }
-    const authentication = new AuthenticationSession(feed, keystore, userIdentity, user.profile.displayName);
+    const authentication = new AuthenticationSession(feed, keystore, userIdentity, user.profile.displayName, localDeviceIdentity);
     const j = new Jinaga(authentication, new MemoryStore());
     await callback(j);
 }

@@ -18,6 +18,10 @@ export class AuthenticationImpl implements Authentication {
         return this.client.login();
     }
 
+    local(): Promise<FactRecord> {
+        throw new Error('Local device has no persistence.');
+    }
+
     async save(facts: FactRecord[]): Promise<FactRecord[]> {
         const saved = await this.inner.save(facts);
         return saved;

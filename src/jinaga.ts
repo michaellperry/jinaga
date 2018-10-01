@@ -43,6 +43,11 @@ export class Jinaga {
             profile
         };
     }
+
+    async local<D>(): Promise<D> {
+        const deviceFact = await this.authentication.local();
+        return hydrate<D>(deviceFact);
+    }
     
     async fact<T>(prototype: T) : Promise<T> {
         try {
