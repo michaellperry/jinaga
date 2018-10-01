@@ -7,4 +7,5 @@ export interface UserIdentity {
 
 export interface Keystore {
     getUserFact(userIdentity: UserIdentity): Promise<FactRecord>;
+    getDeviceFact(userIdentity: UserIdentity): Promise<FactRecord>;
 }

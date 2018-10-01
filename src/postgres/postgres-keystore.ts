@@ -15,9 +15,16 @@ export class PostgresKeystore implements Keystore {
     }
 
     getUserFact(userIdentity: UserIdentity): Promise<FactRecord> {
+        return this.getIdentityFact('Jinaga.User', userIdentity);
+    }
+
+    getDeviceFact(deviceIdentity: UserIdentity): Promise<FactRecord> {
+        return this.getIdentityFact('Jinaga.Device', deviceIdentity);
+    }
+
+    private getIdentityFact(type: string, identity: UserIdentity): Promise<FactRecord> {
         return this.connectionFactory.withTransaction(async connection => {
-            const publicKey = await this.getPublicKey(connection, userIdentity);
-            const type = 'Jinaga.User';
+            const publicKey = await this.getPublicKey(connection, identity);
             const predecessors: PredecessorCollection = {};
             const fields = {
                 publicKey: publicKey

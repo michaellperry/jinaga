@@ -17,7 +17,7 @@ export class AuthenticationDevice implements Authentication {
     }
 
     async local(): Promise<FactRecord> {
-        return await this.keystore.getUserFact(this.localDeviceIdentity);
+        return await this.keystore.getDeviceFact(this.localDeviceIdentity);
     }
 
     from(fact: FactReference, query: Query): Observable {
