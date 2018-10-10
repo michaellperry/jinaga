@@ -1,7 +1,7 @@
-import { FactReference } from '../src/storage';
+import { expect } from 'chai';
+import { describe, it } from 'mocha';
+
 import { ModelMap } from '../src/watch/model-map';
-import { describe, it } from "mocha";
-import { expect } from "chai";
 
 class TestModel {
     constructor(
