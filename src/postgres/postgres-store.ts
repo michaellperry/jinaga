@@ -46,7 +46,8 @@ export class PostgresStore implements Storage {
                         ' (SELECT predecessor_hash, predecessor_type, successor_hash, successor_type, role' +
                         '  FROM (VALUES ' + edgeValues.join(', ') + ') AS v(predecessor_hash, predecessor_type, successor_hash, successor_type, role)' +
                         '  WHERE NOT EXISTS (SELECT 1 FROM public.edge' +
-                        '   WHERE edge.predecessor_hash = v.predecessor_hash AND edge.predecessor_type = v.predecessor_type AND edge.successor_hash = v.successor_hash AND edge.successor_type = v.successor_type AND edge.role = v.role))',
+                        '   WHERE edge.predecessor_hash = v.predecessor_hash AND edge.predecessor_type = v.predecessor_type AND edge.successor_hash = v.successor_hash AND edge.successor_type = v.successor_type AND edge.role = v.role))' +
+                        ' ON CONFLICT DO NOTHING',
                         edgeParameters);
                 }
                 await connection.query('INSERT INTO public.fact' +
@@ -54,7 +55,8 @@ export class PostgresStore implements Storage {
                     ' (SELECT hash, type, to_jsonb(fields), to_jsonb(predecessors)' +
                     '  FROM (VALUES ' + factValues.join(', ') + ') AS v(hash, type, fields, predecessors)' +
                     '  WHERE NOT EXISTS (SELECT 1 FROM public.fact' +
-                    '   WHERE fact.hash = v.hash AND fact.type = v.type))',
+                    '   WHERE fact.hash = v.hash AND fact.type = v.type))' +
+                    ' ON CONFLICT DO NOTHING',
                     factParameters);
             });
         }
