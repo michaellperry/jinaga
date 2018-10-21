@@ -3,9 +3,9 @@ import 'source-map-support/register';
 import { expect } from 'chai';
 import { describe, it } from 'mocha';
 
-import { dehydrateReference } from '../src/fact/hydrate';
-import { sqlFromSteps } from '../src/postgres/sql';
-import { fromDescriptiveString } from '../src/query/descriptive-string';
+import { dehydrateReference } from '../../src/fact/hydrate';
+import { sqlFromSteps } from '../../src/postgres/sql';
+import { fromDescriptiveString } from '../../src/query/descriptive-string';
 
 describe('Postgres', () => {
 

@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import { describe, it } from 'mocha';
 
-import { ModelMap } from '../src/watch/model-map';
+import { ModelMap } from '../../src/watch/model-map';
 
 class TestModel {
     constructor(

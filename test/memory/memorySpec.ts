@@ -1,9 +1,9 @@
 import { expect } from 'chai';
 import { describe, it } from 'mocha';
 
-import { dehydrateReference, dehydrateFact, hydrate } from '../src/fact/hydrate';
-import { MemoryStore } from '../src/memory/memory-store';
-import { fromDescriptiveString } from '../src/query/descriptive-string';
+import { dehydrateReference, dehydrateFact, hydrate } from '../../src/fact/hydrate';
+import { MemoryStore } from '../../src/memory/memory-store';
+import { fromDescriptiveString } from '../../src/query/descriptive-string';
 
 describe('Memory', function() {
     let memory: MemoryStore = null;

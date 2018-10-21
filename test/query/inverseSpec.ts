@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 
-import { fromDescriptiveString } from '../src/query/descriptive-string';
-import { invertQuery } from '../src/query/inverter';
+import { fromDescriptiveString } from '../../src/query/descriptive-string';
+import { invertQuery } from '../../src/query/inverter';
 
 describe("QueryInverter", function () {
     it("the identity query does not affect any others", function () {

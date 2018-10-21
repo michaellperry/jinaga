@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 
-import { computeHash } from '../src/fact/hash';
+import { computeHash } from '../../src/fact/hash';
 
 describe ('Hash', function () {
     it ('should be independent of field order', function () {

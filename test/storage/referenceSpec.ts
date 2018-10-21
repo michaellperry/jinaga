@@ -3,7 +3,7 @@ import 'source-map-support/register';
 import { expect } from 'chai';
 import { describe, it } from 'mocha';
 
-import { uniqueFactReferences } from '../src/storage';
+import { uniqueFactReferences } from '../../src/storage';
 
 describe('Fact reference', () => {
 

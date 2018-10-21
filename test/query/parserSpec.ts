@@ -3,9 +3,9 @@ import 'source-map-support/register';
 import { expect } from 'chai';
 import { describe, it } from 'mocha';
 
-import { Jinaga } from '../src/jinaga';
-import { Query } from '../src/query/query';
-import { Condition, Preposition, Specification } from '../src/query/query-parser';
+import { Jinaga } from '../../src/jinaga';
+import { Query } from '../../src/query/query';
+import { Condition, Preposition, Specification } from '../../src/query/query-parser';
 
 describe('Query parser', () => {
 
