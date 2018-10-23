@@ -25,7 +25,7 @@ function createXHR(method: string, path: string, resolve: (result: any) => void,
         }
     };
     xhr.onerror = (event) => {
-        reject(event.error.message);
+        reject('Network request failed.');
     };
     xhr.setRequestHeader('Accept', 'application/json');
     return xhr;
