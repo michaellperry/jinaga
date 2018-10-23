@@ -1,6 +1,14 @@
 import { Query } from '../query/query';
 import { Direction, ExistentialCondition, Join, PropertyCondition, Quantifier, Step } from '../query/steps';
-import { FactPath, FactRecord, FactReference, factReferenceEquals, Storage } from '../storage';
+import {
+    FactPath,
+    FactRecord,
+    FactReference,
+    factReferenceEquals,
+    FactSignature,
+    factSignatureEquals,
+    Storage,
+} from '../storage';
 import { flatten } from '../util/fn';
 import { formatDot } from './debug';
 import { Inspector } from './inspector';
@@ -42,6 +50,7 @@ function loadAll(references: FactReference[], source: FactRecord[], target: Fact
 
 export class MemoryStore implements Storage {
     private factRecords: FactRecord[] = [];
+    private factSignatures: FactSignature[] = [];
 
     save(facts: FactRecord[]): Promise<FactRecord[]> {
         const added: FactRecord[] = [];
@@ -49,6 +58,17 @@ export class MemoryStore implements Storage {
             if (!this.factRecords.some(factReferenceEquals(fact))) {
                 this.factRecords.push(fact);
                 added.push(fact);
+            }
+        });
+        return Promise.resolve(added);
+    }
+
+    sign(signatures: FactSignature[]): Promise<FactSignature[]> {
+        const added: FactSignature[] = [];
+        signatures.forEach(signature => {
+            if (!this.factSignatures.find(factSignatureEquals(signature))) {
+                this.factSignatures.push(signature);
+                added.push(signature);
             }
         });
         return Promise.resolve(added);
