@@ -1,12 +1,7 @@
 import { expect } from "chai";
-import { Authentication } from "../../src/authentication/authentication";
-import { Feed, Observable } from "../../src/feed/feed";
-import { FeedImpl } from "../../src/feed/feed-impl";
-import { LoginResponse } from "../../src/http/messages";
 import { Jinaga } from "../../src/jinaga";
 import { MemoryStore } from "../../src/memory/memory-store";
-import { Query } from "../../src/query/query";
-import { FactRecord, FactReference, Storage } from "../../src/storage";
+import { MockAuthentication } from "./mock-authentication";
 
 class Room {
     type: string;
@@ -43,36 +38,6 @@ class MessageViewModel {
     ) { }
 }
 
-class MockAuthentication implements Authentication {
-    private inner: Feed;
-
-    constructor(
-        storage: Storage
-    ) {
-        this.inner = new FeedImpl(storage);
-    }
-
-    login(): Promise<LoginResponse> {
-        throw new Error("Method not implemented: login.");
-    }
-    local(): Promise<FactRecord> {
-        throw new Error("Method not implemented: local.");
-    }
-    from(fact: FactReference, query: Query): Observable {
-        return this.inner.from(fact, query);
-    }
-    save(facts: FactRecord[]): Promise<FactRecord[]> {
-        return this.inner.save(facts);
-    }
-    query(start: FactReference, query: Query): Promise<FactReference[][]> {
-        throw new Error("Method not implemented: query.");
-    }
-    load(references: FactReference[]): Promise<FactRecord[]> {
-        return this.inner.load(references);
-    }
-
-
-}
 
 describe("Nested watch", function () {
     var j: Jinaga;
@@ -149,8 +114,8 @@ describe("Nested watch", function () {
             setting.vm.from.splice(index, 1);
     }
 
-    it("can be expressed", function () {
-        const watch = startWatch();
+    it("can be expressed", async function () {
+        const watch = await startWatch();
         watch.stop();
     });
 
@@ -158,14 +123,14 @@ describe("Nested watch", function () {
         const person = await addPerson();
         await setName(person, 'George');
         await addMessage(person);
-        const watch = startWatch();
+        const watch = await startWatch();
         expectName('George');
 
         watch.stop();
     });
 
     it("should find new facts", async function () {
-        const watch = startWatch();
+        const watch = await startWatch();
         const person = await addPerson();
         await setName(person, 'George');
         await addMessage(person);
@@ -175,7 +140,7 @@ describe("Nested watch", function () {
     });
 
     it("should find new facts in other order", async function () {
-        const watch = startWatch();
+        const watch = await startWatch();
         const person = await addPerson();
         await addMessage(person);
         await setName(person, 'George');
@@ -185,7 +150,7 @@ describe("Nested watch", function () {
     });
 
     it("should not find facts after stopped", async function () {
-        const watch = startWatch();
+        const watch = await startWatch();
         const person = await addPerson();
         await addMessage(person);
         watch.stop();
@@ -195,7 +160,9 @@ describe("Nested watch", function () {
 
     it("should stop child", async function () {
         const messages = j.watch(room, j.for(messagesInRoom), makeMessageViewModel);
+        await messages.load();
         const names = messages.watch(j.for(namesOfSender), setMessageFrom, removeMessageFrom);
+        await names.load();
         names.stop();
 
         const person = await addPerson();
@@ -210,7 +177,7 @@ describe("Nested watch", function () {
         const person = await addPerson();
         await setName(person, 'George');
         const message = await addMessage(person);
-        const watch = startWatch();
+        const watch = await startWatch();
         await removeMessage(message);
         expectNoMessages();
 
@@ -221,7 +188,7 @@ describe("Nested watch", function () {
         const person = await addPerson();
         const name = await setName(person, 'George');
         await addMessage(person);
-        const watch = startWatch();
+        const watch = await startWatch();
         await setName(person, 'John', [name]);
         expectName('John');
 
@@ -260,9 +227,10 @@ describe("Nested watch", function () {
         });
     }
 
-    function startWatch() {
+    async function startWatch() {
         const messages = j.watch(room, j.for(messagesInRoom), makeMessageViewModel, removeMessageViewModel);
         messages.watch(j.for(namesOfSender), setMessageFrom, removeMessageFrom);
+        await messages.load();
         return messages;
     }
 

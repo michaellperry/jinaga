@@ -9,6 +9,7 @@ import { mapAsync } from '../util/fn';
 
 interface WatchChild {
     load(): Promise<void>;
+    stop(): void;
 }
 
 export class WatchImpl<Fact, Model> implements Watch<Fact, Model>, WatchChild {
@@ -70,6 +71,7 @@ export class WatchImpl<Fact, Model> implements Watch<Fact, Model>, WatchChild {
 
     stop() {
         this.subscription.dispose();
+        this.children.forEach(child => child.stop());
     }
 
     private async onAdded(paths: FactPath[]) {
