@@ -1,13 +1,13 @@
 import { Query } from './query/query';
-import { FactRecord, FactReference, Storage } from './storage';
+import { FactEnvelope, FactReference, Storage } from './storage';
 
 export class Cache implements Storage {
     constructor(private inner: Storage) {
 
     }
 
-    save(facts: FactRecord[]) {
-        return this.inner.save(facts);
+    save(envelopes: FactEnvelope[]) {
+        return this.inner.save(envelopes);
     }
 
     query(start: FactReference, query: Query) {

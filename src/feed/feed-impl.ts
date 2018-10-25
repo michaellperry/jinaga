@@ -1,6 +1,6 @@
 import { Inverse, invertQuery } from '../query/inverter';
 import { Query } from '../query/query';
-import { FactPath, FactRecord, FactReference, Storage } from '../storage';
+import { FactEnvelope, FactPath, FactRecord, FactReference, Storage } from '../storage';
 import { mapAsync } from '../util/fn';
 import { Feed, Handler, Observable, Subscription } from './feed';
 
@@ -84,10 +84,10 @@ export class FeedImpl implements Feed {
         this.listenersByTypeAndQuery = {};
     }
 
-    async save(facts: FactRecord[]): Promise<FactRecord[]> {
-        const saved = await this.inner.save(facts);
-        await mapAsync(saved, async fact => {
-            await this.notifyFactSaved(fact);
+    async save(envelopes: FactEnvelope[]): Promise<FactEnvelope[]> {
+        const saved = await this.inner.save(envelopes);
+        await mapAsync(saved, async envelope => {
+            await this.notifyFactSaved(envelope.fact);
         });
         return saved;
     }

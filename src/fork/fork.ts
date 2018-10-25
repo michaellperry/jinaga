@@ -1,10 +1,10 @@
+import { TopologicalSorter } from '../fact/sorter';
 import { Feed, Handler, Observable, Subscription } from '../feed/feed';
 import { WebClient } from '../http/web-client';
 import { Query } from '../query/query';
-import { FactRecord, FactReference, factReferenceEquals } from '../storage';
+import { FactEnvelope, FactRecord, FactReference, factReferenceEquals } from '../storage';
 import { flatten } from '../util/fn';
 import { serializeLoad, serializeQuery, serializeSave } from './serialize';
-import { TopologicalSorter } from '../fact/sorter';
 
 class ForkSubscription implements Subscription {
     constructor(
@@ -41,9 +41,9 @@ export class Fork implements Feed {
         
     }
 
-    async save(facts: FactRecord[]): Promise<FactRecord[]> {
-        const response = await this.client.save(serializeSave(facts));
-        const saved = await this.storage.save(facts);
+    async save(envelopes: FactEnvelope[]): Promise<FactEnvelope[]> {
+        const response = await this.client.save(serializeSave(envelopes));
+        const saved = await this.storage.save(envelopes);
         return saved;
     }
 
@@ -96,7 +96,13 @@ export class Fork implements Feed {
             const chunk = references.slice(start, start + 300);
             const response = await this.client.load(serializeLoad(chunk));
             const facts = sorter.sort(response.facts, (p, f) => f);
-            await this.storage.save(facts);
+            const envelopes = facts.map(fact => {
+                return <FactEnvelope>{
+                    fact: fact,
+                    signatures: []
+                };
+            });
+            await this.storage.save(envelopes);
             records = records.concat(facts);
         }
         return records;

@@ -1,10 +1,10 @@
 import { LoadMessage, QueryMessage, SaveMessage } from '../http/messages';
 import { Query } from '../query/query';
-import { FactRecord, FactReference } from '../storage';
+import { FactEnvelope, FactReference } from '../storage';
 
-export function serializeSave(facts: FactRecord[]) : SaveMessage {
+export function serializeSave(envelopes: FactEnvelope[]) : SaveMessage {
     return {
-        facts: facts
+        facts: envelopes.map(e => e.fact)
     };
 }
 

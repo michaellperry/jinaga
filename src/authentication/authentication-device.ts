@@ -2,7 +2,7 @@ import { Feed, Observable } from '../feed/feed';
 import { LoginResponse } from '../http/messages';
 import { Keystore, UserIdentity } from '../keystore';
 import { Query } from '../query/query';
-import { FactRecord, FactReference } from '../storage';
+import { FactEnvelope, FactRecord, FactReference } from '../storage';
 import { Authentication } from './authentication';
 
 export class AuthenticationDevice implements Authentication {
@@ -24,8 +24,8 @@ export class AuthenticationDevice implements Authentication {
         return this.inner.from(fact, query);
     }
 
-    save(facts: FactRecord[]): Promise<FactRecord[]> {
-        return this.inner.save(facts);
+    save(envelopes: FactEnvelope[]): Promise<FactEnvelope[]> {
+        return this.inner.save(envelopes);
     }
 
     query(start: FactReference, query: Query): Promise<FactReference[][]> {

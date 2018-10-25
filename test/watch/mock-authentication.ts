@@ -3,7 +3,7 @@ import { Feed, Observable } from "../../src/feed/feed";
 import { FeedImpl } from "../../src/feed/feed-impl";
 import { LoginResponse } from "../../src/http/messages";
 import { Query } from "../../src/query/query";
-import { FactRecord, FactReference, Storage } from "../../src/storage";
+import { FactEnvelope, FactRecord, FactReference, Storage } from "../../src/storage";
 
 export class MockAuthentication implements Authentication {
   private inner: Feed;
@@ -23,8 +23,8 @@ export class MockAuthentication implements Authentication {
   from(fact: FactReference, query: Query): Observable {
       return this.inner.from(fact, query);
   }
-  save(facts: FactRecord[]): Promise<FactRecord[]> {
-      return this.inner.save(facts);
+  save(envelopes: FactEnvelope[]): Promise<FactEnvelope[]> {
+      return this.inner.save(envelopes);
   }
   query(start: FactReference, query: Query): Promise<FactReference[][]> {
       return this.inner.query(start, query);

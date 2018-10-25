@@ -5,8 +5,8 @@ import { SyncStatus, SyncStatusNotifier } from './http/web-client';
 import { MemoryStore } from './memory/memory-store';
 import { Query } from './query/query';
 import { Condition, Preposition, Specification } from './query/query-parser';
-import { FactPath, uniqueFactReferences } from './storage';
 import { ServiceRunner } from './util/serviceRunner';
+import { FactEnvelope, FactPath, uniqueFactReferences } from './storage';
 import { Watch } from './watch/watch';
 import { WatchImpl } from './watch/watch-impl';
 import { Trace } from './util/trace';
@@ -98,7 +98,13 @@ export class Jinaga {
             const fact = JSON.parse(JSON.stringify(prototype));
             this.validateFact(fact);
             const factRecords = dehydrateFact(fact);
-            const saved = await this.authentication.save(factRecords);
+            const envelopes = factRecords.map(fact => {
+                return <FactEnvelope>{
+                    fact: fact,
+                    signatures: []
+                };
+            });
+            const saved = await this.authentication.save(envelopes);
             return fact;
         } catch (error) {
             this.error(error);

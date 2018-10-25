@@ -26,8 +26,13 @@ export type FactSignature = {
     signature: string;
 }
 
+export type FactEnvelope = {
+    fact: FactRecord;
+    signatures: FactSignature[];
+}
+
 export interface Storage {
-    save(facts: FactRecord[]): Promise<FactRecord[]>;
+    save(envelopes: FactEnvelope[]): Promise<FactEnvelope[]>;
     query(start: FactReference, query: Query): Promise<FactPath[]>;
     exists(fact: FactReference): Promise<boolean>;
     load(references: FactReference[]): Promise<FactRecord[]>;

@@ -1,7 +1,7 @@
 import { Feed, Observable } from './feed/feed';
 import { WebClient } from './http/web-client';
 import { Query } from './query/query';
-import { FactRecord, FactReference } from './storage';
+import { FactEnvelope, FactRecord, FactReference } from './storage';
 
 export class Principal {
     
@@ -17,8 +17,8 @@ export class Authentication implements Feed {
         return this.client.login();
     }
 
-    async save(facts: FactRecord[]): Promise<FactRecord[]> {
-        const saved = await this.inner.save(facts);
+    async save(envelopes: FactEnvelope[]): Promise<FactEnvelope[]> {
+        const saved = await this.inner.save(envelopes);
         return saved;
     }
 

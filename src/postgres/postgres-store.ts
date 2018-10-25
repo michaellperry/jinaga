@@ -1,5 +1,5 @@
 import { Query } from '../query/query';
-import { FactPath, FactRecord, FactReference, Storage } from '../storage';
+import { FactEnvelope, FactPath, FactRecord, FactReference, Storage } from '../storage';
 import { flatten } from '../util/fn';
 import { ConnectionFactory, Row } from './connection';
 import { makeEdgeRecords } from './edge-record';
@@ -32,8 +32,9 @@ export class PostgresStore implements Storage {
         this.connectionFactory = new ConnectionFactory(postgresUri);
     }
     
-    async save(facts: FactRecord[]): Promise<FactRecord[]> {
-        if (facts.length > 0) {
+    async save(envelopes: FactEnvelope[]): Promise<FactEnvelope[]> {
+        if (envelopes.length > 0) {
+            const facts = envelopes.map(e => e.fact);
             if (facts.some(f => !f.hash || !f.type)) {
                 throw new Error('Attempted to save a fact with no hash or type.');
             }
@@ -63,7 +64,7 @@ export class PostgresStore implements Storage {
                     factParameters);
             });
         }
-        return facts;
+        return envelopes;
     }
 
     async query(start: FactReference, query: Query): Promise<FactPath[]> {
