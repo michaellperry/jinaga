@@ -1,6 +1,5 @@
 import { Query } from './query';
-import { Step, Join, PropertyCondition, ExistentialCondition } from './steps';
-import { Direction, Quantifier } from './enums';
+import { Direction, ExistentialCondition, Join, PropertyCondition, Quantifier, Step } from './steps';
 
 function done(descriptive: string, index: number): boolean {
     return index === descriptive.length || lookahead(descriptive, index) === ")";

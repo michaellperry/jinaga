@@ -1,14 +1,8 @@
 node_modules/
-bower_components/
 .idea/
-node/**/*.js
-node/**/*.js.map
-node/**/*.d.ts
-web/**/*.js
-typings/
-src/**/*.js
-src/**/*.js.map
+dist/
+src/*.js
+src/*.js.map
 *.tgz
 .vscode
 npm-debug.log
-.tscache/

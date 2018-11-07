@@ -1,8 +1,14 @@
-import { Quantifier, Direction } from './enums';
+export enum Direction {
+    Predecessor,
+    Successor
+}
+
+export enum Quantifier {
+    Exists,
+    NotExists
+}
 
 export class Step {
-    construtor() {}
-
     public toDeclarativeString(): string {
         throw Error("Abstract");
     }

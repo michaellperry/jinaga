@@ -1,101 +1,160 @@
-import { JinagaCoordinator } from './coordinator/jinaga-coordinator';
-import { SubscriptionProxy } from './coordinator/subscription-proxy';
-import { WatchProxy } from './coordinator/watch-proxy';
-import { FactChannel } from './distributor/factChannel';
-import { Instrumentation } from './instrumentation';
-import { MemoryProvider } from './memory/provider';
-import { NetworkProvider } from './network/provider';
-import { ConditionalSpecification, InverseSpecification, Proxy, Clause, TemplateList, getTemplates } from './query/parser';
-import { StorageProvider } from './storage/provider';
+import { Authentication } from './authentication/authentication';
+import { dehydrateFact, dehydrateReference, hydrate, hydrateFromTree } from './fact/hydrate';
+import { MemoryStore } from './memory/memory-store';
+import { Query } from './query/query';
+import { Condition, Preposition, Specification } from './query/query-parser';
+import { FactPath, uniqueFactReferences } from './storage';
+import { Watch } from './watch/watch';
+import { WatchImpl } from './watch/watch-impl';
 
-class Jinaga {
-    private coordinator: JinagaCoordinator;
+export interface Profile {
+    displayName: string;
+}
 
-    constructor() {
-        this.coordinator = new JinagaCoordinator();
-        this.coordinator.save(new MemoryProvider());
+export class Jinaga {
+    private authentication: Authentication;
+    private store: MemoryStore;
+
+    private errorHandlers: ((message: string) => void)[] = [];
+    private loadingHandlers: ((loading: boolean) => void)[] = [];
+    private progressHandlers: ((count: number) => void)[] = [];
+    
+    constructor(authentication: Authentication, store: MemoryStore) {
+        this.authentication = authentication;
+        this.store = store;
     }
 
     onError(handler: (message: string) => void) {
-        this.coordinator.addErrorHandler(handler);
+        this.errorHandlers.push(handler);
     }
+
     onLoading(handler: (loading: boolean) => void) {
-        this.coordinator.addLoadingHandler(handler);
+        this.loadingHandlers.push(handler);
     }
+
     onProgress(handler: (queueCount: number) => void) {
-        this.coordinator.addProgressHandler(handler);
+        this.progressHandlers.push(handler);
     }
-    instrument(instrumentation: Instrumentation) {
-        this.coordinator.instrument(instrumentation);
+
+    async login<U>(): Promise<{ userFact: U, profile: Profile }> {
+        const { userFact, profile } = await this.authentication.login();
+        return {
+            userFact: hydrate<U>(userFact),
+            profile
+        };
     }
-    save(storage: StorageProvider) {
-        this.coordinator.save(storage);
+
+    async local<D>(): Promise<D> {
+        const deviceFact = await this.authentication.local();
+        return hydrate<D>(deviceFact);
     }
-    sync(network: NetworkProvider) {
-        this.coordinator.sync(network);
+    
+    async fact<T>(prototype: T) : Promise<T> {
+        try {
+            if (!('type' in prototype)) {
+                throw new Error('Specify the type of the fact.');
+            }
+
+            const fact = JSON.parse(JSON.stringify(prototype));
+            const factRecords = dehydrateFact(fact);
+            const saved = await this.authentication.save(factRecords);
+            return fact;
+        } catch (error) {
+            this.errorHandlers.forEach((errorHandler) => {
+                errorHandler(error);
+            });
+            throw error;
+        }
     }
-    fact(message: Object): Object {
-        var fact = JSON.parse(JSON.stringify(message));
-        this.coordinator.fact(fact);
-        return fact;
+
+    async query<T, U>(start: T, preposition: Preposition<T, U>) : Promise<U[]> {
+        const reference = dehydrateReference(start);
+        const query = new Query(preposition.steps);
+        const results = await this.authentication.query(reference, query);
+        if (results.length === 0) {
+            return [];
+        }
+        const references = results.map(r => r[r.length - 1]);
+        const uniqueReferences = uniqueFactReferences(references);
+
+        const facts = await this.authentication.load(uniqueReferences);
+        return hydrateFromTree(uniqueReferences, facts);
     }
-    watch<T, U>(
+
+    watch<T, U, V>(
         start: T,
-        templates: TemplateList<T, U>,
-        resultAdded: (result: Object) => void,
-        resultRemoved: (result: Object) => void = null) : WatchProxy {
-        var watch = this.coordinator.watch(
-            JSON.parse(JSON.stringify(start)),
-            null,
-            getTemplates(templates),
-            (mapping: any, result: Object) => resultAdded(result),
-            resultRemoved);
-        return new WatchProxy(this.coordinator, watch);
-    }
-    subscribe<T, U>(start: Object, templates: TemplateList<T, U>) {
-        var watch = this.coordinator.subscribe(JSON.parse(JSON.stringify(start)), getTemplates(templates));
-        return new SubscriptionProxy(this.coordinator, watch);
-    }
-    query<T, U>(
-        start: Object,
-        templates: TemplateList<T, U>,
-        done: (result: Array<Object>) => void
-    ) {
-        this.coordinator.query(JSON.parse(JSON.stringify(start)), getTemplates(templates), done);
-    }
-    login(callback: (userFact: Object) => void) {
-        this.coordinator.login(callback);
-    }
-    preload(cachedFacts: Array<any>) {
-        var source = {};
-        var channel = new FactChannel(1,
-            message => {},
-            fact => { this.coordinator.onReceived(fact, null, source); });
-        cachedFacts.forEach(cachedFact => {
-            channel.messageReceived(cachedFact);
-        });
+        preposition: Preposition<T, U>,
+        resultAdded: (result: U) => V,
+        resultRemoved: (model: V) => void) : Watch<U, V>;
+    watch<T, U, V>(
+        start: T,
+        preposition: Preposition<T, U>,
+        resultAdded: (result: U) => void) : Watch<U, V>;
+    watch<T, U, V>(
+        start: T,
+        preposition: Preposition<T, U>,
+        resultAdded: (fact: U) => (V | void),
+        resultRemoved?: (model: V) => void
+    ) : Watch<U, V> {
+        const reference = dehydrateReference(start);
+        const query = new Query(preposition.steps);
+        const onResultAdded = (path: FactPath, fact: U, take: ((model: V) => void)) => {
+            const model = resultAdded(fact);
+            take(resultRemoved ? <V>model : null);
+        };
+        const watch = new WatchImpl<U, V>(reference, query, onResultAdded, resultRemoved, this.authentication);
+        watch.begin();
+        return watch;
     }
 
-    where<T, U>(specification: Object, templates: TemplateList<T, U>): T {
-        return new ConditionalSpecification(specification, getTemplates(templates), true) as any;
+    static for<T, U>(specification: (target : T) => Specification<U>) : Preposition<T, U> {
+        return Preposition.for(specification);
     }
 
-    exists<T, U>(template: ((target: T) => U)) : Clause<T, U> {
-        return new Clause<T, U>([template as any]);
+    for<T, U>(specification: (target : T) => Specification<U>) : Preposition<T, U> {
+        return Jinaga.for(specification);
     }
 
-    not<T, U>(condition: (target: T) => U): (target: T) => U;
-    not<T>(specification: T): T;
-    not<T, U>(arg: ((target: T) => U) | T): any {
-        if (typeof(arg) === "function") {
-            var condition: (target: Proxy) => Object = arg as any;
-            return (t: Proxy) => new InverseSpecification(condition(t));
-        }
-        else {
-            var specification = <Object>arg;
-            return new InverseSpecification(specification);
-        }
+    static match<T>(template: T): Specification<T> {
+        return new Specification<T>(template,[]);
+    }
+
+    match<T>(template: T): Specification<T> {
+        return Jinaga.match(template);
+    }
+
+    static exists<T>(template: T): Condition<T> {
+        return new Condition<T>(template, [], false);
+    }
+
+    exists<T>(template: T): Condition<T> {
+        return Jinaga.exists(template);
+    }
+
+    static notExists<T>(template: T): Condition<T> {
+        return new Condition<T>(template, [], true);
+    }
+
+    notExists<T>(template: T): Condition<T> {
+        return Jinaga.notExists(template);
+    }
+
+    static not<T, U>(condition: (target: T) => Condition<U>) : (target: T) => Condition<U> {
+        return target => {
+            const original = condition(target);
+            return new Condition<U>(original.template, original.conditions, !original.negative);
+        };
+    }
+
+    not<T, U>(condition: (target: T) => Condition<U>) : (target: T) => Condition<U> {
+        return Jinaga.not(condition);
+    }
+
+    graphviz(): string {
+        return this.store.graphviz().join('\n');
+    }
+
+    inspect() {
+        return this.store.inspect();
     }
 }
-
-export = Jinaga;
