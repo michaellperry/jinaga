@@ -13,10 +13,12 @@ import { MemoryStore } from './memory/memory-store';
 import { PostgresKeystore } from './postgres/postgres-keystore';
 import { PostgresStore } from './postgres/postgres-store';
 import { Storage } from './storage';
+import { AuthorizationRules } from './authorization/authorizationRules';
 
 export type JinagaServerConfig = {
     pgStore?: string,
-    pgKeystore?: string
+    pgKeystore?: string,
+    builder?: ((a: AuthorizationRules) => AuthorizationRules)
 };
 
 export type JinagaServerInstance = {
@@ -64,7 +66,8 @@ function createStore(config: JinagaServerConfig): Storage {
 function createAuthorization(config: JinagaServerConfig, feed: Feed): Authorization {
     if (config.pgKeystore) {
         const keystore = new PostgresKeystore(config.pgKeystore);
-        const authorization = new Authorization(feed, keystore);
+        const authorizationRules = config.builder ? config.builder(new AuthorizationRules()) : null;
+        const authorization = new Authorization(feed, keystore, authorizationRules);
         return authorization;
     }
     else {
