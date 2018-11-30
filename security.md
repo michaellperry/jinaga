@@ -29,12 +29,11 @@ Multiple queries can be registered for a single type, which would authorize any 
 const { handler, j, withSession } = JinagaServer.create({
     pgStore: postgresConnectionString,
     pgKeystore: postgresConnectionString,
-    authorization: JinagaServer.authorization(a => a
+    authorization: a => a
         .type('Project', j.for(ownerOfProject))
         .type('Contibutor', j.for(projectOfContributor).then(ownerOfProject))
         .type('Entry', j.for(projectOfEntry).then(ownerOfProject))
         .type('Entry', j.for(projectOfEntry).then(contributorsOfProject))
-    )
 });
 ```
 

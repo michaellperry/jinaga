@@ -18,7 +18,7 @@ import { AuthorizationRules } from './authorization/authorizationRules';
 export type JinagaServerConfig = {
     pgStore?: string,
     pgKeystore?: string,
-    builder?: ((a: AuthorizationRules) => AuthorizationRules)
+    authorization?: (a: AuthorizationRules) => AuthorizationRules
 };
 
 export type JinagaServerInstance = {
@@ -66,7 +66,7 @@ function createStore(config: JinagaServerConfig): Storage {
 function createAuthorization(config: JinagaServerConfig, feed: Feed): Authorization {
     if (config.pgKeystore) {
         const keystore = new PostgresKeystore(config.pgKeystore);
-        const authorizationRules = config.builder ? config.builder(new AuthorizationRules()) : null;
+        const authorizationRules = config.authorization ? config.authorization(new AuthorizationRules()) : null;
         const authorization = new Authorization(feed, keystore, authorizationRules);
         return authorization;
     }
