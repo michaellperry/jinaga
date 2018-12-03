@@ -5,6 +5,7 @@ import { dehydrateFact } from '../../src/fact/hydrate';
 import { Jinaga as j } from '../../src/jinaga';
 import { MemoryStore } from '../../src/memory/memory-store';
 import { FactRecord, FactReference } from '../../src/storage';
+import { Trace } from '../../src/util/trace';
 
 
 function givenUserFact(identity = 'authorized-user') {
@@ -178,6 +179,8 @@ function typeQuery(m: Message) {
 }
 
 describe('Authorization rules', () => {
+    Trace.off();
+    
     it('should reject all facts by default', async () => {
         const authorizationRules = givenAuthorizationRules();
         const fact = givenMessage();

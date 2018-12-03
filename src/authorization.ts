@@ -38,6 +38,7 @@ export class Authorization {
         const userFact = await this.keystore.getUserFact(userIdentity);
         const authorizedFacts = await filterAsync(facts, async f =>
             await this.authorizationRules.isAuthorized(userFact, f, this.feed));
+
         return authorizedFacts;
     }
 }

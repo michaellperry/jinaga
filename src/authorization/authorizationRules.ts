@@ -3,6 +3,7 @@ import { Preposition } from '../query/query-parser';
 import { Direction, Join } from '../query/steps';
 import { FactRecord, FactReference, factReferenceEquals, Storage } from '../storage';
 import { flattenAsync, mapAsync } from '../util/fn';
+import { Trace } from '../util/trace';
 
 function getPredecessors(collection: FactReference[] | FactReference) {
     if (!collection) {
@@ -85,7 +86,12 @@ export class AuthorizationRules {
     }
 
     async isAuthorized(userFact: FactReference, fact: FactRecord, store: Storage) {
-        const rules = this.rulesByType[fact.type] || [];
+        const rules = this.rulesByType[fact.type];
+        if (!rules) {
+            Trace.warn(`No authorization rules defined for type ${fact.type}.`);
+            return false;
+        }
+
         const results = await mapAsync(rules, async r => await r.isAuthorized(userFact, fact, store));
         return results.some(b => b);
     }
