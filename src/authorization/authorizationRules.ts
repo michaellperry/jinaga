@@ -25,6 +25,12 @@ class AuthorizationRuleAny implements AuthorizationRule {
     }
 }
 
+class AuthorizationRuleNone implements AuthorizationRule {
+    isAuthorized(userFact: FactReference, fact: FactRecord, store: Storage): Promise<boolean> {
+        return Promise.resolve(false);
+    }
+}
+
 class AuthorizationRuleBy implements AuthorizationRule {
     constructor(
         private head: Join,
@@ -55,6 +61,10 @@ class AuthorizationRuleBy implements AuthorizationRule {
 
 export class AuthorizationRules {
     private rulesByType: {[type: string]: AuthorizationRule[]} = {};
+
+    no(type: string) {
+        return this.with(type, new AuthorizationRuleNone());
+    }
 
     any(type: string) {
         return this.with(type, new AuthorizationRuleAny());
