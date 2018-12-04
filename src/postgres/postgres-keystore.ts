@@ -23,6 +23,9 @@ export class PostgresKeystore implements Keystore {
     }
 
     private getIdentityFact(type: string, identity: UserIdentity): Promise<FactRecord> {
+        if (!identity) {
+            return null;
+        }
         return this.connectionFactory.withTransaction(async connection => {
             const publicKey = await this.getPublicKey(connection, identity);
             const predecessors: PredecessorCollection = {};
