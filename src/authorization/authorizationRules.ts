@@ -62,12 +62,16 @@ class AuthorizationRuleBy implements AuthorizationRule {
 export class AuthorizationRules {
     private rulesByType: {[type: string]: AuthorizationRule[]} = {};
 
+    with(rules: (r: AuthorizationRules) => AuthorizationRules) {
+        return rules(this);
+    }
+
     no(type: string) {
-        return this.with(type, new AuthorizationRuleNone());
+        return this.withRule(type, new AuthorizationRuleNone());
     }
 
     any(type: string) {
-        return this.with(type, new AuthorizationRuleAny());
+        return this.withRule(type, new AuthorizationRuleAny());
     }
 
     type<T, U>(type: string, preposition: Preposition<T, U>) {
@@ -83,10 +87,10 @@ export class AuthorizationRules {
         }
 
         const tail = new Query(preposition.steps.slice(1));
-        return this.with(type, new AuthorizationRuleBy(head, tail));
+        return this.withRule(type, new AuthorizationRuleBy(head, tail));
     }
 
-    private with(type: string, rule: AuthorizationRule) {
+    private withRule(type: string, rule: AuthorizationRule) {
         const oldRules = this.rulesByType[type] || [];
         const newRules = [...oldRules, rule];
         const newRulesByType = { ...this.rulesByType, [type]: newRules };
