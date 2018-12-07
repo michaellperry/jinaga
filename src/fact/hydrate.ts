@@ -46,7 +46,10 @@ class Dehydration {
         let predecessors: PredecessorCollection = {};
         for (let field in fact) {
             const value = fact[field];
-            if (field === 'type' && typeof(value) === 'string') {
+            if (value === null || value === undefined) {
+                // Skip
+            }
+            else if (field === 'type' && typeof(value) === 'string') {
                 type = value;
             }
             else if (typeof(value) === 'object') {

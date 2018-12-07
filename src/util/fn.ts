@@ -26,6 +26,20 @@ export async function mapAsync<T, U>(collection: T[], action: (element: T) => Pr
     }
 }
 
+export async function filterAsync<T>(collection: T[], predicate: (element: T) => Promise<boolean>) {
+    if (collection.length === 0) {
+        return [];
+    }
+    else {
+        const filters = await Promise.all(collection.map(async element => ({
+            include: await predicate(element),
+            element
+        })));
+
+        return filters.filter(f => f.include).map(f => f.element);
+    }
+}
+
 export function findIndex<T>(array: T[], predicate: ((element: T) => boolean)): number {
     for (let index = 0; index < array.length; index++) {
         if (predicate(array[index])) {
