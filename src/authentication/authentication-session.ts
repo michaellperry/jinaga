@@ -40,6 +40,10 @@ export class AuthenticationSession implements Authentication {
         return this.inner.query(start, query);
     }
 
+    exists(fact: FactReference): Promise<boolean> {
+        throw new Error("Exists method not implemented on AuthenticationSession.");
+    }
+
     load(references: FactReference[]): Promise<FactRecord[]> {
         return this.inner.load(references);
     }

@@ -71,6 +71,10 @@ export class PostgresStore implements Storage {
         return rows.map(row => loadFactPath(sqlQuery.pathLength, row));
     }
 
+    exists(fact: FactReference): Promise<boolean> {
+        throw new Error("Exists method not implemented on PostgresStore.");
+    }
+
     async load(references: FactReference[]): Promise<FactRecord[]> {
         if (references.length === 0) {
             return [];

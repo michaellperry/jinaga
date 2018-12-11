@@ -14,6 +14,10 @@ export class Cache implements Storage {
         return this.inner.query(start, query);
     }
 
+    exists(fact: FactReference): Promise<boolean> {
+        throw new Error("Exists method not implemented on Cache.");
+    }
+
     load(references: FactReference[]) {
         return this.inner.load(references);
     }

@@ -29,6 +29,9 @@ export class MockAuthentication implements Authentication {
   query(start: FactReference, query: Query): Promise<FactReference[][]> {
       return this.inner.query(start, query);
   }
+  exists(fact: FactReference): Promise<boolean> {
+    throw new Error("Exists method not implemented on MockAuthentication.");
+  }
   load(references: FactReference[]): Promise<FactRecord[]> {
       return this.inner.load(references);
   }

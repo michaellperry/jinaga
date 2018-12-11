@@ -55,6 +55,10 @@ export class MemoryStore implements Storage {
         return Promise.resolve(results);
     }
 
+    exists(fact: FactReference): Promise<boolean> {
+        throw new Error("Exists method not implemented on MemoryStore.");
+    }
+
     load(references: FactReference[]): Promise<FactRecord[]> {
         let target: FactRecord[] = [];
         loadAll(references, this.factRecords, target);

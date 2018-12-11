@@ -58,6 +58,10 @@ export class Fork implements Feed {
         }
     }
 
+    exists(fact: FactReference): Promise<boolean> {
+        throw new Error("Exists method not implemented on Fork.");
+    }
+
     async load(references: FactReference[]): Promise<FactRecord[]> {
         const known = await this.storage.load(references);
         const remaining = references.filter(reference => !known.some(factReferenceEquals(reference)));

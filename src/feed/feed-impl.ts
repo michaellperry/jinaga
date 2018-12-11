@@ -96,6 +96,10 @@ export class FeedImpl implements Feed {
         return this.inner.query(start, query);
     }
 
+    exists(fact: FactReference): Promise<boolean> {
+        throw new Error("Exists method not implemented on FeedImpl.");
+    }
+
     load(references: FactReference[]) {
         return this.inner.load(references);
     }
