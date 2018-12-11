@@ -9,14 +9,14 @@ should();
 
 describe('Topological sorter', () => {
     it('should accept empty array', () => {
-        const sorter = new TopologicalSorter();
-        const sorted = sorter.sort([]);
+        const sorter = givenTopologicalSorter();
+        const sorted = whenSort(sorter, []);
         sorted.should.be.empty;
     });
 
     it('should accept single fact', () => {
-        const sorter = new TopologicalSorter();
-        const sorted = sorter.sort(
+        const sorter = givenTopologicalSorter();
+        const sorted = whenSort(sorter, 
             dehydrateFact({
                 type: 'Singleton'
             })
@@ -26,8 +26,8 @@ describe('Topological sorter', () => {
     });
 
     it ('should accept facts of same hash', () => {
-        const sorter = new TopologicalSorter();
-        const sorted = sorter.sort(
+        const sorter = givenTopologicalSorter();
+        const sorted = whenSort(sorter, 
             dehydrateFact({
                 type: 'First'
             }).concat(dehydrateFact({
@@ -40,8 +40,8 @@ describe('Topological sorter', () => {
     });
 
     it('should attribute predecessor of same hash', () => {
-        const sorter = new TopologicalSorter();
-        const sorted = sorter.sort(
+        const sorter = givenTopologicalSorter();
+        const sorted = whenSort(sorter, 
             dehydrateFact({
                 type: 'First'
             }).concat(dehydrateFact({
@@ -73,8 +73,8 @@ describe('Topological sorter', () => {
             facts[2],
             facts[1]
         ];
-        const sorter = new TopologicalSorter();
-        const sorted = sorter.sort(unsorted);
+        const sorter = givenTopologicalSorter();
+        const sorted = whenSort(sorter, unsorted);
         sorted.length.should.equal(3);
         sorted[0].type.should.equal('First');
         sorted[1].type.should.equal('Second');
@@ -94,8 +94,8 @@ describe('Topological sorter', () => {
             facts[1],
             facts[0]
         ];
-        const sorter = new TopologicalSorter();
-        const sorted = sorter.sort(unsorted);
+        const sorter = givenTopologicalSorter();
+        const sorted = whenSort(sorter, unsorted);
         sorted.length.should.equal(2);
         sorted[0].type.should.equal('Parent');
         sorted[0].hash.should.equal(facts[0].hash);
@@ -115,8 +115,8 @@ describe('Topological sorter', () => {
             facts[1],
             facts[0]
         ];
-        const sorter = new TopologicalSorter();
-        const sorted = sorter.sort(unsorted);
+        const sorter = givenTopologicalSorter();
+        const sorted = whenSort(sorter, unsorted);
         sorted.length.should.equal(3);
         sorted[2].type.should.equal('Child');
     })
@@ -303,10 +303,18 @@ describe('Topological sorter', () => {
             }
         ];
 
-        const sorter = new TopologicalSorter();
-        const sorted = sorter.sort(facts);
+        const sorter = givenTopologicalSorter();
+        const sorted = whenSort(sorter, facts);
         sorter.finished().should.be.true;
         const last = sorted[sorted.length-1];
         (<any>last.fields).value.should.equal("one\ntwo\nthree\nfour\nfive\n\nsix");
     })
 });
+
+function givenTopologicalSorter() {
+    return new TopologicalSorter<FactRecord>();
+}
+
+function whenSort(sorter: TopologicalSorter<FactRecord>, facts: FactRecord[]) {
+    return sorter.sort(facts, (predecessors, fact) => fact);
+}

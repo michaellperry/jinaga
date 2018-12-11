@@ -1,22 +1,29 @@
 import { FactRecord, FactReference } from '../storage';
 
-export class TopologicalSorter {
+export class TopologicalSorter<T> {
     private factsVisited: { [key: string]: boolean } = {};
     private factsWaiting: { [key: string]: FactRecord[] } = {};
+    private factValue: { [key: string]: T } = {};
 
-    sort(facts: FactRecord[]): FactRecord[] {
-        let factsReceived: FactRecord[] = [];
+    sort(facts: FactRecord[], map: (predecessors: T[], fact: FactRecord) => T): T[] {
+        let factsReceived: T[] = [];
         let factQueue = facts.slice(0);
 
         while (factQueue.length > 0) {
             const fact = factQueue.shift();
-            const waitingPredecessors = this.allPredecessors(fact).filter(key => {
+            const predecessorKeys = this.allPredecessors(fact);
+            const waitingPredecessors = predecessorKeys.filter(key => {
                 return !this.factsVisited[key];
             });
             if (waitingPredecessors.length === 0) {
                 const key = this.factKey(fact);
                 this.factsVisited[key] = true;
-                factsReceived.push(fact);
+                const predecessorValues = predecessorKeys.map(k => {
+                    return this.factValue[k];
+                });
+                const factValue = map(predecessorValues, fact);
+                this.factValue[key] = factValue;
+                factsReceived.push(factValue);
                 const retry = this.factsWaiting[key];
                 if (retry) {
                     retry.forEach(r => {

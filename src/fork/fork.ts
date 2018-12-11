@@ -86,12 +86,12 @@ export class Fork implements Feed {
     }
 
     private async loadRecords(references: FactReference[]) {
-        const sorter = new TopologicalSorter();
+        const sorter = new TopologicalSorter<FactRecord>();
         let records: FactRecord[] = [];
         for (let start = 0; start < references.length; start += 300) {
             const chunk = references.slice(start, start + 300);
             const response = await this.client.load(serializeLoad(chunk));
-            const facts = sorter.sort(response.facts);
+            const facts = sorter.sort(response.facts, (p, f) => f);
             await this.storage.save(facts);
             records = records.concat(facts);
         }

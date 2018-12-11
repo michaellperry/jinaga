@@ -119,6 +119,27 @@ export class HttpRouter {
     }
 
     private async save(user: RequestUser, saveMessage: SaveMessage) : Promise<SaveResponse> {
+        // Sort facts topologically.
+        // For each fact:
+        //   If at least one predecessor is forbidden:
+        //     This fact is forbidden.    (Pf)               => Forbidden
+        //   Else if at least one predecessor is new:
+        //     If this fact is authorized:
+        //       This fact is new.        (!Pf Pn Fa)        => New
+        //     Else:
+        //       This fact is forbidden.  (!Pf Pn !Fa)       => Forbidden
+        //   Else if this fact is not present:
+        //     If this fact is authorized:
+        //       This fact is new.        (!Pf !Pn !Fp Fa)   => New
+        //     Else:
+        //       This fact is forbidden.  (!Pf !Pn !Fp !Fa)  => Forbidden
+        //   Else if fact is authorized:
+        //     This fact is signed.       (!Pf !Pn Fp Fa)    => Signed
+        //   Else:
+        //     This fact is unchanged.    (!Pf !Pn Fp !Fa)   => 0
+        //
+        // If any are forbidden, then request is forbidden.
+        // Save all signed and new facts.
         const userIdentity = serializeUserIdentity(user);
         await this.authorization.save(userIdentity, saveMessage.facts);
         return {};
