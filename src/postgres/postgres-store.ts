@@ -71,8 +71,13 @@ export class PostgresStore implements Storage {
         return rows.map(row => loadFactPath(sqlQuery.pathLength, row));
     }
 
-    exists(fact: FactReference): Promise<boolean> {
-        throw new Error("Exists method not implemented on PostgresStore.");
+    async exists(fact: FactReference): Promise<boolean> {
+        const sql = 'SELECT COUNT(1) AS count FROM public.fact WHERE type=$1 AND hash=$2';
+        const parameters = [ fact.type, fact.hash ];
+        const { rows } = await this.connectionFactory.with(async (connection) => {
+            return await connection.query(sql, parameters);
+        });
+        return rows[0].count > 0;
     }
 
     async load(references: FactReference[]): Promise<FactRecord[]> {

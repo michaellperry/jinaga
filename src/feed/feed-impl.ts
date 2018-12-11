@@ -97,7 +97,7 @@ export class FeedImpl implements Feed {
     }
 
     exists(fact: FactReference): Promise<boolean> {
-        throw new Error("Exists method not implemented on FeedImpl.");
+        return this.inner.exists(fact);
     }
 
     load(references: FactReference[]) {

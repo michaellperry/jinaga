@@ -1,15 +1,21 @@
 interface Tracer {
     warn(message: string): void;
+    error(error: any): any;
 }
 
 class NoOpTracer implements Tracer {
     warn(message: string): void {
+    }
+    error(error: any) {
     }
 }
 
 class ConsoleTracer implements Tracer {
     warn(message: string): void {
         console.warn(message);
+    }
+    error(error: any) {
+        console.error(error);
     }
 }
 
@@ -22,5 +28,8 @@ export class Trace {
     
     static warn(message: string) {
         this.tracer.warn(message);
+    }
+    static error(error: any): void {
+        this.tracer.error(error);
     }
 }

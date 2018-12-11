@@ -1,9 +1,20 @@
 import { AuthorizationRules } from './authorization/authorizationRules';
+import { TopologicalSorter } from './fact/sorter';
 import { Feed } from './feed/feed';
 import { Keystore, UserIdentity } from './keystore';
 import { Query } from './query/query';
 import { FactRecord, FactReference } from './storage';
-import { filterAsync, mapAsync } from './util/fn';
+import { distinct, mapAsync } from './util/fn';
+
+export class Forbidden extends Error {
+    __proto__: Error;
+    constructor(message?: string) {
+        const trueProto = new.target.prototype;
+        super(message);
+
+        this.__proto__ = trueProto;
+    }
+}
 
 export class Authorization {
     constructor(
@@ -26,73 +37,50 @@ export class Authorization {
     }
 
     async save(userIdentity: UserIdentity, facts: FactRecord[]) {
-        const authorizedFacts = await this.authorize(userIdentity, facts);
-        return await this.feed.save(authorizedFacts);
-    }
-
-    private async authorize(userIdentity: UserIdentity, facts: FactRecord[]): Promise<FactRecord[]> {
         if (!this.authorizationRules) {
-            return facts;
+            return await this.feed.save(facts);
         }
 
         const userFact = await this.keystore.getUserFact(userIdentity);
-        const authorizedFacts = await filterAsync(facts, async f =>
-            await this.authorizationRules.isAuthorized(userFact, f, this.feed));
+        const sorter = new TopologicalSorter<Promise<AuthorizationResult>>();
+        const results = await mapAsync(
+            sorter.sort(facts, (p, f) => this.visit(p, f, userFact, facts)),
+            x => x);
 
-        return authorizedFacts;
+        const rejected = results.filter(r => r.verdict === "Forbidden");
+        if (rejected.length > 0) {
+            const distinctTypes = rejected
+                .map(r => r.fact.type)
+                .filter(distinct)
+                .join(", ");
+            const count = rejected.length === 1 ? "1 fact" : `${rejected.length} facts`;
+            const message = `Rejected ${count} of type ${distinctTypes}.`;
+            throw new Forbidden(message);
+        }
+
+        const authorizedFacts = results
+            .filter(r => r.verdict === "New" || r.verdict === "Signed")
+            .map(r => r.fact);
+        return await this.feed.save(authorizedFacts);
     }
 
-    private async visit(predecessors: Promise<AuthorizationResult>[], fact: FactRecord, userFact: FactRecord) {
+    private async visit(predecessors: Promise<AuthorizationResult>[], fact: FactRecord, userFact: FactRecord, factRecords: FactRecord[]): Promise<AuthorizationResult> {
         const predecessorResults = await mapAsync(predecessors, p => p);
-        const verdict = await this.evaluate(predecessorResults, userFact, fact);
+        const verdict = await this.authorize(predecessorResults, userFact, fact, factRecords);
         return { fact, verdict };
     }
 
-    // Sort facts topologically.
-    // For each fact:
-    //   If at least one predecessor is forbidden:
-    //     This fact is forbidden.    (Pf)               => Forbidden
-    //   Else if at least one predecessor is new:
-    //     If this fact is authorized:
-    //       This fact is new.        (!Pf Pn Fa)        => New
-    //     Else:
-    //       This fact is forbidden.  (!Pf Pn !Fa)       => Forbidden
-    //   Else if this fact is not present:
-    //     If this fact is authorized:
-    //       This fact is new.        (!Pf !Pn !Fp Fa)   => New
-    //     Else:
-    //       This fact is forbidden.  (!Pf !Pn !Fp !Fa)  => Forbidden
-    //   Else if fact is authorized:
-    //     This fact is signed.       (!Pf !Pn Fp Fa)    => Signed
-    //   Else:
-    //     This fact is existing.     (!Pf !Pn Fp !Fa)   => Existing
-    //
-    // If any are forbidden, then request is forbidden.
-    // Save all signed and new facts.
-    private async evaluate(predecessors: AuthorizationResult[], userFact: FactRecord, fact: FactRecord) {
+    private async authorize(predecessors: AuthorizationResult[], userFact: FactRecord, fact: FactRecord, factRecords: FactRecord[]) : Promise<AuthorizationVerdict> {
         if (predecessors.some(p => p.verdict === "Forbidden")) {
             return "Forbidden";
         }
 
-        const isAuthorized = await this.isAuthorized(userFact, fact);
-        if (predecessors.some(p => p.verdict === "New")) {
-            return isAuthorized ? "New" : "Forbidden";
-        }
-
-        const isPresent = await this.feed.exists(fact);
-        if (!isPresent) {
+        const isAuthorized = await this.authorizationRules.isAuthorized(userFact, fact, factRecords, this.feed);
+        if (predecessors.some(p => p.verdict === "New") || !(await this.feed.exists(fact))) {
             return isAuthorized ? "New" : "Forbidden";
         }
 
         return isAuthorized ? "Existing" : "Signed";
-    }
-
-    private async isAuthorized(userFact: FactRecord, fact: FactRecord) {
-        if (!this.authorizationRules) {
-            return true;
-        }
-
-        return await this.authorizationRules.isAuthorized(userFact, fact, this.feed);
     }
 }
 

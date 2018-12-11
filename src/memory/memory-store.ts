@@ -6,6 +6,10 @@ import { formatDot } from './debug';
 import { Inspector } from './inspector';
 
 export function getPredecessors(fact: FactRecord, role: string) {
+    if (!fact) {
+        return [];
+    }
+    
     const predecessors = fact.predecessors[role];
     if (predecessors) {
         if (Array.isArray(predecessors)) {
@@ -42,7 +46,7 @@ export class MemoryStore implements Storage {
     save(facts: FactRecord[]): Promise<FactRecord[]> {
         const added: FactRecord[] = [];
         facts.forEach(fact => {
-            if (!this.factRecords.find(factReferenceEquals(fact))) {
+            if (!this.factRecords.some(factReferenceEquals(fact))) {
                 this.factRecords.push(fact);
                 added.push(fact);
             }
@@ -56,7 +60,8 @@ export class MemoryStore implements Storage {
     }
 
     exists(fact: FactReference): Promise<boolean> {
-        throw new Error("Exists method not implemented on MemoryStore.");
+        const exists = this.factRecords.some(factReferenceEquals(fact));
+        return Promise.resolve(exists);
     }
 
     load(references: FactReference[]): Promise<FactRecord[]> {

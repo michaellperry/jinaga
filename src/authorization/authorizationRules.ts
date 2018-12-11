@@ -1,56 +1,100 @@
+import { getPredecessors } from '../memory/memory-store';
 import { Query } from '../query/query';
 import { Preposition } from '../query/query-parser';
-import { Direction, Join } from '../query/steps';
+import { Direction, Join, PropertyCondition, Step } from '../query/steps';
 import { FactRecord, FactReference, factReferenceEquals, Storage } from '../storage';
-import { flattenAsync, mapAsync } from '../util/fn';
+import { findIndex, flatten, flattenAsync, mapAsync } from '../util/fn';
 import { Trace } from '../util/trace';
 
-function getPredecessors(collection: FactReference[] | FactReference) {
-    if (!collection) {
-        return [];
+class Evidence {
+    constructor(
+        private factRecords: FactRecord[]
+    ) { }
+
+    query(start: FactReference, query: Query): FactReference[] {
+        const results = this.executeQuery(start, query.steps);
+        return results;
     }
-    if (Array.isArray(collection)) {
-        return collection;
+
+    private executeQuery(start: FactReference, steps: Step[]) {
+        return steps.reduce((facts, step) => {
+            return this.executeStep(facts, step);
+        }, [start]);
     }
-    return [ collection ];
+
+    private executeStep(facts: FactReference[], step: Step): FactReference[] {
+        if (step instanceof PropertyCondition) {
+            if (step.name === 'type') {
+                return facts.filter(fact => {
+                    return fact.type === step.value;
+                });
+            }
+        }
+        else if (step instanceof Join) {
+            if (step.direction === Direction.Predecessor) {
+                return flatten(facts, fact => {
+                    const record = this.findFact(fact);
+                    return getPredecessors(record, step.role);
+                });
+            }
+        }
+
+        throw new Error('Defect in parsing authorization rule.');
+    }
+
+    private findFact(reference: FactReference): FactRecord {
+        return this.factRecords.find(factReferenceEquals(reference));
+    }
+}
+
+function headStep(step: Step) {
+    if (step instanceof PropertyCondition) {
+        return step.name === 'type';
+    }
+    else if (step instanceof Join) {
+        return step.direction === Direction.Predecessor;
+    }
+    else {
+        return false;
+    }
 }
 
 interface AuthorizationRule {
-    isAuthorized(userFact: FactReference, fact: FactRecord, store: Storage): Promise<boolean>;
+    isAuthorized(userFact: FactReference, fact: FactRecord, evidence: Evidence, store: Storage): Promise<boolean>;
 }
 
 class AuthorizationRuleAny implements AuthorizationRule {
-    isAuthorized(userFact: FactReference, fact: FactRecord, store: Storage) {
+    isAuthorized(userFact: FactReference, fact: FactRecord, evidence: Evidence, store: Storage) {
         return Promise.resolve(true);
     }
 }
 
 class AuthorizationRuleNone implements AuthorizationRule {
-    isAuthorized(userFact: FactReference, fact: FactRecord, store: Storage): Promise<boolean> {
+    isAuthorized(userFact: FactReference, fact: FactRecord, evidence: Evidence, store: Storage): Promise<boolean> {
         return Promise.resolve(false);
     }
 }
 
 class AuthorizationRuleBy implements AuthorizationRule {
     constructor(
-        private head: Join,
+        private head: Query,
         private tail: Query
     ) {
 
     }
 
-    async isAuthorized(userFact: FactReference, fact: FactRecord, store: Storage) {
+    async isAuthorized(userFact: FactReference, fact: FactRecord, evidence: Evidence, store: Storage) {
         if (!userFact) {
             return false;
         }
-        const predecessors = getPredecessors(fact.predecessors[this.head.role]);
+        const predecessors = evidence.query(fact, this.head);
         const results = await flattenAsync(predecessors, async p =>
             await this.executeQuery(store, p));
         return results.some(factReferenceEquals(userFact));
     }
 
     private async executeQuery(store: Storage, predecessors: FactReference) {
-        if (this.tail.steps.length === 0) {
+        if (!this.tail) {
             return [ predecessors ];
         }
         const results = await store.query(predecessors, this.tail);
@@ -78,15 +122,17 @@ export class AuthorizationRules {
         if (preposition.steps.length === 0) {
             throw new Error(`Invalid authorization rule for type ${type}: the query matches the fact itself.`);
         }
-        const head = preposition.steps[0];
-        if (!(head instanceof Join)) {
+        const first = preposition.steps[0];
+        if (!(first instanceof Join)) {
             throw new Error(`Invalid authorization rule for type ${type}: the query does not begin with a predecessor.`);
         }
-        if (head.direction !== Direction.Predecessor) {
+        if (first.direction !== Direction.Predecessor) {
             throw new Error(`Invalid authorization rule for type ${type}: the query expects successors.`);
         }
 
-        const tail = new Query(preposition.steps.slice(1));
+        const index = findIndex(preposition.steps, step => !headStep(step));
+        const head = index < 0 ? new Query(preposition.steps) : new Query(preposition.steps.slice(0, index));
+        const tail = index < 0 ? null : new Query(preposition.steps.slice(index));
         return this.withRule(type, new AuthorizationRuleBy(head, tail));
     }
 
@@ -99,14 +145,16 @@ export class AuthorizationRules {
         return result;
     }
 
-    async isAuthorized(userFact: FactReference, fact: FactRecord, store: Storage) {
+    async isAuthorized(userFact: FactReference, fact: FactRecord, factRecords: FactRecord[], store: Storage) {
         const rules = this.rulesByType[fact.type];
         if (!rules) {
             Trace.warn(`No authorization rules defined for type ${fact.type}.`);
             return false;
         }
 
-        const results = await mapAsync(rules, async r => await r.isAuthorized(userFact, fact, store));
+        const evidence = new Evidence(factRecords);
+        const results = await mapAsync(rules, async r =>
+            await r.isAuthorized(userFact, fact, evidence, store));
         return results.some(b => b);
     }
 }

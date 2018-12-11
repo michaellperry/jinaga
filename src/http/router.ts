@@ -1,9 +1,10 @@
 import { Handler, Router } from 'express';
-import { Authorization } from '../authorization';
+import { Authorization, Forbidden } from '../authorization';
 import { computeHash } from '../fact/hash';
 import { UserIdentity } from '../keystore';
 import { fromDescriptiveString } from '../query/descriptive-string';
 import { FactRecord, FactReference } from '../storage';
+import { Trace } from '../util/trace';
 import { LoadMessage, LoadResponse, ProfileMessage, QueryMessage, QueryResponse, SaveMessage, SaveResponse } from './messages';
 
 
@@ -21,7 +22,7 @@ function get<U>(method: ((req: RequestUser) => Promise<U>)): Handler {
                     next();
                 })
                 .catch(error => {
-                    console.error(error);
+                    Trace.error(error);
                     res.sendStatus(500);
                     next();
                 });
@@ -40,8 +41,13 @@ function post<T, U>(method: (user: RequestUser, message: T) => Promise<U>): Hand
                 next();
             })
             .catch(error => {
-                console.error(error);
-                res.sendStatus(500);
+                if (error instanceof Forbidden) {
+                    res.status(403).send(error.message);
+                }
+                else {
+                    Trace.error(error);
+                    res.sendStatus(500);
+                }
                 next();
             });
     };
