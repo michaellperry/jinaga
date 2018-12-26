@@ -1,5 +1,6 @@
 import { Authentication } from './authentication/authentication';
 import { AuthenticationImpl } from './authentication/authentication-impl';
+import { AuthenticationNoOp } from './authentication/authentication-noop';
 import { Feed } from './feed/feed';
 import { FeedImpl } from './feed/feed-impl';
 import { Fork } from './fork/fork';
@@ -30,6 +31,7 @@ function createAuthentication(config: JinagaBrowserConfig, feed: Feed): Authenti
         return authentication;
     }
     else {
-        throw new Error('Not yet able to create a non-authenticated client.');
+        const authentication = new AuthenticationNoOp(feed);
+        return authentication;
     }
 }
