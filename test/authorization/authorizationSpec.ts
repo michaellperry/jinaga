@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { Authorization } from "../../src/authorization";
+import { AuthorizationKeystore } from "../../src/authorization/authorization-keystore";
 import { AuthorizationRules } from "../../src/authorization/authorizationRules";
 import { dehydrateFact, hydrate } from "../../src/fact/hydrate";
 import { FeedImpl } from "../../src/feed/feed-impl";
@@ -169,7 +169,7 @@ function givenAuthorizationWithStorage(storage: MemoryStore) {
         .type('Like', j.for(likeUser))
         .type('Delete', j.for(deleteSender))
         ;
-    return new Authorization(feed, keystore, authorizationRules);
+    return new AuthorizationKeystore(feed, keystore, authorizationRules);
 }
 
 function givenOtherUser() {
@@ -179,7 +179,7 @@ function givenOtherUser() {
     };
 }
 
-async function givenLoggedInUser(authorization: Authorization) {
+async function givenLoggedInUser(authorization: AuthorizationKeystore) {
     const userIdentity = givenMockUserIdentity();
     const userFact = await authorization.getUserFact(userIdentity);
     const user = hydrate<{}>(userFact);
@@ -193,7 +193,7 @@ function givenMockUserIdentity() {
     };
 }
 
-async function whenSave(authorization: Authorization, facts: FactRecord[]) {
+async function whenSave(authorization: AuthorizationKeystore, facts: FactRecord[]) {
     const userIdentity = givenMockUserIdentity();
     const result = await authorization.save(userIdentity, facts);
     return result;
