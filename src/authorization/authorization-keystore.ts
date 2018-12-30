@@ -1,10 +1,11 @@
-import { AuthorizationRules } from './authorization/authorizationRules';
-import { TopologicalSorter } from './fact/sorter';
-import { Feed } from './feed/feed';
-import { Keystore, UserIdentity } from './keystore';
-import { Query } from './query/query';
-import { FactRecord, FactReference } from './storage';
-import { distinct, mapAsync } from './util/fn';
+import { TopologicalSorter } from '../fact/sorter';
+import { Feed } from '../feed/feed';
+import { Keystore, UserIdentity } from '../keystore';
+import { Query } from '../query/query';
+import { FactRecord, FactReference } from '../storage';
+import { distinct, mapAsync } from '../util/fn';
+import { Authorization } from "./authorization";
+import { AuthorizationRules } from './authorizationRules';
 
 export class Forbidden extends Error {
     __proto__: Error;
@@ -16,7 +17,7 @@ export class Forbidden extends Error {
     }
 }
 
-export class Authorization {
+export class AuthorizationKeystore implements Authorization {
     constructor(
         private feed: Feed,
         private keystore: Keystore,

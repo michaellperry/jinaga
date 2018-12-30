@@ -1,5 +1,6 @@
 import { Handler, Router } from 'express';
-import { Authorization, Forbidden } from '../authorization';
+import { Authorization } from '../authorization/authorization';
+import { Forbidden } from '../authorization/authorization-keystore';
 import { computeHash } from '../fact/hash';
 import { UserIdentity } from '../keystore';
 import { fromDescriptiveString } from '../query/descriptive-string';

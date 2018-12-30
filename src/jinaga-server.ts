@@ -1,8 +1,10 @@
 import { Handler, Request } from 'express';
-
 import { AuthenticationDevice } from './authentication/authentication-device';
 import { AuthenticationSession } from './authentication/authentication-session';
-import { Authorization } from './authorization';
+import { AuthorizationNoOp } from './authorization/authorizaation-noop';
+import { Authorization } from './authorization/authorization';
+import { AuthorizationKeystore } from './authorization/authorization-keystore';
+import { AuthorizationRules } from './authorization/authorizationRules';
 import { Cache } from './cache';
 import { Feed } from './feed/feed';
 import { FeedImpl } from './feed/feed-impl';
@@ -13,7 +15,7 @@ import { MemoryStore } from './memory/memory-store';
 import { PostgresKeystore } from './postgres/postgres-keystore';
 import { PostgresStore } from './postgres/postgres-store';
 import { Storage } from './storage';
-import { AuthorizationRules } from './authorization/authorizationRules';
+
 
 export type JinagaServerConfig = {
     pgStore?: string,
@@ -67,11 +69,11 @@ function createAuthorization(config: JinagaServerConfig, feed: Feed): Authorizat
     if (config.pgKeystore) {
         const keystore = new PostgresKeystore(config.pgKeystore);
         const authorizationRules = config.authorization ? config.authorization(new AuthorizationRules()) : null;
-        const authorization = new Authorization(feed, keystore, authorizationRules);
+        const authorization = new AuthorizationKeystore(feed, keystore, authorizationRules);
         return authorization;
     }
     else {
-        throw new Error('Cannot yet produce a non-authorized service');
+        return new AuthorizationNoOp(feed);
     }
 }
 
