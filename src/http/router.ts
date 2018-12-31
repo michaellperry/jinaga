@@ -35,6 +35,9 @@ function post<T, U>(method: (user: RequestUser, message: T) => Promise<U>): Hand
     return (req, res, next) => {
         const user = <RequestUser>req.user;
         const message = <T>req.body;
+        if (!message) {
+            throw new Error('Ensure that you have installed body-parser and called app.use(bodyParser.json()).');
+        }
         method(user, message)
             .then(response => {
                 res.setHeader('Content-Type', 'application/json');

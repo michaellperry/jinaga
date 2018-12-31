@@ -3,3 +3,4 @@ export { JinagaServer, JinagaServerConfig, JinagaServerInstance } from './jinaga
 export { JinagaBrowser, JinagaBrowserConfig } from './jinaga-browser';
 export { Watch } from './watch/watch';
 export { AuthorizationRules } from './authorization/authorizationRules';
+export { SyncStatus } from './http/web-client';

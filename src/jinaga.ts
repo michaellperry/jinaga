@@ -6,23 +6,22 @@ import { Condition, Preposition, Specification } from './query/query-parser';
 import { FactPath, uniqueFactReferences } from './storage';
 import { Watch } from './watch/watch';
 import { WatchImpl } from './watch/watch-impl';
+import { SyncStatus, SyncStatusNotifier } from './http/web-client';
 
 export interface Profile {
     displayName: string;
 }
 
 export class Jinaga {
-    private authentication: Authentication;
-    private store: MemoryStore;
-
     private errorHandlers: ((message: string) => void)[] = [];
     private loadingHandlers: ((loading: boolean) => void)[] = [];
     private progressHandlers: ((count: number) => void)[] = [];
     
-    constructor(authentication: Authentication, store: MemoryStore) {
-        this.authentication = authentication;
-        this.store = store;
-    }
+    constructor(
+        private authentication: Authentication,
+        private store: MemoryStore,
+        private syncStatusNotifier: SyncStatusNotifier
+    ) { }
 
     onError(handler: (message: string) => void) {
         this.errorHandlers.push(handler);
@@ -34,6 +33,10 @@ export class Jinaga {
 
     onProgress(handler: (queueCount: number) => void) {
         this.progressHandlers.push(handler);
+    }
+
+    onSyncStatus(handler: (status: SyncStatus) => void) {
+        this.syncStatusNotifier.onSyncStatus(handler);
     }
 
     async login<U>(): Promise<{ userFact: U, profile: Profile }> {
