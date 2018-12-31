@@ -43,7 +43,7 @@ describe("Watch", function () {
   var j: Jinaga;
   beforeEach(function() {
     const memory = new MemoryStore();
-    j = new Jinaga(new MockAuthentication(memory), memory);
+    j = new Jinaga(new MockAuthentication(memory), memory, null);
     tasks = [];
   });
 

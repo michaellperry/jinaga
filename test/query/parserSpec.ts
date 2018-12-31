@@ -9,7 +9,7 @@ import { Condition, Preposition, Specification } from '../../src/query/query-par
 
 describe('Query parser', () => {
 
-    const j = new Jinaga(null, null);
+    const j = new Jinaga(null, null, null);
 
     function tasksInList(l: List): Specification<Task> {
         l.type = 'List';

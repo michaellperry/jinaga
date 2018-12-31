@@ -46,7 +46,7 @@ describe("Nested watch", function () {
 
     beforeEach(function () {
         const memory = new MemoryStore();
-        j = new Jinaga(new MockAuthentication(memory), memory);
+        j = new Jinaga(new MockAuthentication(memory), memory, null);
         room = {
             type: 'Room',
             identifier: Math.random()

@@ -15,6 +15,7 @@ import { MemoryStore } from './memory/memory-store';
 import { PostgresKeystore } from './postgres/postgres-keystore';
 import { PostgresStore } from './postgres/postgres-store';
 import { Storage } from './storage';
+import { SyncStatusNotifier } from './http/web-client';
 
 
 export type JinagaServerConfig = {
@@ -43,7 +44,8 @@ export class JinagaServer {
         const keystore = new PostgresKeystore(config.pgKeystore);
         const authentication = new AuthenticationDevice(feed, keystore, localDeviceIdentity);
         const memory = new MemoryStore();
-        const j: Jinaga = new Jinaga(authentication, memory);
+        const syncStatusNotifier = new SyncStatusNotifier();
+        const j: Jinaga = new Jinaga(authentication, memory, syncStatusNotifier);
         return {
             handler: router.handler,
             j,
@@ -84,6 +86,7 @@ async function withSession(feed: Feed, keystore: Keystore, req: Request, callbac
         id: user.id
     }
     const authentication = new AuthenticationSession(feed, keystore, userIdentity, user.profile.displayName, localDeviceIdentity);
-    const j = new Jinaga(authentication, new MemoryStore());
+    const syncStatusNotifier = new SyncStatusNotifier();
+    const j = new Jinaga(authentication, new MemoryStore(), syncStatusNotifier);
     await callback(j);
 }
