@@ -104,6 +104,27 @@ export class WebClient {
                     retryInSeconds: 0,
                     warning: ''
                 });
+                const xhr = createXHR('POST', this.url + path,
+                    (result: any) => {
+                        this.syncStatusNotifier.notify({
+                            sending: false,
+                            retrying: false,
+                            retryInSeconds: 0,
+                            warning: ''
+                        });
+                        resolve(result);
+                    },
+                    (result: any) => {
+                        this.syncStatusNotifier.notify({
+                            sending: false,
+                            retrying: false,
+                            retryInSeconds: 0,
+                            warning: result
+                        });
+                        reject(result);
+                    },
+                    retry);
+                xhr.setRequestHeader('Content-Type', 'application/json');
                 xhr.timeout = timeoutSeconds * 1000;
                 xhr.send(JSON.stringify(body));
             };
@@ -116,31 +137,10 @@ export class WebClient {
                 });
                 setTimeout(() => {
                     timeoutSeconds = Math.min(timeoutSeconds * 2, 60);
-                    retrySeconds = Math.min(retrySeconds, 60);
+                    retrySeconds = Math.min(retrySeconds * 2, 60);
                     send();
                 }, retrySeconds * 1000);
             };
-            const xhr = createXHR('POST', this.url + path,
-                (result: any) => {
-                    this.syncStatusNotifier.notify({
-                        sending: false,
-                        retrying: false,
-                        retryInSeconds: 0,
-                        warning: ''
-                    });
-                    resolve(result);
-                },
-                (result: any) => {
-                    this.syncStatusNotifier.notify({
-                        sending: false,
-                        retrying: false,
-                        retryInSeconds: 0,
-                        warning: result
-                    });
-                    reject(result);
-                },
-                retry);
-            xhr.setRequestHeader('Content-Type', 'application/json');
             send();
         });
     }
