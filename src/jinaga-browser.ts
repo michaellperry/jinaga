@@ -4,9 +4,12 @@ import { AuthenticationNoOp } from './authentication/authentication-noop';
 import { Feed } from './feed/feed';
 import { FeedImpl } from './feed/feed-impl';
 import { Fork } from './fork/fork';
-import { WebClient, SyncStatusNotifier } from './http/web-client';
+import { SyncStatus, SyncStatusNotifier, WebClient } from './http/web-client';
 import { Jinaga } from './jinaga';
 import { MemoryStore } from './memory/memory-store';
+import { Watch } from "./watch/watch";
+
+export { Jinaga, Watch, SyncStatus };
 
 export type JinagaBrowserConfig = {
     httpEndpoint?: string,
