@@ -261,4 +261,46 @@ describe('Query parser', () => {
         const query = parseQuery(j.for(grandchildren));
         expect(query.toDescriptiveString()).to.equal('S.grandparent F.type="Parent" S.parent F.type="Child"');
     });
+
+    it('should parse consecutive existential conditions', () => {
+        function ideaAbstractsInCompany(c: any) {
+            return Jinaga.match({
+                type: 'ImprovingU.Abstract',
+                idea: {
+                    type: 'ImprovingU.Idea',
+                    semester: {
+                        type: 'ImprovingU.Semester',
+                        office: {
+                            type: 'ImprovingU.Office',
+                            company: c
+                        }
+                    }
+                }
+            }).suchThat(ideaAbstractIsCurrent).suchThat(ideaAbstractNotMigrated);
+        }
+        
+        function ideaAbstractIsCurrent(next: any) {
+            return Jinaga.notExists({
+                type: 'ImprovingU.Abstract',
+                prior: [next]
+            });
+        }
+        
+        function ideaAbstractNotMigrated(a: any) {
+            return Jinaga.notExists({
+                type: 'ImprovingU.Abstract.Migration',
+                oldAbstract: a
+            });
+        }
+
+        const query = parseQuery(j.for(ideaAbstractsInCompany));
+        expect(query.toDescriptiveString()).to.equal(
+            'S.company F.type="ImprovingU.Office" ' +
+            'S.office F.type="ImprovingU.Semester" ' +
+            'S.semester F.type="ImprovingU.Idea" ' +
+            'S.idea F.type="ImprovingU.Abstract" ' +
+            'N(S.prior F.type="ImprovingU.Abstract") ' +
+            'N(S.oldAbstract F.type="ImprovingU.Abstract.Migration")'
+        );
+    });
 });

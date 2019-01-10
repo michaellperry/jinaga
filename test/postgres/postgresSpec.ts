@@ -165,10 +165,71 @@ describe('Postgres', () => {
             'WHERE e3.predecessor_type = e1.successor_type AND e3.predecessor_hash = e1.successor_hash ' +
               'AND e3.role = $5)'
     );
-    expect(parameters[0]).to.equal('Root');
-    expect(parameters[1]).to.equal(startHash);
-    expect(parameters[2]).to.equal('child');
-    expect(parameters[3]).to.equal('condition');
-    expect(parameters[4]).to.equal('other');
+    expect(parameters).to.deep.equal([
+      'Root',
+      startHash,
+      'child',
+      'condition',
+      'other'
+    ]);
+  });
+
+  it('should parse migration query', () => {
+    const query =
+      'S.company F.type="ImprovingU.Office" ' +
+      'S.office F.type="ImprovingU.Semester" ' +
+      'S.semester F.type="ImprovingU.Idea" ' +
+      'S.idea F.type="ImprovingU.Abstract" ' +
+      'N(S.prior F.type="ImprovingU.Abstract") ' +
+      'N(S.oldAbstract F.type="ImprovingU.Abstract.Migration")'
+
+    const { sql, parameters } = sqlFor(query);
+    expect(sql).to.equal(
+      'SELECT ' +
+        'e1.successor_type AS type0, e1.successor_hash AS hash0, ' +
+        'e2.successor_type AS type1, e2.successor_hash AS hash1, ' +
+        'e3.successor_type AS type2, e3.successor_hash AS hash2, ' +
+        'e4.successor_type AS type3, e4.successor_hash AS hash3 ' +
+      'FROM public.edge e1  ' +
+      'JOIN public.edge e2 ' +
+        'ON e2.predecessor_hash = e1.successor_hash ' +
+          'AND e2.predecessor_type = e1.successor_type ' +
+      'JOIN public.edge e3 ' +
+        'ON e3.predecessor_hash = e2.successor_hash ' +
+          'AND e3.predecessor_type = e2.successor_type ' +
+      'JOIN public.edge e4 ' +
+        'ON e4.predecessor_hash = e3.successor_hash ' +
+          'AND e4.predecessor_type = e3.successor_type ' +
+      'WHERE e1.predecessor_type = $1 AND e1.predecessor_hash = $2 ' +
+        'AND e1.role = $3 AND e1.successor_type = $4 ' +
+        'AND e2.role = $5 AND e2.successor_type = $6 ' +
+        'AND e3.role = $7 AND e3.successor_type = $8 ' +
+        'AND e4.role = $9 AND e4.successor_type = $10 ' +
+        'AND NOT EXISTS (SELECT 1 ' +
+          'FROM public.edge e5  ' +
+          'WHERE e5.predecessor_type = e4.successor_type ' +
+            'AND e5.predecessor_hash = e4.successor_hash ' +
+            'AND e5.role = $11 AND e5.successor_type = $12) ' +
+        'AND NOT EXISTS (SELECT 1 ' +
+          'FROM public.edge e6  ' +
+            'WHERE e6.predecessor_type = e4.successor_type AND e6.predecessor_hash = e4.successor_hash ' +
+            'AND e6.role = $13 AND e6.successor_type = $14)'
+    );
+    expect(parameters).to.deep.equal([
+      'Root',
+      startHash,
+      'company',
+      'ImprovingU.Office',
+      'office',
+      'ImprovingU.Semester',
+      'semester',
+      'ImprovingU.Idea',
+      'idea',
+      'ImprovingU.Abstract',
+      'prior',
+      'ImprovingU.Abstract',
+      'oldAbstract',
+      'ImprovingU.Abstract.Migration'
+    ]);
   });
 });
