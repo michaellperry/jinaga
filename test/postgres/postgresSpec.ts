@@ -150,4 +150,25 @@ describe('Postgres', () => {
       expect(pathLength).to.equal(1);
   });
 
+  it('should parse consecutive existential queries', () => {
+    const { sql, parameters } = sqlFor('S.child N(S.condition) N(S.other)');
+    expect(sql).to.equal(
+      'SELECT e1.successor_type AS type0, e1.successor_hash AS hash0 ' +
+        'FROM public.edge e1  ' +
+        'WHERE e1.predecessor_type = $1 AND e1.predecessor_hash = $2 AND e1.role = $3 ' +
+          'AND NOT EXISTS (SELECT 1 ' +
+            'FROM public.edge e2  ' +
+            'WHERE e2.predecessor_type = e1.successor_type AND e2.predecessor_hash = e1.successor_hash ' +
+              'AND e2.role = $4) ' +
+          'AND NOT EXISTS (SELECT 1 ' +
+            'FROM public.edge e3  ' +
+            'WHERE e3.predecessor_type = e1.successor_type AND e3.predecessor_hash = e1.successor_hash ' +
+              'AND e3.role = $5)'
+    );
+    expect(parameters[0]).to.equal('Root');
+    expect(parameters[1]).to.equal(startHash);
+    expect(parameters[2]).to.equal('child');
+    expect(parameters[3]).to.equal('condition');
+    expect(parameters[4]).to.equal('other');
+  });
 });
