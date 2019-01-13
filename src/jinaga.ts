@@ -110,6 +110,19 @@ export class Jinaga {
         return watch;
     }
 
+    service<T, U, V>(
+        start: T,
+        preposition: Preposition<T, U>,
+        handler: (message: U) => Promise<V>
+    ) {
+        throw new Error('Service not yet implemented.');
+        // The handler returns a fact.
+        // The fact must remove the message from the preposition.
+        // If so, it is saved.
+        // If not, it is logged and discarded.
+        // Exceptions are logged and discarded.
+    }
+
     static for<T, U>(specification: (target : T) => Specification<U>) : Preposition<T, U> {
         return Preposition.for(specification);
     }
