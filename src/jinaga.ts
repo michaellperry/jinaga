@@ -1,13 +1,15 @@
 import { Authentication } from './authentication/authentication';
 import { dehydrateFact, dehydrateReference, hydrate, hydrateFromTree } from './fact/hydrate';
+import { runService } from './feed/service';
+import { SyncStatus, SyncStatusNotifier } from './http/web-client';
 import { MemoryStore } from './memory/memory-store';
 import { Query } from './query/query';
 import { Condition, Preposition, Specification } from './query/query-parser';
 import { FactPath, uniqueFactReferences } from './storage';
+import { ServiceRunner } from './util/serviceRunner';
 import { Watch } from './watch/watch';
 import { WatchImpl } from './watch/watch-impl';
-import { SyncStatus, SyncStatusNotifier } from './http/web-client';
-
+    
 export interface Profile {
     displayName: string;
 }
@@ -16,6 +18,7 @@ export class Jinaga {
     private errorHandlers: ((message: string) => void)[] = [];
     private loadingHandlers: ((loading: boolean) => void)[] = [];
     private progressHandlers: ((count: number) => void)[] = [];
+    private serviceRunner = new ServiceRunner(exception => this.error(exception));
     
     constructor(
         private authentication: Authentication,
@@ -63,9 +66,7 @@ export class Jinaga {
             const saved = await this.authentication.save(factRecords);
             return fact;
         } catch (error) {
-            this.errorHandlers.forEach((errorHandler) => {
-                errorHandler(error);
-            });
+            this.error(error);
             throw error;
         }
     }
@@ -110,17 +111,20 @@ export class Jinaga {
         return watch;
     }
 
-    service<T, U, V>(
+    service<T, U>(
         start: T,
         preposition: Preposition<T, U>,
-        handler: (message: U) => Promise<V>
+        handler: (message: U) => Promise<void>
     ) {
-        throw new Error('Service not yet implemented.');
-        // The handler returns a fact.
-        // The fact must remove the message from the preposition.
-        // If so, it is saved.
-        // If not, it is logged and discarded.
-        // Exceptions are logged and discarded.
+        const reference = dehydrateReference(start);
+        const query = new Query(preposition.steps);
+        const feed = this.authentication;
+        const serviceRunner = this.serviceRunner;
+        runService<U>(feed, reference, query, serviceRunner, handler);
+    }
+
+    async stop() {
+        await this.serviceRunner.all();
     }
 
     static for<T, U>(specification: (target : T) => Specification<U>) : Preposition<T, U> {
@@ -172,5 +176,11 @@ export class Jinaga {
 
     inspect() {
         return this.store.inspect();
+    }
+
+    private error(error: any) {
+        this.errorHandlers.forEach((errorHandler) => {
+            errorHandler(error);
+        });
     }
 }
