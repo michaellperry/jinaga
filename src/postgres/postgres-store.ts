@@ -64,7 +64,14 @@ export class PostgresStore implements Storage {
     }
 
     async query(start: FactReference, query: Query): Promise<FactPath[]> {
+        if (query.steps.length === 0) {
+            return [[start]];
+        }
+        
         const sqlQuery = sqlFromSteps(start, query.steps);
+        if (!sqlQuery) {
+            throw new Error(`Could not generate SQL for query "${query.toDescriptiveString()}"`);
+        }
         const { rows } = await this.connectionFactory.with(async (connection) => {
             return await connection.query(sqlQuery.sql, sqlQuery.parameters);
         });

@@ -117,7 +117,7 @@ describe('Service', () => {
         });
         await context.stop();
         context.expectExceptions([
-            'The handler did not remove the processed message from the query. This process will be duplicated the next time the service is run.'
+            'The handler did not remove the processed message from the query \'S.parent F.type="Child" N(S.child F.type="Handled")\'. This process will be duplicated the next time the service is run.'
         ]);
         expect(runs).to.equal(1);
     });

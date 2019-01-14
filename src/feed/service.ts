@@ -19,7 +19,9 @@ export function runService<U>(feed: Feed, start: FactReference, query: Query, se
                     await handler(fact);
                 });
                 if (processing.length > 0) {
-                    throw new Error('The handler did not remove the processed message from the query. This process will be duplicated the next time the service is run.');
+                    throw new Error(
+                        `The handler did not remove the processed message from the query '${query.toDescriptiveString()}'. ` +
+                        `This process will be duplicated the next time the service is run.`);
                 }
             });
         }, (pathsRemoved) => {
