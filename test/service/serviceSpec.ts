@@ -10,7 +10,7 @@ class TestContext {
     private store = new MemoryStore();
     private feed = new FeedImpl(this.store);
     private exceptions: any[] = [];
-    private serviceRunner = new ServiceRunner(exception => this.exceptions.push(exception));
+    private serviceRunner = new ServiceRunner(exception => this.exceptions.push(exception.message));
 
     async fact(fact: {}) {
         const records = dehydrateFact(fact);
@@ -30,6 +30,10 @@ class TestContext {
 
     expectNoExceptions() {
         expect(this.exceptions).to.deep.equal([]);
+    }
+
+    expectExceptions(expected: string[]) {
+        expect(this.exceptions).to.deep.equal(expected);
     }
 }
 
@@ -93,6 +97,28 @@ describe('Service', () => {
         });
         await context.stop();
         context.expectNoExceptions();
+        expect(runs).to.equal(1);
+    });
+
+    it('should fail if handler does not remove fact', async () => {
+        const context = new TestContext();
+
+        const start = {
+            type: 'Start',
+            value: 1
+        };
+        await context.fact({
+            type: 'Child',
+            parent: start
+        });
+        let runs = 0;
+        await context.run(start, 'S.parent F.type="Child" N(S.child F.type="Handled")', async child => {
+            ++runs;
+        });
+        await context.stop();
+        context.expectExceptions([
+            'The handler did not remove the processed message from the query. This process will be duplicated the next time the service is run.'
+        ]);
         expect(runs).to.equal(1);
     });
 });

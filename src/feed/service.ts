@@ -1,6 +1,6 @@
 import { Hydration } from '../fact/hydrate';
 import { Query } from '../query/query';
-import { FactReference } from '../storage';
+import { FactReference, factReferenceEquals } from '../storage';
 import { mapAsync } from '../util/fn';
 import { ServiceRunner } from '../util/serviceRunner';
 import { Feed } from './feed';
@@ -18,8 +18,13 @@ export function runService<U>(feed: Feed, start: FactReference, query: Query, se
                     const fact = <U>hydration.hydrate(reference);
                     await handler(fact);
                 });
+                if (processing.length > 0) {
+                    throw new Error('The handler did not remove the processed message from the query. This process will be duplicated the next time the service is run.');
+                }
             });
         }, (pathsRemoved) => {
+            const factsRemoved = pathsRemoved.map(p => p[p.length - 1]);
+            processing = processing.filter(p => !factsRemoved.some(factReferenceEquals(p)));
         }
     );
     return subscription;
