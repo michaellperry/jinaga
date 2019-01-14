@@ -1,5 +1,5 @@
 import { Authentication } from './authentication/authentication';
-import { dehydrateFact, dehydrateReference, hydrate, hydrateFromTree } from './fact/hydrate';
+import { dehydrateFact, dehydrateReference, hydrate, hydrateFromTree, HashMap } from './fact/hydrate';
 import { runService } from './feed/service';
 import { SyncStatus, SyncStatusNotifier } from './http/web-client';
 import { MemoryStore } from './memory/memory-store';
@@ -58,11 +58,8 @@ export class Jinaga {
     
     async fact<T>(prototype: T) : Promise<T> {
         try {
-            if (!('type' in prototype)) {
-                throw new Error('Specify the type of the fact.');
-            }
-
             const fact = JSON.parse(JSON.stringify(prototype));
+            this.validateFact(fact);
             const factRecords = dehydrateFact(fact);
             const saved = await this.authentication.save(factRecords);
             return fact;
@@ -177,6 +174,25 @@ export class Jinaga {
 
     inspect() {
         return this.store.inspect();
+    }
+
+    private validateFact(prototype: HashMap) {
+        if (!('type' in prototype)) {
+            throw new Error('Specify the type of the fact and all of its predecessors.');
+        }
+        for (const field in prototype) {
+            const value = prototype[field];
+            if (typeof(value) === 'object') {
+                if (Array.isArray(value)) {
+                    value
+                        .filter(element => element)
+                        .forEach(element => this.validateFact(element));
+                }
+                else {
+                    this.validateFact(value);
+                }
+            }
+        }
     }
 
     private error(error: any) {

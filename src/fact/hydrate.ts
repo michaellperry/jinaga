@@ -54,9 +54,9 @@ class Dehydration {
             }
             else if (typeof(value) === 'object') {
                 if (Array.isArray(value)) {
-                    predecessors[field] = value.map(element => {
-                        return this.dehydrate(element);
-                    });
+                    predecessors[field] = value
+                        .filter(element => element)
+                        .map(element => this.dehydrate(element));
                 }
                 else {
                     predecessors[field] = this.dehydrate(value);
@@ -67,6 +67,9 @@ class Dehydration {
             }
         }
         const hash = computeHash(fields, predecessors);
+        if (!type) {
+            throw new Error('Specify the type of the fact and all of its predecessors.');
+        }
         return { type, hash, predecessors, fields };
     }
 }
@@ -91,10 +94,7 @@ export class Hydration {
     hydrate(reference: FactReference): HashMap {
         const entry = this.entries.find(r => r.record.hash === reference.hash && r.record.type === reference.type);
         if (!entry) {
-            return {
-                __error: 'Referenced fact not found in tree',
-                __reference: reference
-            };
+            throw new Error('Referenced fact not found in tree');
         }
 
         if (entry.fact) {
