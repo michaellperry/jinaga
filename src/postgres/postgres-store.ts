@@ -34,6 +34,9 @@ export class PostgresStore implements Storage {
     
     async save(facts: FactRecord[]): Promise<FactRecord[]> {
         if (facts.length > 0) {
+            if (facts.some(f => !f.hash || !f.type)) {
+                throw new Error('Attempted to save a fact with no hash or type.');
+            }
             const edgeRecords = flatten(facts, makeEdgeRecords);
             const factValues = facts.map((f, i) => '($' + (i*4 + 1) + ', $' + (i*4 + 2) + ', $' + (i*4 + 3) + ', $' + (i*4 + 4) + ')');
             const factParameters = flatten(facts, (f) => [f.hash, f.type, JSON.stringify(f.fields), JSON.stringify(f.predecessors)]);
