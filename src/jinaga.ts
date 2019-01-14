@@ -70,7 +70,9 @@ export class Jinaga {
     }
 
     async query<T, U>(start: T, preposition: Preposition<T, U>) : Promise<U[]> {
-        const reference = dehydrateReference(start);
+        const fact = JSON.parse(JSON.stringify(start));
+        this.validateFact(fact);
+        const reference = dehydrateReference(fact);
         const query = new Query(preposition.steps);
         const results = await this.authentication.query(reference, query);
         if (results.length === 0) {
@@ -98,7 +100,9 @@ export class Jinaga {
         resultAdded: (fact: U) => (V | void),
         resultRemoved?: (model: V) => void
     ) : Watch<U, V> {
-        const reference = dehydrateReference(start);
+        const fact = JSON.parse(JSON.stringify(start));
+        this.validateFact(fact);
+        const reference = dehydrateReference(fact);
         const query = new Query(preposition.steps);
         const onResultAdded = (path: FactPath, fact: U, take: ((model: V) => void)) => {
             const model = resultAdded(fact);
@@ -114,7 +118,9 @@ export class Jinaga {
         preposition: Preposition<T, U>,
         handler: (message: U) => Promise<void>
     ) {
-        const reference = dehydrateReference(start);
+        const fact = JSON.parse(JSON.stringify(start));
+        this.validateFact(fact);
+        const reference = dehydrateReference(fact);
         const query = new Query(preposition.steps);
         const feed = this.authentication;
         const serviceRunner = this.serviceRunner;
