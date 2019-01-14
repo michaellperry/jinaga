@@ -9,6 +9,9 @@ export type EdgeRecord = {
 };
 
 function makeEdgeRecord(predecessor: FactReference, successor: FactRecord, role: string): EdgeRecord {
+    if (!predecessor.hash || !predecessor.type || !successor.hash || !successor.type) {
+        throw new Error('Attempting to save edge with null hash or type.');
+    }
     return {
         predecessor_hash: predecessor.hash,
         predecessor_type: predecessor.type,
