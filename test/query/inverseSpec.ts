@@ -73,4 +73,79 @@ describe("QueryInverter", function () {
         inverses[0].added.toDescriptiveString().should.equal("F.type=\"TaskCompleted\" P.task");
         expect(inverses[0].removed).to.be.null;
     });
+
+    it("added does not start with existential query", function () {
+        var inverses = invertQuery(fromDescriptiveString('S.project F.type="Task" N(S.task F.type="TaskCompleted") N(S.oldTask F.type="Task.Migration")'));
+        expect(inverses.map(i => ({
+            appliedToType: i.appliedToType,
+            affected: i.affected.toDescriptiveString(),
+            added: i.added ? i.added.toDescriptiveString() : null,
+            removed: i.removed ? i.removed.toDescriptiveString() : null
+        }))).to.deep.equal([
+            {
+                appliedToType: 'Task',
+                affected: 'F.type="Task" P.project',
+                added: '',
+                removed: null
+            },
+            {
+                appliedToType: 'TaskCompleted',
+                affected: 'F.type="TaskCompleted" P.task F.type="Task" P.project',
+                added: null,
+                removed: 'F.type="TaskCompleted" P.task N(S.oldTask F.type="Task.Migration")'
+            },
+            {
+                appliedToType: 'Task.Migration',
+                affected: 'F.type="Task.Migration" P.oldTask F.type="Task" P.project',
+                added: null,
+                removed: 'F.type="Task.Migration" P.oldTask'
+            }
+        ]);
+    });
+
+    it("first existential query is never satisfied", function () {
+        var inverses = invertQuery(fromDescriptiveString('S.project F.type="Task" E(S.task F.type="TaskCompleted") N(S.oldTask F.type="Task.Migration")'));
+        expect(inverses.map(i => ({
+            appliedToType: i.appliedToType,
+            affected: i.affected.toDescriptiveString(),
+            added: i.added ? i.added.toDescriptiveString() : null,
+            removed: i.removed ? i.removed.toDescriptiveString() : null
+        }))).to.deep.equal([
+            {
+                appliedToType: 'TaskCompleted',
+                affected: 'F.type="TaskCompleted" P.task F.type="Task" P.project',
+                added: 'F.type="TaskCompleted" P.task N(S.oldTask F.type="Task.Migration")',
+                removed: null
+            },
+            {
+                appliedToType: 'Task.Migration',
+                affected: 'F.type="Task.Migration" P.oldTask F.type="Task" P.project',
+                added: null,
+                removed: 'F.type="Task.Migration" P.oldTask'
+            }
+        ]);
+    });
+
+    it("second existential query is never satisfied", function () {
+        var inverses = invertQuery(fromDescriptiveString('S.project F.type="Task" N(S.task F.type="TaskCompleted") E(S.oldTask F.type="Task.Migration")'));
+        expect(inverses.map(i => ({
+            appliedToType: i.appliedToType,
+            affected: i.affected.toDescriptiveString(),
+            added: i.added ? i.added.toDescriptiveString() : null,
+            removed: i.removed ? i.removed.toDescriptiveString() : null
+        }))).to.deep.equal([
+            {
+                appliedToType: 'TaskCompleted',
+                affected: 'F.type="TaskCompleted" P.task F.type="Task" P.project',
+                added: null,
+                removed: 'F.type="TaskCompleted" P.task E(S.oldTask F.type="Task.Migration")'
+            },
+            {
+                appliedToType: 'Task.Migration',
+                affected: 'F.type="Task.Migration" P.oldTask F.type="Task" P.project',
+                added: 'F.type="Task.Migration" P.oldTask',
+                removed: null
+            }
+        ]);
+    });
 });

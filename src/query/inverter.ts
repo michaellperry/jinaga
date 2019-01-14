@@ -24,7 +24,7 @@ function optimize(steps: Array<Step>) : Array<Step> {
                 return null;
             }
             else {
-                return steps.slice(1);
+                return optimize(steps.slice(1));
             }
         }
         // Also, successor joins are never satisfied.
