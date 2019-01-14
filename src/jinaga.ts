@@ -9,6 +9,7 @@ import { FactPath, uniqueFactReferences } from './storage';
 import { ServiceRunner } from './util/serviceRunner';
 import { Watch } from './watch/watch';
 import { WatchImpl } from './watch/watch-impl';
+import { Trace } from './util/trace';
     
 export interface Profile {
     displayName: string;
@@ -179,6 +180,7 @@ export class Jinaga {
     }
 
     private error(error: any) {
+        Trace.error(error);
         this.errorHandlers.forEach((errorHandler) => {
             errorHandler(error);
         });
