@@ -1,9 +1,10 @@
 import { Query } from './query/query';
 import { FactRecord, FactReference, Storage } from './storage';
 import { Trace } from './util/trace';
+import { flatten } from './util/fn';
 
 export class Cache implements Storage {
-    private factsByReference: { [key: string]: FactRecord } = {};
+    private factsByReference: { [key: string]: FactRecord[] } = {};
 
     constructor(private inner: Storage) {
 
@@ -40,15 +41,19 @@ export class Cache implements Storage {
                 }
             }
         });
-        const hits = cacheLookup.filter(l => l.hit).map(l => l.fact);
+        const hits = flatten(cacheLookup.filter(l => l.hit), l => l.fact);
         const misses = cacheLookup.filter(l => !l.hit).map(l => l.reference);
         if (misses.length > 0) {
             Trace.warn(`Load: ${JSON.stringify({misses}, null, 2)}`);
-            const result = await this.inner.load(misses);
-            result.forEach(result => {
-                this.factsByReference[referenceKey(result)] = result;
+            const results = await this.inner.load(misses);
+            results.forEach(record => {
+                const key = referenceKey(record);
+                if (!this.factsByReference[key]) {
+                    const closure = computeClosure(results, record);
+                    this.factsByReference[key] = closure;
+                }
             });
-            return result.concat(hits);
+            return results.concat(hits);
         }
         else {
             return hits;
@@ -58,4 +63,8 @@ export class Cache implements Storage {
 
 function referenceKey(reference: FactReference) {
     return `${reference.hash}:${reference.type}`;
+}
+
+function computeClosure(tree: FactRecord[], reference: FactReference) {
+    return tree;    
 }

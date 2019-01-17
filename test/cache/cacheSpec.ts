@@ -43,7 +43,7 @@ describe('Cache', () => {
         const { cache } = givenStoreWith([]);
 
         const results = await cache.load([]);
-        expect(results).to.deep.equal([]);
+        expect(results).to.have.members([]);
     });
 
     it('should pass first request through to storage', async () => {
@@ -53,7 +53,7 @@ describe('Cache', () => {
         const { cache, proxy } = givenStoreWith(records);
 
         const results = await cache.load([reference]);
-        expect(results).to.deep.equal(records);
+        expect(results).to.have.members(records);
         expect(proxy.loadCount).to.equal(1);
     });
 
@@ -65,7 +65,36 @@ describe('Cache', () => {
 
         await cache.load([reference]);
         const results = await cache.load([reference]);
-        expect(results).to.deep.equal(records);
+        expect(results).to.have.members(records);
+        expect(proxy.loadCount).to.equal(1);
+    });
+
+    it('should return predecessors from second request', async () => {
+        const fact = { type: 'Post', slug: 'constructors', blog: {
+            type: 'Root', identifier: 'qedcode'
+        }};
+        const records = dehydrateFact(fact);
+        const reference = dehydrateReference(fact);
+        const { cache, proxy } = givenStoreWith(records);
+
+        await cache.load([reference]);
+        const results = await cache.load([reference]);
+        expect(results).to.have.members(records);
+        expect(proxy.loadCount).to.equal(1);
+    });
+
+    it('should return all ancestors from second request', async () => {
+        const fact = { type: 'Comment', createdAt: '2019-01-16T18:34:23.381Z', post: {
+            type: 'Post', slug: 'constructors', blog: {
+                type: 'Root', identifier: 'qedcode'
+        }}};
+        const records = dehydrateFact(fact);
+        const reference = dehydrateReference(fact);
+        const { cache, proxy } = givenStoreWith(records);
+        
+        await cache.load([reference]);
+        const results = await cache.load([reference]);
+        expect(results).to.have.members(records);
         expect(proxy.loadCount).to.equal(1);
     });
 });
