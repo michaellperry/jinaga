@@ -53,3 +53,9 @@ export function findIndex<T>(array: T[], predicate: ((element: T) => boolean)): 
 export function distinct<T>(value: T, index: number, self: T[]) { 
     return self.indexOf(value) === index;
 }
+
+export function distinctBy<T>(equals: (a: T) => (b: T) => boolean) {
+    return (value: T, index: number, self: T[]) => (
+        self.findIndex(equals(value)) === index
+    );
+}

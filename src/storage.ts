@@ -35,3 +35,9 @@ export function uniqueFactReferences(references: FactReference[]): FactReference
         return findIndex(array, factReferenceEquals(value)) === index;
     });
 }
+
+export function uniqueFactRecords(records: FactRecord[]): FactRecord[] {
+    return records.filter((value, index, array) => {
+        return findIndex(array, factReferenceEquals(value)) === index;
+    });
+}

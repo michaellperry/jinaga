@@ -1,7 +1,7 @@
 import { Query } from './query/query';
-import { FactRecord, FactReference, Storage } from './storage';
-import { Trace } from './util/trace';
+import { FactRecord, FactReference, factReferenceEquals, Storage, uniqueFactRecords } from './storage';
 import { flatten } from './util/fn';
+import { Trace } from './util/trace';
 
 export class Cache implements Storage {
     private factsByReference: { [key: string]: FactRecord[] } = {};
@@ -53,10 +53,10 @@ export class Cache implements Storage {
                     this.factsByReference[key] = closure;
                 }
             });
-            return results.concat(hits);
+            return uniqueFactRecords(results.concat(hits));
         }
         else {
-            return hits;
+            return uniqueFactRecords(hits);
         }
     }
 }
@@ -66,5 +66,28 @@ function referenceKey(reference: FactReference) {
 }
 
 function computeClosure(tree: FactRecord[], reference: FactReference) {
-    return tree;    
+    let visited: { [key: string]: FactRecord } = {};
+    addAncestors(tree, visited, reference);
+    return Object.keys(visited).map(key => visited[key]);
+}
+
+function addAncestors(
+    tree: FactRecord[],
+    visited: { [key: string]: FactRecord },
+    reference: FactReference) {
+    const key = referenceKey(reference);
+    if (!visited.hasOwnProperty(key)) {
+        const record = tree.find(factReferenceEquals(reference));
+        visited[key] = record;
+        const predecessors = flatten(
+            Object.keys(record.predecessors),
+            p => predecessorArray(record.predecessors[p]));
+        predecessors.forEach(predecessor => {
+            addAncestors(tree, visited, predecessor);
+        });
+    }
+}
+
+function predecessorArray(predecessors: FactReference | FactReference[]) {
+    return Array.isArray(predecessors) ? predecessors : [ predecessors ];
 }
