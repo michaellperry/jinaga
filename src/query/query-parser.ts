@@ -37,6 +37,12 @@ export class Preposition<T, U> {
         public steps: Step[]
     ) {}
 
+    /**
+     * Extend a preposition chain.
+     * 
+     * @param specification A template function, which returns j.match
+     * @returns A preposition that can be passed to query or watch, or used to construct a preposition chain
+     */
     then<V>(specification: (target : U) => Specification<V>): Preposition<U, V> {
         return new Preposition<U, V>(this.steps.concat(parseTemplate(specification)));
     }

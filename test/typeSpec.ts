@@ -6,6 +6,13 @@ const j = JinagaBrowser.create({
   httpEndpoint: 'https://localhost:3000/jinaga'
 });
 
+(async () => {
+    const company = await j.fact({
+        type: 'ImprovingU.Company',
+        name: 'Improving'
+    });
+})();
+
 function accessInCompany(c: any) {
   return j.match({
       type: 'ImprovingU.Catalog.Access',

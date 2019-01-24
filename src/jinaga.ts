@@ -27,14 +27,30 @@ export class Jinaga {
         private syncStatusNotifier: SyncStatusNotifier
     ) { }
 
+    /**
+     * Register an callback to receive error messages.
+     * 
+     * @param handler A function to receive error messages
+     */
     onError(handler: (message: string) => void) {
         this.errorHandlers.push(handler);
     }
 
+    /**
+     * Register a callback to receive loading state notifications.
+     * 
+     * @param handler A function to receive loading state
+     */
     onLoading(handler: (loading: boolean) => void) {
         this.loadingHandlers.push(handler);
     }
 
+    /**
+     * Register a callback to receive outgoing fact count.
+     * A count greater than 0 is an indication to the user that the application is saving.
+     * 
+     * @param handler A function to receive the number of facts in the queue
+     */
     onProgress(handler: (queueCount: number) => void) {
         this.progressHandlers.push(handler);
     }
@@ -43,6 +59,12 @@ export class Jinaga {
         this.syncStatusNotifier.onSyncStatus(handler);
     }
 
+    /**
+     * Log the user in and return a fact that represents their identity.
+     * This method is only valid in the browser.
+     * 
+     * @returns A promise that resolves to a fact that represents the user's identity, and the user's profile as reported by the configured Passport strategy
+     */
     async login<U>(): Promise<{ userFact: U, profile: Profile }> {
         const { userFact, profile } = await this.authentication.login();
         return {
@@ -51,11 +73,26 @@ export class Jinaga {
         };
     }
 
+    /**
+     * Access the identity of the local machine.
+     * This method is only valid for the server and clients with local storage.
+     * The local machine's identity is not shared with remote machines.
+     * 
+     * @returns A promise that resolves to the local machine's identity
+     */
     async local<D>(): Promise<D> {
         const deviceFact = await this.authentication.local();
         return hydrate<D>(deviceFact);
     }
     
+    /**
+     * Creates a new fact.
+     * This method is asynchronous.
+     * It will be resolved when the fact has been persisted.
+     * 
+     * @param prototype The fact to save and share
+     * @returns The fact that was just created
+     */
     async fact<T>(prototype: T) : Promise<T> {
         try {
             const fact = JSON.parse(JSON.stringify(prototype));
@@ -69,6 +106,13 @@ export class Jinaga {
         }
     }
 
+    /**
+     * Execute a query for facts matching a template.
+     * 
+     * @param start A fact from which to begin the query
+     * @param preposition A template function passed into j.for
+     * @returns A promise that resolves to an array of results
+     */
     async query<T, U>(start: T, preposition: Preposition<T, U>) : Promise<U[]> {
         const fact = JSON.parse(JSON.stringify(start));
         this.validateFact(fact);
@@ -85,11 +129,32 @@ export class Jinaga {
         return hydrateFromTree(uniqueReferences, facts);
     }
 
+    /**
+     * Receive notification when a fact is added or removed from query results.
+     * The notification function will initially recieve all matching facts.
+     * It will then subsequently receive new facts as they are created.
+     * 
+     * @param start A fact from which to begin the query
+     * @param preposition A template function passed into j.for
+     * @param resultAdded A function that is called when a fact is added
+     * @param resultRemoved (optional) A function that is called when a fact is removed
+     * @returns A Watch object that can be used to nest new watches or stop watching
+     */
     watch<T, U, V>(
         start: T,
         preposition: Preposition<T, U>,
         resultAdded: (result: U) => V,
         resultRemoved: (model: V) => void) : Watch<U, V>;
+    /**
+     * Receive notification when a fact is added or removed from query results.
+     * The notification function will initially recieve all matching facts.
+     * It will then subsequently receive new facts as they are created.
+     * 
+     * @param start A fact from which to begin the query
+     * @param preposition A template function passed into j.for
+     * @param resultAdded A function that is called when a fact is added
+     * @returns A Watch object that can be used to nest new watches or stop watching
+     */
     watch<T, U, V>(
         start: T,
         preposition: Preposition<T, U>,
@@ -131,38 +196,92 @@ export class Jinaga {
         await this.serviceRunner.all();
     }
 
+    /**
+     * Prepare a template function to be used in query or watch.
+     * 
+     * @param specification A template function, which returns j.match
+     * @returns A preposition that can be passed to query or watch, or used to construct a preposition chain
+     */
     static for<T, U>(specification: (target : T) => Specification<U>) : Preposition<T, U> {
         return Preposition.for(specification);
     }
 
+    /**
+     * Prepare a template function to be used in query or watch.
+     * 
+     * @param specification A template function, which returns j.match
+     * @returns A preposition that can be passed to query or watch, or used to construct a preposition chain
+     */
     for<T, U>(specification: (target : T) => Specification<U>) : Preposition<T, U> {
         return Jinaga.for(specification);
     }
 
+    /**
+     * Used within a template function to specify the shape of the target facts.
+     * 
+     * @param template A JSON object with the desired type and predecessors
+     * @returns A specification that can be used by query or watch
+     */
     static match<T>(template: T): Specification<T> {
         return new Specification<T>(template,[]);
     }
 
+    /**
+     * Used within a template function to specify the shape of the target facts.
+     * 
+     * @param template A JSON object with the desired type and predecessors
+     * @returns A specification that can be used by query or watch
+     */
     match<T>(template: T): Specification<T> {
         return Jinaga.match(template);
     }
 
+    /**
+     * Used in a template function to create a condition that is true if a matching fact exists.
+     * 
+     * @param template A JSON object with the desired type and predecessors
+     * @returns A condition that can be used in suchThat or not
+     */
     static exists<T>(template: T): Condition<T> {
         return new Condition<T>(template, [], false);
     }
 
+    /**
+     * Used in a template function to create a condition that is true if a matching fact exists.
+     * 
+     * @param template A JSON object with the desired type and predecessors
+     * @returns A condition that can be used in suchThat or not
+     */
     exists<T>(template: T): Condition<T> {
         return Jinaga.exists(template);
     }
 
+    /**
+     * Used in a template function to create a condition that is true if no matching fact exists.
+     * 
+     * @param template A JSON object with the desired type and predecessors
+     * @returns A condition that can be used in suchThat or not
+     */
     static notExists<T>(template: T): Condition<T> {
         return new Condition<T>(template, [], true);
     }
 
+    /**
+     * Used in a template function to create a condition that is true if no matching fact exists.
+     * 
+     * @param template A JSON object with the desired type and predecessors
+     * @returns A condition that can be used in suchThat or not
+     */
     notExists<T>(template: T): Condition<T> {
         return Jinaga.notExists(template);
     }
 
+    /**
+     * Inverts a condition defined using exists or notExists.
+     * 
+     * @param condition A template function using exists or notExists to invert
+     * @returns The opposite condition
+     */
     static not<T, U>(condition: (target: T) => Condition<U>) : (target: T) => Condition<U> {
         return target => {
             const original = condition(target);
@@ -170,14 +289,32 @@ export class Jinaga {
         };
     }
 
+    /**
+     * Inverts a condition defined using exists or notExists.
+     * 
+     * @param condition A template function using exists or notExists to invert
+     * @returns The opposite condition
+     */
     not<T, U>(condition: (target: T) => Condition<U>) : (target: T) => Condition<U> {
         return Jinaga.not(condition);
     }
 
+    /**
+     * Generate a diagram of all facts in memory.
+     * The diagram is written in the DOT graph language.
+     * Use graphviz.org to visualize the diagram.
+     * 
+     * @returns A DOT diagram of facts in memory
+     */
     graphviz(): string {
         return this.store.graphviz().join('\n');
     }
 
+    /**
+     * Open an inspector in the browser's console window to navigate through facts in memory.
+     * 
+     * @returns An inspector listing all facts
+     */
     inspect() {
         return this.store.inspect();
     }
