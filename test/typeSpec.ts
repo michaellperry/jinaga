@@ -11,7 +11,7 @@ const j = JinagaBrowser.create({
         type: 'ImprovingU.Company',
         name: 'Improving'
     });
-})();
+});
 
 function accessInCompany(c: any) {
   return j.match({

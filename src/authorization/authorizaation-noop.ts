@@ -1,8 +1,8 @@
-import { Authorization } from "./authorization";
 import { Feed } from "../feed/feed";
 import { UserIdentity } from '../keystore';
 import { Query } from '../query/query';
 import { FactRecord, FactReference } from '../storage';
+import { Authorization } from "./authorization";
 import { Forbidden } from "./authorization-keystore";
 
 export class AuthorizationNoOp implements Authorization {
@@ -22,7 +22,11 @@ export class AuthorizationNoOp implements Authorization {
         return this.feed.load(references);
     }
 
-    save(userIdentity: UserIdentity, facts: FactRecord[]): Promise<FactRecord[]> {
-        return this.feed.save(facts);
+    async save(userIdentity: UserIdentity, facts: FactRecord[]): Promise<FactRecord[]> {
+        const envelopes = await this.feed.save(facts.map(fact => ({
+            fact,
+            signatures: []
+        })));
+        return envelopes.map(envelope => envelope.fact);
     }
 }

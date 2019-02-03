@@ -14,7 +14,8 @@ class TestContext {
 
     async fact(fact: {}) {
         const records = dehydrateFact(fact);
-        await this.feed.save(records);
+        const envelopes = records.map(f => ({ fact: f, signatures: [] }));
+        await this.feed.save(envelopes);
     }
 
     async run(fact: {}, queryString: string, handler: (message: {}) => Promise<void>) {

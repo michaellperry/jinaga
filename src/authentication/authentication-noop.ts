@@ -1,7 +1,7 @@
 import { Feed } from "../feed/feed";
 import { LoginResponse } from "../http/messages";
 import { Query } from "../query/query";
-import { FactRecord, FactReference } from "../storage";
+import { FactEnvelope, FactRecord, FactReference } from "../storage";
 import { Authentication } from "./authentication";
 
 export class AuthenticationNoOp implements Authentication {
@@ -18,8 +18,9 @@ export class AuthenticationNoOp implements Authentication {
     from(fact: FactReference, query: Query) {
         return this.inner.from(fact, query);
     }
-    save(facts: FactRecord[]) {
-        return this.inner.save(facts);
+    async save(envelopes: FactEnvelope[]): Promise<FactEnvelope[]> {
+        const saved = await this.inner.save(envelopes);
+        return saved;
     }
     query(start: FactReference, query: Query) {
         return this.inner.query(start, query);

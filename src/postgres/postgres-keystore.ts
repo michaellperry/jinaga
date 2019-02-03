@@ -3,7 +3,7 @@ import { PoolClient } from 'pg';
 
 import { computeHash } from '../fact/hash';
 import { Keystore, UserIdentity } from '../keystore';
-import { FactRecord, PredecessorCollection } from '../storage';
+import { FactRecord, PredecessorCollection, FactSignature } from '../storage';
 import { ConnectionFactory } from './connection';
 
 
@@ -20,6 +20,10 @@ export class PostgresKeystore implements Keystore {
 
     getDeviceFact(deviceIdentity: UserIdentity): Promise<FactRecord> {
         return this.getIdentityFact('Jinaga.Device', deviceIdentity);
+    }
+
+    signFact(userIdentity: UserIdentity, fact: FactRecord): Promise<FactSignature> {
+        throw new Error("Method not implemented.");
     }
 
     private getIdentityFact(type: string, identity: UserIdentity): Promise<FactRecord> {

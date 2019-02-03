@@ -2,7 +2,7 @@ import { TopologicalSorter } from '../fact/sorter';
 import { Feed } from '../feed/feed';
 import { Keystore, UserIdentity } from '../keystore';
 import { Query } from '../query/query';
-import { FactRecord, FactReference } from '../storage';
+import { FactRecord, FactReference, FactEnvelope } from '../storage';
 import { distinct, mapAsync } from '../util/fn';
 import { Authorization } from "./authorization";
 import { AuthorizationRules } from './authorizationRules';
@@ -39,7 +39,11 @@ export class AuthorizationKeystore implements Authorization {
 
     async save(userIdentity: UserIdentity, facts: FactRecord[]) {
         if (!this.authorizationRules) {
-            return await this.feed.save(facts);
+            const envelopes = await this.feed.save(facts.map(fact => ({
+                fact,
+                signatures: []
+            })));
+            return envelopes.map(envelope => envelope.fact);
         }
 
         const userFact = await this.keystore.getUserFact(userIdentity);
@@ -62,7 +66,12 @@ export class AuthorizationKeystore implements Authorization {
         const authorizedFacts = results
             .filter(r => r.verdict === "New" || r.verdict === "Signed")
             .map(r => r.fact);
-        return await this.feed.save(authorizedFacts);
+        const signedFacts = await mapAsync(authorizedFacts, async fact => (<FactEnvelope>{
+            fact,
+            signatures: [ await this.keystore.signFact(userIdentity, fact) ]
+        }))
+        const envelopes = await this.feed.save(signedFacts);
+        return envelopes.map(envelope => envelope.fact);
     }
 
     private async visit(predecessors: Promise<AuthorizationResult>[], fact: FactRecord, userFact: FactRecord, factRecords: FactRecord[]): Promise<AuthorizationResult> {
@@ -81,7 +90,7 @@ export class AuthorizationKeystore implements Authorization {
             return isAuthorized ? "New" : "Forbidden";
         }
 
-        return isAuthorized ? "Existing" : "Signed";
+        return isAuthorized ? "Signed" : "Existing";
     }
 }
 

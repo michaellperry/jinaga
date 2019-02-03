@@ -2,7 +2,7 @@ import Keypair = require('keypair');
 
 import { computeHash } from '../fact/hash';
 import { Keystore, UserIdentity } from "../keystore";
-import { FactRecord, PredecessorCollection } from "../storage";
+import { FactRecord, PredecessorCollection, FactSignature } from "../storage";
 
 export class MemoryKeystore implements Keystore {
     private keyPairs: { [key: string]: { publicKey: string, privateKey: string }} = {};
@@ -13,6 +13,10 @@ export class MemoryKeystore implements Keystore {
     
     getDeviceFact(userIdentity: UserIdentity): Promise<FactRecord> {
         return Promise.resolve(this.getIdentityFact('Jinaga.Device', userIdentity));
+    }
+
+    signFact(userIdentity: UserIdentity, fact: FactRecord): Promise<FactSignature> {
+        throw new Error("Method not implemented.");
     }
 
     private getIdentityFact(type: string, identity: UserIdentity): FactRecord {

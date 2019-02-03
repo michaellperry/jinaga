@@ -101,7 +101,7 @@ describe('Authorization', () => {
             message: 'Hiya, Pal!',
             sender: mickeyMouse
         };
-        await storage.save(dehydrateFact(tweet));
+        await storage.save(dehydrateFact(tweet).map(f => ({ fact: f, signatures: [] })));
 
         const authorization = givenAuthorizationWithStorage(storage);
         const lewiscarrol = await givenLoggedInUser(authorization);
