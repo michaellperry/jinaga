@@ -58,7 +58,9 @@ IF (SELECT to_regclass('public.fact') IS NULL) THEN
         type character varying(50),
         hash character varying(100),
         fields jsonb,
-        predecessors jsonb
+        predecessors jsonb,
+        date_learned timestamp NOT NULL
+            DEFAULT (now() at time zone 'utc')
     );
 
 
@@ -67,6 +69,17 @@ IF (SELECT to_regclass('public.fact') IS NULL) THEN
     CREATE UNIQUE INDEX ux_fact ON public.fact USING btree (hash, type);
 
     GRANT SELECT,INSERT ON TABLE public.fact TO dev;
+
+ELSE
+
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns
+        WHERE table_schema='public' AND table_name='fact' AND column_name='date_learned') THEN
+
+        ALTER TABLE public.fact
+            ADD date_learned timestamp NOT NULL
+            DEFAULT (now() at time zone 'utc');
+            
+    END IF;
 
 END IF;
 
