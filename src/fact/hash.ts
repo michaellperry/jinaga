@@ -1,7 +1,6 @@
 import { hash } from 'tweetnacl';
 import { decodeUTF8, encodeBase64 } from 'tweetnacl-util';
-
-import { FactReference, PredecessorCollection } from '../storage';
+import { FactRecord, FactReference, PredecessorCollection } from '../storage';
 import { HashMap } from './hydrate';
 
 export function computeHash(fields: {}, predecessors: PredecessorCollection) {
@@ -9,6 +8,11 @@ export function computeHash(fields: {}, predecessors: PredecessorCollection) {
         fields: fields,
         predecessors: canonicalPredecessors(predecessors)
     });
+}
+
+export function verifyHash(fact: FactRecord) {
+    const computedHash = computeHash(fact.fields, fact.predecessors);
+    return fact.hash === computedHash;
 }
 
 function canonicalPredecessors(predecessors: PredecessorCollection) {

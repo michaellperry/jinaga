@@ -1,13 +1,10 @@
 import { Handler, Router } from 'express';
 import { Authorization } from '../authorization/authorization';
 import { Forbidden } from '../authorization/authorization-keystore';
-import { computeHash } from '../fact/hash';
 import { UserIdentity } from '../keystore';
 import { fromDescriptiveString } from '../query/descriptive-string';
-import { FactRecord, FactReference } from '../storage';
 import { Trace } from '../util/trace';
 import { LoadMessage, LoadResponse, ProfileMessage, QueryMessage, QueryResponse, SaveMessage, SaveResponse } from './messages';
-
 
 function get<U>(method: ((req: RequestUser) => Promise<U>)): Handler {
     return (req, res, next) => {
@@ -54,13 +51,6 @@ function post<T, U>(method: (user: RequestUser, message: T) => Promise<U>): Hand
                 }
                 next();
             });
-    };
-}
-
-function serializeFactReferenceFromFact(factRecord: FactRecord) : FactReference {
-    return {
-        type: factRecord.type,
-        hash: computeHash(factRecord.fields, factRecord.predecessors)
     };
 }
 

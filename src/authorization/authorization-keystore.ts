@@ -1,8 +1,9 @@
+import { verifyHash } from '../fact/hash';
 import { TopologicalSorter } from '../fact/sorter';
 import { Feed } from '../feed/feed';
 import { Keystore, UserIdentity } from '../keystore';
 import { Query } from '../query/query';
-import { FactRecord, FactReference, FactEnvelope } from '../storage';
+import { FactEnvelope, FactRecord, FactReference } from '../storage';
 import { distinct, mapAsync } from '../util/fn';
 import { Authorization } from "./authorization";
 import { AuthorizationRules } from './authorizationRules';
@@ -82,6 +83,10 @@ export class AuthorizationKeystore implements Authorization {
 
     private async authorize(predecessors: AuthorizationResult[], userFact: FactRecord, fact: FactRecord, factRecords: FactRecord[]) : Promise<AuthorizationVerdict> {
         if (predecessors.some(p => p.verdict === "Forbidden")) {
+            return "Forbidden";
+        }
+
+        if (!verifyHash(fact)) {
             return "Forbidden";
         }
 
