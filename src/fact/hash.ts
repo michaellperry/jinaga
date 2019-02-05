@@ -10,6 +10,13 @@ export function computeHash(fields: {}, predecessors: PredecessorCollection) {
     });
 }
 
+export function canonicalizeFact(fields: {}, predecessors: PredecessorCollection) {
+    return canonicalize({
+        fields: fields,
+        predecessors: canonicalPredecessors(predecessors)
+    });
+}
+
 export function verifyHash(fact: FactRecord) {
     const computedHash = computeHash(fact.fields, fact.predecessors);
     return fact.hash === computedHash;
