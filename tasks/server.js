@@ -36,6 +36,9 @@ var webpackConfig = {
         },
         'tweetnacl-util': {
             commonjs: 'tweetnacl-util'
+        },
+        'node-forge': {
+            commonjs: 'node-forge'
         }
     }
 };
