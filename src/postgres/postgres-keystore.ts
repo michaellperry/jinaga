@@ -21,7 +21,7 @@ export class PostgresKeystore implements Keystore {
         return this.getIdentityFact('Jinaga.Device', deviceIdentity);
     }
 
-    async signFact(userIdentity: UserIdentity, fact: FactRecord): Promise<FactSignature> {
+    async signFact(userIdentity: UserIdentity, fact: FactRecord): Promise<FactSignature[]> {
         return await this.connectionFactory.withTransaction(async connection => {
             const { publicKey: publicPem, privateKey: privatePem } = await this.getPrivateKey(connection, userIdentity);
             const privateKey = <pki.rsa.PrivateKey>pki.privateKeyFromPem(privatePem);
@@ -37,12 +37,10 @@ export class PostgresKeystore implements Keystore {
             if (!verified) {
                 throw new Error('The signature did not verify correctly.');
             }
-            return {
-                type: fact.type,
-                hash: fact.hash,
+            return [{
                 signature,
                 publicKey: publicPem
-            }
+            }];
         });
     }
 

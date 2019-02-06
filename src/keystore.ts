@@ -8,5 +8,5 @@ export interface UserIdentity {
 export interface Keystore {
     getUserFact(userIdentity: UserIdentity): Promise<FactRecord>;
     getDeviceFact(userIdentity: UserIdentity): Promise<FactRecord>;
-    signFact(userIdentity: UserIdentity, fact: FactRecord): Promise<FactSignature>;
+    signFact(userIdentity: UserIdentity, fact: FactRecord): Promise<FactSignature[]>;
 }

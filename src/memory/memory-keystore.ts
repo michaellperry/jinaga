@@ -15,8 +15,8 @@ export class MemoryKeystore implements Keystore {
         return Promise.resolve(this.getIdentityFact('Jinaga.Device', userIdentity));
     }
 
-    signFact(userIdentity: UserIdentity, fact: FactRecord): Promise<FactSignature> {
-        throw new Error("Method not implemented.");
+    signFact(userIdentity: UserIdentity, fact: FactRecord): Promise<FactSignature[]> {
+        return Promise.resolve([]);
     }
 
     private getIdentityFact(type: string, identity: UserIdentity): FactRecord {

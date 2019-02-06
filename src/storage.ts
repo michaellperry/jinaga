@@ -20,8 +20,6 @@ export type FactRecord = {
 };
 
 export type FactSignature = {
-    type: string;
-    hash: string;
     publicKey: string;
     signature: string;
 }
@@ -46,9 +44,4 @@ export function uniqueFactReferences(references: FactReference[]): FactReference
     return references.filter((value, index, array) => {
         return findIndex(array, factReferenceEquals(value)) === index;
     });
-}
-
-export function factSignatureEquals(a: FactSignature) {
-    return (s: FactSignature) => s.hash === a.hash && s.type === a.type &&
-        s.publicKey === a.publicKey && s.signature === a.signature;
 }
