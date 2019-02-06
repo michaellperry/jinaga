@@ -41,6 +41,16 @@ export class PostgresStore implements Storage {
             const edgeRecords = flatten(facts, makeEdgeRecords);
             const factValues = facts.map((f, i) => '($' + (i*4 + 1) + ', $' + (i*4 + 2) + ', $' + (i*4 + 3) + ', $' + (i*4 + 4) + ')');
             const factParameters = flatten(facts, (f) => [f.hash, f.type, JSON.stringify(f.fields), JSON.stringify(f.predecessors)]);
+            const signatureRecords = flatten(envelopes, envelope => envelope.signatures.map(signature => ({
+                type: envelope.fact.type,
+                hash: envelope.fact.hash,
+                publicKey: signature.publicKey,
+                signature: signature.signature
+            })));
+            const signatureValues = signatureRecords.map((s, i) =>
+                `($${i*4 + 1}, $${i*4 + 2}, $${i*4 + 3}, $${i*4 + 4})`);
+            const signatureParameters = flatten(signatureRecords, s =>
+                [s.hash, s.type, s.publicKey, s.signature]);
             await this.connectionFactory.withTransaction(async (connection) => {
                 if (edgeRecords.length > 0) {
                     const edgeValues = edgeRecords.map((e, i) => '($' + (i*5 + 1) + ', $' + (i*5 + 2) + ', $' + (i*5 + 3) + ', $' + (i*5 + 4) + ', $' + (i*5 + 5) + ')');
@@ -62,6 +72,15 @@ export class PostgresStore implements Storage {
                     '   WHERE fact.hash = v.hash AND fact.type = v.type))' +
                     ' ON CONFLICT DO NOTHING',
                     factParameters);
+                if (signatureRecords.length > 0) {
+                    await connection.query(`INSERT INTO public.signature
+                     (hash, type, public_key, signature) 
+                     (SELECT hash, type, public_key, signature 
+                      FROM (VALUES ${signatureValues.join(', ')}) AS v(hash, type, public_key, signature) 
+                      WHERE NOT EXISTS (SELECT 1 FROM public.signature 
+                       WHERE signature.hash = v.hash AND signature.type = v.type AND signature.public_key = v.public_key))
+                     ON CONFLICT DO NOTHING`, signatureParameters);
+                }
             });
         }
         return envelopes;

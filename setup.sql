@@ -105,5 +105,29 @@ IF (SELECT to_regclass('public.user') IS NULL) THEN
 
 END IF;
 
+--
+-- Signature
+--
+
+IF (SELECT to_regclass('public.signature') IS NULL) THEN
+
+    CREATE TABLE public."signature" (
+        type character varying(50),
+        hash character varying(100),
+        public_key character varying(300),
+        signature character varying(200),
+        date_learned timestamp NOT NULL
+            DEFAULT (now() at time zone 'utc')
+    );
+
+
+    ALTER TABLE public."signature" OWNER TO postgres;
+
+    CREATE UNIQUE INDEX ux_signature ON public."signature" USING btree (hash, public_key, type);
+
+    GRANT SELECT,INSERT ON TABLE public."signature" TO dev;
+
+END IF;
+
 END
 $do$
