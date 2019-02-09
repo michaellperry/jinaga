@@ -1,4 +1,3 @@
-import Keypair = require('keypair');
 import { md, pki, util } from "node-forge";
 import { PoolClient } from 'pg';
 import { canonicalizeFact, computeHash } from '../fact/hash';
@@ -90,9 +89,9 @@ export class PostgresKeystore implements Keystore {
     }
 
     private async generateKeyPair(connection: PoolClient, userIdentity: UserIdentity) {
-        const pair = Keypair({ bits: 1024 });
-        const privateKey = pair.private;
-        const publicKey = pair.public;
+        const keypair = pki.rsa.generateKeyPair({ bits: 2048 });
+        const privateKey = pki.privateKeyToPem(keypair.privateKey);
+        const publicKey = pki.publicKeyToPem(keypair.publicKey);
         await connection.query('INSERT INTO public.user (provider, user_id, private_key, public_key) VALUES ($1, $2, $3, $4)',
             [userIdentity.provider, userIdentity.id, privateKey, publicKey]);
         return publicKey;

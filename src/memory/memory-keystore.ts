@@ -1,8 +1,7 @@
-import Keypair = require('keypair');
-
+import { pki } from "node-forge";
 import { computeHash } from '../fact/hash';
 import { Keystore, UserIdentity } from "../keystore";
-import { FactRecord, PredecessorCollection, FactSignature } from "../storage";
+import { FactRecord, FactSignature, PredecessorCollection } from "../storage";
 
 export class MemoryKeystore implements Keystore {
     private keyPairs: { [key: string]: { publicKey: string, privateKey: string }} = {};
@@ -44,9 +43,9 @@ export class MemoryKeystore implements Keystore {
     }
 
     private generateKeyPair(key: string) {
-        const pair = Keypair({ bits: 1024 });
-        const privateKey = pair.private;
-        const publicKey = pair.public;
+        const keypair = pki.rsa.generateKeyPair({ bits: 1024 });
+        const privateKey = pki.privateKeyToPem(keypair.privateKey);
+        const publicKey = pki.publicKeyToPem(keypair.publicKey);
         this.keyPairs[key] = { publicKey, privateKey };
         return publicKey;
     }

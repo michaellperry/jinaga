@@ -92,8 +92,8 @@ IF (SELECT to_regclass('public.user') IS NULL) THEN
     CREATE TABLE public."user" (
         provider character varying(100),
         user_id character varying(50),
-        private_key character varying(1000),
-        public_key character varying(300)
+        private_key character varying(1800),
+        public_key character varying(500)
     );
 
 
@@ -102,6 +102,27 @@ IF (SELECT to_regclass('public.user') IS NULL) THEN
     CREATE UNIQUE INDEX ux_user ON public."user" USING btree (user_id, provider);
 
     GRANT SELECT,INSERT ON TABLE public."user" TO dev;
+
+ELSE
+
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns
+        WHERE table_schema='public' AND table_name='user' AND column_name='public_key'
+            AND character_maximum_length >= 500) THEN
+        
+        ALTER TABLE public.user
+            ALTER COLUMN public_key TYPE character varying(500);
+        
+    END IF;
+
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns
+        WHERE table_schema='public' AND table_name='user' AND column_name='private_key'
+            AND character_maximum_length >= 1800) THEN
+        
+        ALTER TABLE public.user
+            ALTER COLUMN private_key TYPE character varying(1800);
+        
+    END IF;
+
 
 END IF;
 
@@ -114,8 +135,8 @@ IF (SELECT to_regclass('public.signature') IS NULL) THEN
     CREATE TABLE public."signature" (
         type character varying(50),
         hash character varying(100),
-        public_key character varying(300),
-        signature character varying(200),
+        public_key character varying(500),
+        signature character varying(400),
         date_learned timestamp NOT NULL
             DEFAULT (now() at time zone 'utc')
     );
@@ -126,6 +147,26 @@ IF (SELECT to_regclass('public.signature') IS NULL) THEN
     CREATE UNIQUE INDEX ux_signature ON public."signature" USING btree (hash, public_key, type);
 
     GRANT SELECT,INSERT ON TABLE public."signature" TO dev;
+
+ELSE
+
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns
+        WHERE table_schema='public' AND table_name='signature' AND column_name='public_key'
+            AND character_maximum_length >= 500) THEN
+        
+        ALTER TABLE public.signature
+            ALTER COLUMN public_key TYPE character varying(500);
+        
+    END IF;
+
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns
+        WHERE table_schema='public' AND table_name='signature' AND column_name='signature'
+            AND character_maximum_length >= 400) THEN
+        
+        ALTER TABLE public.signature
+            ALTER COLUMN signature TYPE character varying(400);
+        
+    END IF;
 
 END IF;
 

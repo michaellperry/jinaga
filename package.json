@@ -45,7 +45,6 @@
   },
   "dependencies": {
     "express": "^4.11.1",
-    "keypair": "^1.0.1",
     "node-forge": "^0.7.6",
     "passport": "^0.3.2",
     "pg": "^7.4.1",
