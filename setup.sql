@@ -101,6 +101,8 @@ IF (SELECT to_regclass('public.user') IS NULL) THEN
 
     CREATE UNIQUE INDEX ux_user ON public."user" USING btree (user_id, provider);
 
+    CREATE UNIQUE INDEX ux_user_public_key ON public."user" (public_key);
+
     GRANT SELECT,INSERT ON TABLE public."user" TO dev;
 
 ELSE
@@ -123,6 +125,21 @@ ELSE
         
     END IF;
 
+    IF (SELECT to_regclass('public.duplicate_users') IS NULL) THEN
+
+        CREATE TABLE public.duplicate_users AS
+            SELECT u.provider, u.user_id, u.public_key, u.private_key
+            FROM public."user" AS u
+            JOIN (SELECT public_key FROM public."user" GROUP BY public_key HAVING count(*) > 1) AS dup
+                ON dup.public_key = u.public_key;
+                
+        DELETE FROM public."user" AS u
+            WHERE EXISTS (SELECT 1 FROM public.duplicate_users AS d
+                WHERE d.provider = u.provider AND d.user_id = u.user_id);
+
+        CREATE UNIQUE INDEX IF NOT EXISTS ux_user_public_key ON public."user" (public_key);
+
+    END IF;
 
 END IF;
 
