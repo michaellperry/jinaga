@@ -5,11 +5,11 @@ import { Feed } from './feed/feed';
 import { FeedImpl } from './feed/feed-impl';
 import { Fork } from './fork/fork';
 import { SyncStatus, SyncStatusNotifier, WebClient } from './http/web-client';
-import { Jinaga } from './jinaga';
+import { Jinaga, Preposition } from './jinaga';
 import { MemoryStore } from './memory/memory-store';
 import { Watch } from "./watch/watch";
 
-export { Jinaga, Watch, SyncStatus };
+export { Jinaga, Watch, SyncStatus, Preposition };
 
 export type JinagaBrowserConfig = {
     httpEndpoint?: string,

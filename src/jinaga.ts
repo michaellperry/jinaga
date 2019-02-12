@@ -15,6 +15,8 @@ export interface Profile {
     displayName: string;
 }
 
+export { Preposition };
+
 export class Jinaga {
     private errorHandlers: ((message: string) => void)[] = [];
     private loadingHandlers: ((loading: boolean) => void)[] = [];
@@ -303,6 +305,15 @@ export class Jinaga {
      */
     not<T, U>(condition: (target: T) => Condition<U>) : (target: T) => Condition<U> {
         return Jinaga.not(condition);
+    }
+
+    static hash<T>(fact: T) {
+        const reference = dehydrateReference(fact);
+        return reference.hash;
+    }
+
+    hash<T>(fact: T) {
+        return Jinaga.hash(fact);
     }
 
     /**
