@@ -3,6 +3,7 @@ import { PoolClient } from 'pg';
 import { canonicalizeFact, computeHash } from '../fact/hash';
 import { Keystore, UserIdentity } from '../keystore';
 import { FactRecord, FactSignature, PredecessorCollection } from '../storage';
+import { Trace } from "../util/trace";
 import { ConnectionFactory } from './connection';
 
 export class PostgresKeystore implements Keystore {
@@ -28,13 +29,15 @@ export class PostgresKeystore implements Keystore {
             const digest = md.sha512.create().update(canonicalString);
             const hash = util.encode64(digest.digest().getBytes());
             if (fact.hash !== hash) {
-                throw new Error('Hash does not match.');
+                Trace.error(`Hash does not match. "${fact.hash}" !== "${hash}"\nFact: ${canonicalString}`);
+                return [];
             }
             const signature = util.encode64(privateKey.sign(digest));
             const publicKey = <pki.rsa.PublicKey>pki.publicKeyFromPem(publicPem);
             const verified = publicKey.verify(digest.digest().getBytes(), util.decode64(signature));
             if (!verified) {
-                throw new Error('The signature did not verify correctly.');
+                Trace.error(`The signature did not verify correctly.\nHash: ${hash}\nSignature: ${signature}\nFact: ${canonicalString}\n${publicPem}`);
+                return [];
             }
             return [{
                 signature,

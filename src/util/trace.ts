@@ -1,4 +1,4 @@
-interface Tracer {
+export interface Tracer {
     warn(message: string): void;
     error(error: any): any;
 }
@@ -21,6 +21,10 @@ class ConsoleTracer implements Tracer {
 
 export class Trace {
     private static tracer: Tracer = new ConsoleTracer();
+
+    static configure(tracer: Tracer) {
+        Trace.tracer = tracer;
+    }
 
     static off() {
         Trace.tracer = new NoOpTracer();

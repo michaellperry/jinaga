@@ -1,21 +1,21 @@
 import { Authentication } from './authentication/authentication';
-import { dehydrateFact, dehydrateReference, hydrate, hydrateFromTree, HashMap } from './fact/hydrate';
+import { dehydrateFact, dehydrateReference, HashMap, hydrate, hydrateFromTree } from './fact/hydrate';
 import { runService } from './feed/service';
 import { SyncStatus, SyncStatusNotifier } from './http/web-client';
 import { MemoryStore } from './memory/memory-store';
 import { Query } from './query/query';
 import { Condition, Preposition, Specification } from './query/query-parser';
-import { ServiceRunner } from './util/serviceRunner';
 import { FactEnvelope, FactPath, uniqueFactReferences } from './storage';
+import { ServiceRunner } from './util/serviceRunner';
+import { Trace, Tracer } from './util/trace';
 import { Watch } from './watch/watch';
 import { WatchImpl } from './watch/watch-impl';
-import { Trace } from './util/trace';
     
 export interface Profile {
     displayName: string;
 }
 
-export { Preposition };
+export { Trace, Tracer, Preposition };
 
 export class Jinaga {
     private errorHandlers: ((message: string) => void)[] = [];
