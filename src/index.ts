@@ -1,4 +1,4 @@
-export { Jinaga, Profile } from './jinaga';
+export { Jinaga, Profile, Trace, Tracer, Preposition } from './jinaga';
 export { JinagaServer, JinagaServerConfig, JinagaServerInstance } from './jinaga-server';
 export { JinagaBrowser, JinagaBrowserConfig } from './jinaga-browser';
 export { Watch } from './watch/watch';
