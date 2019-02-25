@@ -26,8 +26,16 @@ export class AuthorizationKeystore implements Authorization {
         
     }
 
-    getUserFact(userIdentity: UserIdentity) {
-        return this.keystore.getUserFact(userIdentity);
+    async getUserFact(userIdentity: UserIdentity) {
+        const userFact = await this.keystore.getUserFact(userIdentity);
+        const envelopes = [
+            <FactEnvelope>{
+                fact: userFact,
+                signatures: []
+            }
+        ];
+        await this.feed.save(envelopes);
+        return userFact;
     }
 
     query(userIdentity: UserIdentity, start: FactReference, query: Query) {

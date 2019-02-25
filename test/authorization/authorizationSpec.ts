@@ -164,7 +164,7 @@ function givenAuthorizationWithStorage(storage: MemoryStore) {
     const feed = new FeedImpl(storage);
     const authorizationRules = new AuthorizationRules()
         .any('Hashtag')
-        .any('Jinaga.User')
+        .no('Jinaga.User')
         .type('Tweet', j.for(tweetSender))
         .type('Like', j.for(likeUser))
         .type('Delete', j.for(deleteSender))
