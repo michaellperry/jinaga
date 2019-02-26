@@ -79,6 +79,13 @@ describe("Watch", function () {
       tasks.splice(index, 1);
   }
 
+  it("should tolerate null start", async function () {
+    const watch = j.watch(null, j.for(tasksInList), taskAdded);
+    await watch.load();
+    watch.watch(j.for(tasksInList), (parent, result) => {});
+    watch.stop();
+  });
+
   it("should return a matching message", async function () {
     await j.watch(chores, j.for(tasksInList), taskAdded).load();
     await j.fact(trash);

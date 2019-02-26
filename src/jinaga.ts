@@ -10,6 +10,7 @@ import { ServiceRunner } from './util/serviceRunner';
 import { Trace, Tracer } from './util/trace';
 import { Watch } from './watch/watch';
 import { WatchImpl } from './watch/watch-impl';
+import { WatchNoOp } from './watch/watch-noop';
     
 export interface Profile {
     displayName: string;
@@ -96,6 +97,9 @@ export class Jinaga {
      * @returns The fact that was just created
      */
     async fact<T>(prototype: T) : Promise<T> {
+        if (!prototype) {
+            return null;
+        }
         try {
             const fact = JSON.parse(JSON.stringify(prototype));
             this.validateFact(fact);
@@ -122,6 +126,9 @@ export class Jinaga {
      * @returns A promise that resolves to an array of results
      */
     async query<T, U>(start: T, preposition: Preposition<T, U>) : Promise<U[]> {
+        if (!start) {
+            return [];
+        }
         const fact = JSON.parse(JSON.stringify(start));
         this.validateFact(fact);
         const reference = dehydrateReference(fact);
@@ -173,6 +180,9 @@ export class Jinaga {
         resultAdded: (fact: U) => (V | void),
         resultRemoved?: (model: V) => void
     ) : Watch<U, V> {
+        if (!start) {
+            return new WatchNoOp<U, V>();
+        }
         const fact = JSON.parse(JSON.stringify(start));
         this.validateFact(fact);
         const reference = dehydrateReference(fact);
@@ -191,6 +201,9 @@ export class Jinaga {
         preposition: Preposition<T, U>,
         handler: (message: U) => Promise<void>
     ) {
+        if (!start) {
+            return;
+        }
         const fact = JSON.parse(JSON.stringify(start));
         this.validateFact(fact);
         const reference = dehydrateReference(fact);
@@ -337,6 +350,9 @@ export class Jinaga {
     }
 
     private validateFact(prototype: HashMap) {
+        if (!prototype) {
+            throw new Error('A fact or any of its predecessors cannot be null.')
+        }
         if (!('type' in prototype)) {
             throw new Error('Specify the type of the fact and all of its predecessors.');
         }
