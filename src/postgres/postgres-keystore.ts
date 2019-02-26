@@ -26,7 +26,8 @@ export class PostgresKeystore implements Keystore {
             const { publicKey: publicPem, privateKey: privatePem } = await this.getPrivateKey(connection, userIdentity);
             const privateKey = <pki.rsa.PrivateKey>pki.privateKeyFromPem(privatePem);
             const canonicalString = canonicalizeFact(fact.fields, fact.predecessors);
-            const digest = md.sha512.create().update(canonicalString);
+            const encodedString = util.encodeUtf8(canonicalString);
+            const digest = md.sha512.create().update(encodedString);
             const hash = util.encode64(digest.digest().getBytes());
             if (fact.hash !== hash) {
                 Trace.error(`Hash does not match. "${fact.hash}" !== "${hash}"\nFact: ${canonicalString}`);
