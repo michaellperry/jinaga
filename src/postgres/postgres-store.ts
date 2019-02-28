@@ -1,5 +1,6 @@
+import { PoolClient } from 'pg';
 import { Query } from '../query/query';
-import { FactEnvelope, FactPath, FactRecord, FactReference, Storage } from '../storage';
+import { FactEnvelope, FactPath, FactRecord, FactReference, factReferenceEquals, Storage } from '../storage';
 import { flatten } from '../util/fn';
 import { ConnectionFactory, Row } from './connection';
 import { makeEdgeRecords } from './edge-record';
@@ -11,6 +12,13 @@ function loadFactRecord(r: Row): FactRecord {
         hash: r.hash,
         predecessors: JSON.parse(r.predecessors),
         fields: JSON.parse(r.fields)
+    };
+}
+
+function loadFactReference(r: Row): FactReference {
+    return {
+        type: r.type,
+        hash: r.hash
     };
 }
 
@@ -38,52 +46,18 @@ export class PostgresStore implements Storage {
             if (facts.some(f => !f.hash || !f.type)) {
                 throw new Error('Attempted to save a fact with no hash or type.');
             }
-            const edgeRecords = flatten(facts, makeEdgeRecords);
-            const factValues = facts.map((f, i) => '($' + (i*4 + 1) + ', $' + (i*4 + 2) + ', $' + (i*4 + 3) + ', $' + (i*4 + 4) + ')');
-            const factParameters = flatten(facts, (f) => [f.hash, f.type, JSON.stringify(f.fields), JSON.stringify(f.predecessors)]);
-            const signatureRecords = flatten(envelopes, envelope => envelope.signatures.map(signature => ({
-                type: envelope.fact.type,
-                hash: envelope.fact.hash,
-                publicKey: signature.publicKey,
-                signature: signature.signature
-            })));
-            const signatureValues = signatureRecords.map((s, i) =>
-                `($${i*4 + 1}, $${i*4 + 2}, $${i*4 + 3}, $${i*4 + 4})`);
-            const signatureParameters = flatten(signatureRecords, s =>
-                [s.hash, s.type, s.publicKey, s.signature]);
-            await this.connectionFactory.withTransaction(async (connection) => {
-                if (edgeRecords.length > 0) {
-                    const edgeValues = edgeRecords.map((e, i) => '($' + (i*5 + 1) + ', $' + (i*5 + 2) + ', $' + (i*5 + 3) + ', $' + (i*5 + 4) + ', $' + (i*5 + 5) + ')');
-                    const edgeParameters = flatten(edgeRecords, (e) => [e.predecessor_hash, e.predecessor_type, e.successor_hash, e.successor_type, e.role]);
-                    await connection.query('INSERT INTO public.edge' +
-                        ' (predecessor_hash, predecessor_type, successor_hash, successor_type, role)' +
-                        ' (SELECT predecessor_hash, predecessor_type, successor_hash, successor_type, role' +
-                        '  FROM (VALUES ' + edgeValues.join(', ') + ') AS v(predecessor_hash, predecessor_type, successor_hash, successor_type, role)' +
-                        '  WHERE NOT EXISTS (SELECT 1 FROM public.edge' +
-                        '   WHERE edge.predecessor_hash = v.predecessor_hash AND edge.predecessor_type = v.predecessor_type AND edge.successor_hash = v.successor_hash AND edge.successor_type = v.successor_type AND edge.role = v.role))' +
-                        ' ON CONFLICT DO NOTHING',
-                        edgeParameters);
-                }
-                await connection.query('INSERT INTO public.fact' +
-                    ' (hash, type, fields, predecessors)' +
-                    ' (SELECT hash, type, to_jsonb(fields), to_jsonb(predecessors)' +
-                    '  FROM (VALUES ' + factValues.join(', ') + ') AS v(hash, type, fields, predecessors)' +
-                    '  WHERE NOT EXISTS (SELECT 1 FROM public.fact' +
-                    '   WHERE fact.hash = v.hash AND fact.type = v.type))' +
-                    ' ON CONFLICT DO NOTHING',
-                    factParameters);
-                if (signatureRecords.length > 0) {
-                    await connection.query(`INSERT INTO public.signature
-                     (hash, type, public_key, signature) 
-                     (SELECT hash, type, public_key, signature 
-                      FROM (VALUES ${signatureValues.join(', ')}) AS v(hash, type, public_key, signature) 
-                      WHERE NOT EXISTS (SELECT 1 FROM public.signature 
-                       WHERE signature.hash = v.hash AND signature.type = v.type AND signature.public_key = v.public_key))
-                     ON CONFLICT DO NOTHING`, signatureParameters);
-                }
+            return await this.connectionFactory.withTransaction(async (connection) => {
+                const newFacts = await filterNewFacts(facts, connection);
+                await insertEdges(newFacts, connection);
+                await insertFacts(newFacts, connection);
+                await insertSignatures(envelopes, connection);
+                return envelopes.filter(envelope => newFacts.some(
+                    factReferenceEquals(envelope.fact)));
             });
         }
-        return envelopes;
+        else {
+            return [];
+        }
     }
 
     async query(start: FactReference, query: Query): Promise<FactPath[]> {
@@ -132,5 +106,78 @@ export class PostgresStore implements Storage {
             return await connection.query(sql, parameters);
         })
         return rows.map(loadFactRecord);
+    }
+}
+
+async function filterNewFacts(facts: FactRecord[], connection: PoolClient) {
+    if (facts.length > 0) {
+        const factValues = facts.map((f, i) =>
+            '($' + (i * 2 + 1) + ', $' + (i * 2 + 2) + ')');
+        const factParameters = flatten(facts, (f) =>
+            [f.hash, f.type]);
+
+        const { rows } = await connection.query('SELECT hash, type' +
+            '  FROM (VALUES ' + factValues.join(', ') + ') AS v(hash, type)' +
+            '  WHERE NOT EXISTS (SELECT 1 FROM public.fact' +
+            '   WHERE fact.hash = v.hash AND fact.type = v.type)', factParameters);
+            
+        const newFactReferences = rows.map(loadFactReference);
+        return facts.filter(f => newFactReferences.some(factReferenceEquals(f)));
+    }
+    else {
+        return [];
+    }
+}
+
+async function insertEdges(facts: FactRecord[], connection: PoolClient) {
+    const edgeRecords = flatten(facts, makeEdgeRecords);
+    if (edgeRecords.length > 0) {
+        const edgeValues = edgeRecords.map((e, i) =>
+            '($' + (i * 5 + 1) + ', $' + (i * 5 + 2) + ', $' + (i * 5 + 3) + ', $' + (i * 5 + 4) + ', $' + (i * 5 + 5) + ')');
+        const edgeParameters = flatten(edgeRecords, (e) =>
+            [e.predecessor_hash, e.predecessor_type, e.successor_hash, e.successor_type, e.role]);
+
+        await connection.query('INSERT INTO public.edge' +
+            ' (predecessor_hash, predecessor_type, successor_hash, successor_type, role)' +
+            ' (VALUES ' + edgeValues.join(', ') + ')' +
+            ' ON CONFLICT DO NOTHING', edgeParameters);
+    }
+}
+
+async function insertFacts(facts: FactRecord[], connection: PoolClient) {
+    if (facts.length > 0) {
+        const factValues = facts.map((f, i) =>
+            '($' + (i * 4 + 1) + ', $' + (i * 4 + 2) + ', $' + (i * 4 + 3) + ', $' + (i * 4 + 4) + ')');
+        const factParameters = flatten(facts, (f) =>
+            [f.hash, f.type, JSON.stringify(f.fields), JSON.stringify(f.predecessors)]);
+
+        await connection.query('INSERT INTO public.fact' +
+            ' (hash, type, fields, predecessors)' +
+            ' (SELECT hash, type, to_jsonb(fields), to_jsonb(predecessors)' +
+            '  FROM (VALUES ' + factValues.join(', ') + ') AS v(hash, type, fields, predecessors))' +
+            ' ON CONFLICT DO NOTHING', factParameters);
+    }
+}
+
+async function insertSignatures(envelopes: FactEnvelope[], connection: PoolClient) {
+    const signatureRecords = flatten(envelopes, envelope => envelope.signatures.map(signature => ({
+        type: envelope.fact.type,
+        hash: envelope.fact.hash,
+        publicKey: signature.publicKey,
+        signature: signature.signature
+    })));
+    if (signatureRecords.length > 0) {
+        const signatureValues = signatureRecords.map((s, i) =>
+            `($${i * 4 + 1}, $${i * 4 + 2}, $${i * 4 + 3}, $${i * 4 + 4})`);
+        const signatureParameters = flatten(signatureRecords, s =>
+            [s.hash, s.type, s.publicKey, s.signature]);
+
+        await connection.query(`INSERT INTO public.signature
+            (hash, type, public_key, signature) 
+            (SELECT hash, type, public_key, signature 
+            FROM (VALUES ${signatureValues.join(', ')}) AS v(hash, type, public_key, signature) 
+            WHERE NOT EXISTS (SELECT 1 FROM public.signature 
+            WHERE signature.hash = v.hash AND signature.type = v.type AND signature.public_key = v.public_key))
+            ON CONFLICT DO NOTHING`, signatureParameters);
     }
 }
