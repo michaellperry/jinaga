@@ -43,8 +43,8 @@ export class Preposition<T, U> {
      * @param specification A template function, which returns j.match
      * @returns A preposition that can be passed to query or watch, or used to construct a preposition chain
      */
-    then<V>(specification: (target : U) => Specification<V>): Preposition<U, V> {
-        return new Preposition<U, V>(this.steps.concat(parseTemplate(specification)));
+    then<V>(specification: (target : U) => Specification<V>): Preposition<T, V> {
+        return new Preposition<T, V>(this.steps.concat(parseTemplate(specification)));
     }
 
     static for<T, U>(specification: (target : T) => Specification<U>): Preposition<T, U> {
