@@ -5,8 +5,11 @@
   "main": "dist/index.js",
   "types": "dist/types/index.d.ts",
   "scripts": {
-    "start": "gulp",
-    "test": "gulp test"
+    "clean": "rm -rf ./dist",
+    "build": "webpack",
+    "test": "mocha --opts mocha.opts",
+    "test:watch": "mocha --opts mocha.opts --watch",
+    "dev": "nodemon -e ts -w ./src -x npm run test:watch"
   },
   "repository": {
     "type": "git",
@@ -29,19 +32,18 @@
     "@types/node-forge": "^0.7.11",
     "@types/passport": "^0.3.2",
     "@types/pg": "^7.4.13",
+    "acorn": "^6.1.1",
     "chai": "^4.2.0",
     "chai-as-promised": "^7.1.1",
     "del": "^3.0.0",
-    "gulp": "^4.0.0",
-    "gulp-mocha": "^6.0.0",
-    "gulp-sourcemaps": "^2.6.5",
-    "gulp-typescript": "^5.0.0",
     "mocha": "^5.2.0",
+    "nodemon": "^1.18.10",
     "source-map-support": "^0.5.10",
     "ts-loader": "^4.5.0",
+    "ts-node": "^8.0.2",
     "typescript": "^2.9.2",
-    "webpack": "^4.29.5",
-    "webpack-stream": "^4.0.3"
+    "webpack": "^4.29.6",
+    "webpack-cli": "^3.2.3"
   },
   "dependencies": {
     "express": "^4.16.4",
