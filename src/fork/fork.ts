@@ -85,7 +85,7 @@ export class Fork implements Feed {
         const paths = queryResponse.results;
         if (paths.length > 0) {
             const references = distinct(flatten(paths, p => p));
-            await this.loadRecords(references);
+            await this.load(references);
         }
     }
 
