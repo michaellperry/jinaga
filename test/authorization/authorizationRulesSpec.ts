@@ -217,6 +217,15 @@ describe('Authorization rules', () => {
         expect(authorized).to.be.false;
     });
 
+    it('should accept permissive fact when not logged in', async () => {
+        const authorizationRules = givenAuthorizationRules(a => a
+            .any(Message.Type));
+        const fact = givenMessage();
+        const authorized = await whenAuthorize(authorizationRules, null, fact);
+
+        expect(authorized).to.be.true;
+    });
+
     it('should reject known fact from no user', async () => {
         const authorizationRules = givenAuthorizationRules(a => a
             .type(Message.Type, j.for(Message.authorOf)));

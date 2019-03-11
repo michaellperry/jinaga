@@ -22,6 +22,10 @@ export class PostgresKeystore implements Keystore {
     }
 
     async signFact(userIdentity: UserIdentity, fact: FactRecord): Promise<FactSignature[]> {
+        if (!userIdentity) {
+            return [];
+        }
+        
         return await this.connectionFactory.withTransaction(async connection => {
             const { publicKey: publicPem, privateKey: privatePem } = await this.getPrivateKey(connection, userIdentity);
             const privateKey = <pki.rsa.PrivateKey>pki.privateKeyFromPem(privatePem);
