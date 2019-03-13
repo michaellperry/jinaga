@@ -39,9 +39,9 @@
     "del": "^3.0.0",
     "mocha": "^5.2.0",
     "nodemon": "^1.18.10",
-    "source-map-support": "^0.5.10",
+    "source-map-support": "^0.5.11",
     "ts-loader": "^4.5.0",
-    "ts-node": "^8.0.2",
+    "ts-node": "^8.0.3",
     "typescript": "^2.9.2",
     "webpack": "^4.29.6",
     "webpack-cli": "^3.2.3"
@@ -50,7 +50,7 @@
     "express": "^4.16.4",
     "node-forge": "^0.7.6",
     "passport": "^0.3.2",
-    "pg": "^7.8.1",
+    "pg": "^7.8.2",
     "tweetnacl": "^1.0.0",
     "tweetnacl-util": "^0.15.0"
   }
