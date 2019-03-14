@@ -5,7 +5,7 @@ import { SyncStatus, SyncStatusNotifier } from './http/web-client';
 import { MemoryStore } from './memory/memory-store';
 import { Query } from './query/query';
 import { Condition, Preposition, Specification } from './query/query-parser';
-import { FactEnvelope, FactPath, uniqueFactReferences } from './storage';
+import { FactEnvelope, FactPath, uniqueFactReferences, FactRecord } from './storage';
 import { ServiceRunner } from './util/serviceRunner';
 import { Trace, Tracer } from './util/trace';
 import { Watch } from './watch/watch';
@@ -327,6 +327,20 @@ export class Jinaga {
 
     hash<T>(fact: T) {
         return Jinaga.hash(fact);
+    }
+
+    async load<T>(type: string, hash: string) {
+        const references = [{ type, hash }];
+        const records = await this.store.load(references);
+        if (records.length === 0) {
+            return null;
+        }
+        const loaded = hydrateFromTree(references, records);
+        return loaded[0] as T;
+    }
+
+    onFactAdded(factAdded: (factRecord: FactRecord) => void): () => void {
+        return this.store.onFactAdded(factAdded);
     }
 
     /**

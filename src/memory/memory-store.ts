@@ -42,6 +42,7 @@ function loadAll(references: FactReference[], source: FactRecord[], target: Fact
 
 export class MemoryStore implements Storage {
     private factRecords: FactRecord[] = [];
+    private factAddedListeners: ((factRecord: FactRecord) => void)[] = [];
 
     save(envelopes: FactEnvelope[]): Promise<FactEnvelope[]> {
         const added: FactEnvelope[] = [];
@@ -50,6 +51,11 @@ export class MemoryStore implements Storage {
                 this.factRecords.push(envelope.fact);
                 added.push(envelope);
             }
+        });
+        this.factAddedListeners.forEach(listener => {
+            added.forEach(factEnvelope => {
+                listener(factEnvelope.fact);
+            });
         });
         return Promise.resolve(added);
     }
@@ -68,6 +74,16 @@ export class MemoryStore implements Storage {
         let target: FactRecord[] = [];
         loadAll(references, this.factRecords, target);
         return Promise.resolve(target);
+    }
+
+    onFactAdded(factAdded: (factRecord: FactRecord) => void): () => void {
+        this.factAddedListeners.push(factAdded);
+        return () => {
+            const index = this.factAddedListeners.indexOf(factAdded);
+            if (index >= 0) {
+                this.factAddedListeners.splice(index, 1);
+            }
+        };
     }
 
     private executeQuery(start: FactReference, steps: Step[]) {

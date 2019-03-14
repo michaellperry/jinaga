@@ -10,6 +10,7 @@ import { MemoryStore } from './memory/memory-store';
 import { Watch } from "./watch/watch";
 
 export { Jinaga, Watch, SyncStatus, Preposition, Trace, Tracer };
+export { FactRecord, FactReference, PredecessorCollection } from './storage';
 
 export type JinagaBrowserConfig = {
     httpEndpoint?: string,
