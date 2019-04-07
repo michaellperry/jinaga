@@ -2,7 +2,7 @@ import { expect } from 'chai';
 
 import { AuthorizationRules } from '../../src/authorization/authorizationRules';
 import { dehydrateFact } from '../../src/fact/hydrate';
-import { Jinaga as j } from '../../src/jinaga';
+import { Jinaga as j, ensure } from '../../src/jinaga';
 import { MemoryStore } from '../../src/memory/memory-store';
 import { FactRecord, FactReference } from '../../src/storage';
 import { Trace } from '../../src/util/trace';
@@ -121,7 +121,7 @@ class Member {
     user: User;
 
     static user(m: Member) {
-        (<any>m).has('user');
+        ensure(m).has("user");
 
         return j.match(m.user);
     }
@@ -135,13 +135,13 @@ class Message {
     group: Group;
 
     static authorOf(m: Message) {
-        (<any>m).has('author');
+        ensure(m).has("author");
 
         return j.match(m.author);
     }
 
     static group(m: Message) {
-        (<any>m).has('group');
+        ensure(m).has("group");
 
         return j.match(m.group);
     }
@@ -162,7 +162,7 @@ class Approval {
     }
 
     static by(a: Approval) {
-        (<any>a).has('approver');
+        ensure(a).has("approver");
 
         return j.match(a.approver);
     }
@@ -173,7 +173,7 @@ function emptyQuery(m: Message) {
 }
 
 function typeQuery(m: Message) {
-    (<any>m).has('author');
+    ensure(m).has("author");
     m.type = Message.Type;
 
     return j.match(m.author);

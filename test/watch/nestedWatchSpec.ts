@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { Jinaga } from "../../src/jinaga";
+import { Jinaga, ensure } from "../../src/jinaga";
 import { MemoryStore } from "../../src/memory/memory-store";
 import { MockAuthentication } from "./mock-authentication";
 
@@ -76,8 +76,8 @@ describe("Nested watch", function () {
     }
 
     function namesOfSender(m: Message) {
-        (<any>m).has('sender');
-        (<any>m).sender.type = 'Person';
+        ensure(m).has("sender");
+        m.sender.type = 'Person';
         return j.match(<Name>{
             type: 'Name',
             person: m.sender

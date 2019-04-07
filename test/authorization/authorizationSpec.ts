@@ -3,7 +3,7 @@ import { AuthorizationKeystore } from "../../src/authorization/authorization-key
 import { AuthorizationRules } from "../../src/authorization/authorizationRules";
 import { dehydrateFact, hydrate } from "../../src/fact/hydrate";
 import { FeedImpl } from "../../src/feed/feed-impl";
-import { Jinaga as j } from "../../src/jinaga";
+import { Jinaga as j, ensure } from "../../src/jinaga";
 import { MemoryKeystore } from "../../src/memory/memory-keystore";
 import { MemoryStore } from "../../src/memory/memory-store";
 import { FactRecord } from "../../src/storage";
@@ -200,19 +200,19 @@ async function whenSave(authorization: AuthorizationKeystore, facts: FactRecord[
 }
 
 function tweetSender(t: { sender: {} }) {
-    (<any>t).has('sender');
+    ensure(t).has("sender");
 
     return j.match(t.sender);
 }
 
 function likeUser(l: { user: {} }) {
-    (<any>l).has('user');
+    ensure(l).has("user");
 
     return j.match(l.user);
 }
 
 function deleteSender(d: { tweet: { sender: {} } }) {
-    (<any>d).has('tweet').has('sender');
+    ensure(d).has("tweet").has("sender");
 
     return j.match(d.tweet.sender);
 }

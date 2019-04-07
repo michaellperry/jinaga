@@ -4,7 +4,7 @@ import { runService } from './feed/service';
 import { SyncStatus, SyncStatusNotifier } from './http/web-client';
 import { MemoryStore } from './memory/memory-store';
 import { Query } from './query/query';
-import { Condition, Preposition, Specification } from './query/query-parser';
+import { Condition, ensure, FactDescription, Preposition, Specification } from './query/query-parser';
 import { FactEnvelope, FactPath, uniqueFactReferences } from './storage';
 import { ServiceRunner } from './util/serviceRunner';
 import { Trace, Tracer } from './util/trace';
@@ -16,7 +16,7 @@ export interface Profile {
     displayName: string;
 }
 
-export { Trace, Tracer, Preposition };
+export { Trace, Tracer, Preposition, FactDescription, ensure };
 
 export class Jinaga {
     private errorHandlers: ((message: string) => void)[] = [];

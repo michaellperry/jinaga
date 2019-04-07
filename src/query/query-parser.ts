@@ -131,3 +131,18 @@ function parseTemplate(template: (target: any) => any): Step[] {
     }
     return steps;
 }
+
+export class FactDescription<T> {
+    constructor(
+        private fact: T
+    ) { }
+
+    has<K extends keyof T>(field: K): FactDescription<T[K]> {
+        (<any>this.fact).has(field);
+        return new FactDescription<T[K]>(this.fact[field]);
+    }
+}
+
+export function ensure<T>(fact: T) {
+    return new FactDescription<T>(fact);
+}

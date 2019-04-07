@@ -5,7 +5,7 @@ import { describe, it } from 'mocha';
 
 import { Jinaga } from '../../src/jinaga';
 import { Query } from '../../src/query/query';
-import { Condition, Preposition, Specification } from '../../src/query/query-parser';
+import { Condition, Preposition, Specification, ensure } from '../../src/query/query-parser';
 
 describe('Query parser', () => {
 
@@ -31,13 +31,13 @@ describe('Query parser', () => {
     }
 
     function listOfTask(t: Task): Specification<List> {
-        (<any>t).has('list');
+        ensure(t).has("list");
         t.type = 'Task';
         return j.match(t.list);
     }
 
     function listOfCompletion(c: Completion): Specification<List> {
-        (<any>c).has('task').has('list');
+        ensure(c).has("task").has("list");
         c.type = 'Completion';
         c.task.type = 'Task';
         return j.match(c.task.list);
