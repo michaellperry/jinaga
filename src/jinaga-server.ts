@@ -8,19 +8,22 @@ import { AuthorizationRules } from './authorization/authorizationRules';
 import { Cache } from './cache';
 import { Feed } from './feed/feed';
 import { FeedImpl } from './feed/feed-impl';
+import { Fork } from './fork/fork';
+import { NodeHttpConnection } from './http/node-http';
 import { HttpRouter, RequestUser } from './http/router';
+import { SyncStatusNotifier, WebClient } from './http/web-client';
 import { Jinaga } from './jinaga';
 import { Keystore, UserIdentity } from './keystore';
 import { MemoryStore } from './memory/memory-store';
 import { PostgresKeystore } from './postgres/postgres-keystore';
 import { PostgresStore } from './postgres/postgres-store';
 import { Storage } from './storage';
-import { SyncStatusNotifier } from './http/web-client';
 
 
 export type JinagaServerConfig = {
     pgStore?: string,
     pgKeystore?: string,
+    httpEndpoint?: string,
     authorization?: (a: AuthorizationRules) => AuthorizationRules
 };
 
@@ -37,14 +40,15 @@ const localDeviceIdentity = {
 
 export class JinagaServer {
     static create(config: JinagaServerConfig): JinagaServerInstance {
+        const syncStatusNotifier = new SyncStatusNotifier();
         const store = createStore(config);
         const feed = new FeedImpl(store);
-        const authorization = createAuthorization(config, feed);
+        const fork = createFork(config, feed, syncStatusNotifier);
+        const authorization = createAuthorization(config, fork);
         const router = new HttpRouter(authorization);
         const keystore = new PostgresKeystore(config.pgKeystore);
-        const authentication = new AuthenticationDevice(feed, keystore, localDeviceIdentity);
+        const authentication = new AuthenticationDevice(fork, keystore, localDeviceIdentity);
         const memory = new MemoryStore();
-        const syncStatusNotifier = new SyncStatusNotifier();
         const j: Jinaga = new Jinaga(authentication, memory, syncStatusNotifier);
         return {
             handler: router.handler,
@@ -64,6 +68,18 @@ function createStore(config: JinagaServerConfig): Storage {
     }
     else {
         return new MemoryStore();
+    }
+}
+
+function createFork(config: JinagaServerConfig, feed: Feed, syncStatusNotifier: SyncStatusNotifier): Feed {
+    if (config.httpEndpoint) {
+        const httpConnection = new NodeHttpConnection(config.httpEndpoint);
+        const webClient = new WebClient(httpConnection, syncStatusNotifier);
+        const fork = new Fork(feed, webClient);
+        return fork;
+    }
+    else {
+        return feed;
     }
 }
 

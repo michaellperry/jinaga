@@ -5,6 +5,7 @@ import { Feed } from './feed/feed';
 import { FeedImpl } from './feed/feed-impl';
 import { Fork } from './fork/fork';
 import { SyncStatus, SyncStatusNotifier, WebClient } from './http/web-client';
+import { XhrConnection } from './http/xhr';
 import { ensure, FactDescription, Jinaga, Preposition, Trace, Tracer } from './jinaga';
 import { MemoryStore } from './memory/memory-store';
 import { Watch } from "./watch/watch";
@@ -33,7 +34,8 @@ function createAuthentication(
     syncStatusNotifier: SyncStatusNotifier
 ): Authentication {
     if (config.httpEndpoint) {
-        const webClient = new WebClient(config.httpEndpoint, syncStatusNotifier);
+        const httpConnection = new XhrConnection(config.httpEndpoint);
+        const webClient = new WebClient(httpConnection, syncStatusNotifier);
         const fork = new Fork(feed, webClient);
         const authentication = new AuthenticationImpl(fork, webClient);
         return authentication;

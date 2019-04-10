@@ -1,47 +1,4 @@
-import {
-    LoadMessage,
-    LoadResponse,
-    LoginResponse,
-    QueryMessage,
-    QueryResponse,
-    SaveMessage,
-    SaveResponse,
-} from './messages';
-
-function createXHR(
-    method: string,
-    path: string,
-    resolve: (result: any) => void,
-    reject: (reason: any) => void,
-    retry: (reason: any) => void
-) {
-    const xhr = new XMLHttpRequest();
-    xhr.open(method, path, true);
-    xhr.onload = () => {
-        if (xhr.status === 403) {
-            reject(xhr.responseText);
-        }
-        else if (xhr.status >= 400) {
-            retry(xhr.responseText);
-        }
-        else if (xhr.responseType === 'json') {
-            const response = <{}>xhr.response;
-            resolve(response);
-        }
-        else {
-            const response = <{}>JSON.parse(xhr.response);
-            resolve(response);
-        }
-    };
-    xhr.ontimeout = (event) => {
-        retry('Network request timed out.');
-    };
-    xhr.onerror = (event) => {
-        retry('Network request failed.');
-    };
-    xhr.setRequestHeader('Accept', 'application/json');
-    return xhr;
-}
+import { LoadMessage, LoadResponse, LoginResponse, QueryMessage, QueryResponse, SaveMessage, SaveResponse } from './messages';
 
 export type SyncStatus = {
     sending: boolean;
@@ -64,14 +21,42 @@ export class SyncStatusNotifier {
     }
 }
 
+export interface HttpSuccess {
+    result: "success";
+    response: {}
+}
+
+export interface HttpFailure {
+    result: "failure";
+    error: string;
+}
+
+export interface HttpRetry {
+    result: "retry";
+    error: string
+}
+
+export type HttpResponse = HttpSuccess | HttpFailure | HttpRetry;
+
+export interface HttpConnection {
+    get(path: string): Promise<{}>;
+    post(path: string, body: {}, timeoutSeconds: number): Promise<HttpResponse>;
+}
+
+function delay(timeSeconds: number): Promise<void> {
+    return new Promise<void>((resolve, reject) => {
+        setTimeout(resolve, timeSeconds * 1000);
+    });
+}
+
 export class WebClient {
     constructor(
-        private url: string,
+        private httpConnection: HttpConnection,
         private syncStatusNotifier: SyncStatusNotifier) {
     }
 
     async login() {
-        return <LoginResponse> await this.get('/login');
+        return <LoginResponse> await this.httpConnection.get('/login');
     }
 
     async query(query: QueryMessage) {
@@ -86,62 +71,47 @@ export class WebClient {
         return <LoadResponse> await this.post('/load', load);
     }
 
-    private async get(path: string) {
-        return new Promise<{}>((resolve, reject) => {
-            const xhr = createXHR('GET', this.url + path, resolve, reject, reject);
-            xhr.send();
-        });
-    }
-
     private async post(path: string, body: {}) {
-        return new Promise<{}>((resolve, reject) => {
-            let timeoutSeconds = 5;
-            let retrySeconds = 1;
-            const send = () => {
+        let timeoutSeconds = 5;
+        let retrySeconds = 1;
+
+        while (true) {
+            this.syncStatusNotifier.notify({
+                sending: true,
+                retrying: false,
+                retryInSeconds: 0,
+                warning: ''
+            });
+            const response = await this.httpConnection.post(path, body, timeoutSeconds);
+            if (response.result === "success") {
                 this.syncStatusNotifier.notify({
-                    sending: true,
+                    sending: false,
                     retrying: false,
                     retryInSeconds: 0,
                     warning: ''
                 });
-                const xhr = createXHR('POST', this.url + path,
-                    (result: any) => {
-                        this.syncStatusNotifier.notify({
-                            sending: false,
-                            retrying: false,
-                            retryInSeconds: 0,
-                            warning: ''
-                        });
-                        resolve(result);
-                    },
-                    (result: any) => {
-                        this.syncStatusNotifier.notify({
-                            sending: false,
-                            retrying: false,
-                            retryInSeconds: 0,
-                            warning: result
-                        });
-                        reject(result);
-                    },
-                    retry);
-                xhr.setRequestHeader('Content-Type', 'application/json');
-                xhr.timeout = timeoutSeconds * 1000;
-                xhr.send(JSON.stringify(body));
-            };
-            const retry = (reason: any) => {
+                return response.response;
+            }
+            else if (response.result === "failure") {
+                this.syncStatusNotifier.notify({
+                    sending: false,
+                    retrying: false,
+                    retryInSeconds: 0,
+                    warning: response.error
+                });
+                throw new Error(response.error);
+            }
+            else {
                 this.syncStatusNotifier.notify({
                     sending: false,
                     retrying: true,
                     retryInSeconds: retrySeconds,
-                    warning: reason
+                    warning: response.error
                 });
-                setTimeout(() => {
-                    timeoutSeconds = Math.min(timeoutSeconds * 2, 60);
-                    retrySeconds = Math.min(retrySeconds * 2, 60);
-                    send();
-                }, retrySeconds * 1000);
-            };
-            send();
-        });
+                await delay(retrySeconds);
+                timeoutSeconds = Math.min(timeoutSeconds * 2, 60);
+                retrySeconds = Math.min(retrySeconds * 2, 60);
+            }
+        }
     }
 }

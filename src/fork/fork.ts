@@ -35,7 +35,7 @@ class ForkObservable implements Observable {
 
 export class Fork implements Feed {
     constructor(
-        private storage: Feed,
+        private feed: Feed,
         private client: WebClient
     ) {
         
@@ -43,13 +43,13 @@ export class Fork implements Feed {
 
     async save(envelopes: FactEnvelope[]): Promise<FactEnvelope[]> {
         const response = await this.client.save(serializeSave(envelopes));
-        const saved = await this.storage.save(envelopes);
+        const saved = await this.feed.save(envelopes);
         return saved;
     }
 
     async query(start: FactReference, query: Query) {
         if (query.isDeterministic()) {
-            const results = await this.storage.query(start, query);
+            const results = await this.feed.query(start, query);
             return results;
         }
         else {
@@ -63,7 +63,7 @@ export class Fork implements Feed {
     }
 
     async load(references: FactReference[]): Promise<FactRecord[]> {
-        const known = await this.storage.load(references);
+        const known = await this.feed.load(references);
         const remaining = references.filter(reference => !known.some(factReferenceEquals(reference)));
         if (remaining.length === 0) {
             return known;
@@ -75,7 +75,7 @@ export class Fork implements Feed {
     }
 
     from(fact: FactReference, query: Query): Observable {
-        const observable = this.storage.from(fact, query);
+        const observable = this.feed.from(fact, query);
         const loaded = this.initiateQuery(fact, query);
         return new ForkObservable(observable, loaded);
     }
@@ -102,7 +102,7 @@ export class Fork implements Feed {
                     signatures: []
                 };
             });
-            await this.storage.save(envelopes);
+            await this.feed.save(envelopes);
             records = records.concat(facts);
         }
         return records;
