@@ -1,8 +1,10 @@
 var path = require('path');
+var nodeExternals = require('webpack-node-externals');
 
 module.exports = [
     {
         mode: 'production',
+        target: 'web',
         entry: './src/jinaga-browser.ts',
         devtool: 'source-map',
         module: {
@@ -23,6 +25,7 @@ module.exports = [
     },
     {
         mode: 'production',
+        target: 'node',
         entry: './src/index.ts',
         devtool: 'source-map',
         module: {
@@ -39,25 +42,8 @@ module.exports = [
             path: path.resolve(__dirname, './dist'),
             filename: 'index.js'
         },
-        externals: {
-            express: {
-                commonjs: 'express'
-            },
-            pg: {
-                commonjs: 'pg'
-            },
-            keypair: {
-                commonjs: 'keypair'
-            },
-            tweetnacl: {
-                commonjs: 'tweetnacl'
-            },
-            'tweetnacl-util': {
-                commonjs: 'tweetnacl-util'
-            },
-            'node-forge': {
-                commonjs: 'node-forge'
-            }
-        }
+        externals: [
+            nodeExternals()
+        ]
     }
 ]
