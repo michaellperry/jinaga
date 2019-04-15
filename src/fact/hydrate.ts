@@ -1,5 +1,6 @@
-import { computeHash } from './hash';
 import { FactRecord, FactReference, PredecessorCollection } from '../storage';
+import { toJSON } from '../util/obj';
+import { computeHash } from './hash';
 
 export type HashMap = { [key: string]: any };
 
@@ -9,7 +10,7 @@ type DehydrationEntry = {
     reference: FactReference
 };
 
-class Dehydration {
+export class Dehydration {
     private entries : DehydrationEntry[] = [];
 
     factRecords() {
@@ -45,7 +46,7 @@ class Dehydration {
         let fields: HashMap = {};
         let predecessors: PredecessorCollection = {};
         for (let field in fact) {
-            const value = fact[field];
+            const value = toJSON(fact[field]);
             if (value === null || value === undefined) {
                 // Skip
             }
@@ -78,6 +79,8 @@ type HydrationEntry = {
     record: FactRecord,
     fact: HashMap
 }
+
+const hashSymbol = typeof(Symbol) === "undefined" ? null : Symbol("hash");
 
 export class Hydration {
     private entries: HydrationEntry[];
@@ -115,6 +118,9 @@ export class Hydration {
 
         entry.fact = fact;
 
+        if (hashSymbol) {
+            (fact as any)[hashSymbol] = reference.hash;
+        }
         return fact;
     }
 
@@ -126,6 +132,10 @@ export class Hydration {
             return this.hydrate(references);
         }
     }
+}
+
+export function lookupHash<T extends Object>(fact: T) {
+    return hashSymbol && (fact as any)[hashSymbol] as string;
 }
 
 export function hydrate<T>(record: FactRecord) {

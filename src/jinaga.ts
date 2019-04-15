@@ -1,11 +1,12 @@
 import { Authentication } from './authentication/authentication';
-import { dehydrateFact, dehydrateReference, HashMap, hydrate, hydrateFromTree } from './fact/hydrate';
+import { dehydrateReference, Dehydration, HashMap, hydrate, hydrateFromTree, lookupHash } from './fact/hydrate';
 import { runService } from './feed/service';
 import { SyncStatus, SyncStatusNotifier } from './http/web-client';
 import { MemoryStore } from './memory/memory-store';
 import { Query } from './query/query';
 import { Condition, ensure, FactDescription, Preposition, Specification } from './query/query-parser';
 import { FactEnvelope, FactPath, uniqueFactReferences } from './storage';
+import { toJSON } from './util/obj';
 import { ServiceRunner } from './util/serviceRunner';
 import { Trace, Tracer } from './util/trace';
 import { Watch } from './watch/watch';
@@ -101,9 +102,11 @@ export class Jinaga {
             return null;
         }
         try {
-            const fact = JSON.parse(JSON.stringify(prototype));
-            this.validateFact(fact);
-            const factRecords = dehydrateFact(fact);
+            this.validateFact(prototype);
+            const dehydration = new Dehydration();
+            const reference = dehydration.dehydrate(prototype);
+            const factRecords = dehydration.factRecords();
+            const hydrated = hydrateFromTree([reference], factRecords)[0];
             const envelopes = factRecords.map(fact => {
                 return <FactEnvelope>{
                     fact: fact,
@@ -111,7 +114,7 @@ export class Jinaga {
                 };
             });
             const saved = await this.authentication.save(envelopes);
-            return fact;
+            return hydrated as T;
         } catch (error) {
             this.error(error);
             throw error;
@@ -321,6 +324,10 @@ export class Jinaga {
     }
 
     static hash<T>(fact: T) {
+        const hash = lookupHash(fact);
+        if (hash) {
+            return hash;
+        }
         const reference = dehydrateReference(fact);
         return reference.hash;
     }
@@ -357,7 +364,7 @@ export class Jinaga {
             throw new Error('Specify the type of the fact and all of its predecessors.');
         }
         for (const field in prototype) {
-            const value = prototype[field];
+            const value = toJSON(prototype[field]);
             if (typeof(value) === 'object') {
                 if (Array.isArray(value)) {
                     value
