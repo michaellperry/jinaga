@@ -6,6 +6,7 @@ import { FactPath, FactReference, uniqueFactReferences } from '../storage';
 import { ModelMap } from './model-map';
 import { Watch } from './watch';
 import { mapAsync } from '../util/fn';
+import { Trace } from '../util/trace';
 
 interface WatchChild {
     load(): Promise<void>;
@@ -82,10 +83,16 @@ export class WatchImpl<Fact, Model> implements Watch<Fact, Model>, WatchChild {
         paths.forEach(path => {
             if (!this.modelMap.hasModel(path)) {
                 const factReference = path[path.length - 1];
-                const fact = <Fact>hydration.hydrate(factReference);
-                this.resultAdded(path, fact, (model: Model) => {
-                    this.modelMap.setModel(path, model);
-                });
+                try {
+                    const fact = <Fact>hydration.hydrate(factReference);
+                    this.resultAdded(path, fact, (model: Model) => {
+                        this.modelMap.setModel(path, model);
+                    });
+                }
+                catch (x) {
+                    // Log and continue.
+                    Trace.error(x);
+                }
             }
         });
     }

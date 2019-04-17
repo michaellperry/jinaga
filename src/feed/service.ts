@@ -4,6 +4,7 @@ import { FactReference, factReferenceEquals } from '../storage';
 import { mapAsync } from '../util/fn';
 import { ServiceRunner } from '../util/serviceRunner';
 import { Feed } from './feed';
+import { Trace } from '../util/trace';
 
 export function runService<U>(feed: Feed, start: FactReference, query: Query, serviceRunner: ServiceRunner, handler: (message: U) => Promise<void>) {
     let processing: FactReference[] = [];
@@ -15,8 +16,14 @@ export function runService<U>(feed: Feed, start: FactReference, query: Query, se
                 const hydration = new Hydration(recordsAdded);
                 await mapAsync(factsAdded, async reference => {
                     processing.push(reference);
-                    const fact = <U>hydration.hydrate(reference);
-                    await handler(fact);
+                    try {
+                        const fact = <U>hydration.hydrate(reference);
+                        await handler(fact);
+                    }
+                    catch (x) {
+                        // Log and continue.
+                        Trace.error(x);
+                    }
                 });
                 if (processing.length > 0) {
                     throw new Error(
