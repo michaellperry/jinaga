@@ -43,6 +43,7 @@ function post<T, U>(method: (user: RequestUser, message: T) => Promise<U>): Hand
             })
             .catch(error => {
                 if (error instanceof Forbidden) {
+                    Trace.warn(error.message);
                     res.status(403).send(error.message);
                 }
                 else {
