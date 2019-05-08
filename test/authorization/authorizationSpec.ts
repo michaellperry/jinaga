@@ -148,7 +148,94 @@ describe('Authorization', () => {
         }));
         expect(result.length).to.be.greaterThan(0);
     });
+
+    it('should authorize catalog access', async () => {
+        const authorization = givenAuthorizationRules(a => a
+            .any('Jinaga.User')
+            .type('ImprovingU.Company', j.for(creator))
+            .any('ImprovingU.Semester')
+            .any('ImprovingU.Catalog')
+            .type('ImprovingU.Catalog.Access', j.for(catalog).then(semester).then(company).then(creator))
+            .any('ImprovingU.Catalog.AccessRequest.Response')
+            );
+        const user = await givenLoggedInUser(authorization);
+        const access = {
+            "from": user,
+            "accessRequest": {
+                "createdAt": "2019-05-06T15:22:55.906Z",
+                "type": "ImprovingU.Catalog.AccessRequest",
+                "from": {
+                    "publicKey": "-----BEGIN PUBLIC KEY-----\r\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEArzy94kEgtlyDLTkGlac+\r\nnpMlL2uTqWr0nrNpOA77P/lg2q8daZ05yn6y8KLB8txLhHtzjz6eAEBEbiXhLHTI\r\nuJoYv8vSsM+ZpmsotIrV2RaZpvrHU0VHiNrgzNl2rjiW5DDy6vSUnvXSpdE+S1zG\r\n548xr/iVaapTaUoW4u+xxp3r/3yaznd+T3dBNJ+jxmcYzyZUAyaqIHCDmV8pCOVx\r\n2/wsIO6z2pVr0UuhR1CJv4ok8cwtfsOIOaAf6Q73rrE6exTaJz/vX54y8GTJhyr+\r\nRmX/WBLCFJfvICXqQrT/Yqh6fuwe8+Ovnrfk3dBf8bwkgMd+JljiRe1U6F4cpeWC\r\nfwIDAQAB\r\n-----END PUBLIC KEY-----\r\n",
+                    "type": "Jinaga.User"
+                },
+                "catalog": {
+                    "office": "Dallas",
+                    "type": "ImprovingU.Catalog",
+                    "_in": {
+                        "name": "Summer 2019",
+                        "type": "ImprovingU.Semester",
+                        "company": {
+                            "name": "Improving",
+                            "type": "ImprovingU.Company",
+                            "from": user
+                        }
+                    }
+                }
+            },
+            "authorization": [
+                {
+                    "to": {
+                        "publicKey": "-----BEGIN PUBLIC KEY-----\r\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEArzy94kEgtlyDLTkGlac+\r\nnpMlL2uTqWr0nrNpOA77P/lg2q8daZ05yn6y8KLB8txLhHtzjz6eAEBEbiXhLHTI\r\nuJoYv8vSsM+ZpmsotIrV2RaZpvrHU0VHiNrgzNl2rjiW5DDy6vSUnvXSpdE+S1zG\r\n548xr/iVaapTaUoW4u+xxp3r/3yaznd+T3dBNJ+jxmcYzyZUAyaqIHCDmV8pCOVx\r\n2/wsIO6z2pVr0UuhR1CJv4ok8cwtfsOIOaAf6Q73rrE6exTaJz/vX54y8GTJhyr+\r\nRmX/WBLCFJfvICXqQrT/Yqh6fuwe8+Ovnrfk3dBf8bwkgMd+JljiRe1U6F4cpeWC\r\nfwIDAQAB\r\n-----END PUBLIC KEY-----\r\n",
+                        "type": "Jinaga.User"
+                    },
+                    "write": {
+                        "office": "Dallas",
+                        "type": "ImprovingU.Catalog",
+                        "_in": {
+                            "name": "Summer 2019",
+                            "type": "ImprovingU.Semester",
+                            "company": {
+                                "name": "Improving",
+                                "type": "ImprovingU.Company",
+                                "from": user
+                            }
+                        }
+                    },
+                    "createdAt": "2019-05-08T11:32:41.185Z",
+                    "type": "ImprovingU.Catalog.Access"
+                }
+            ],
+            "type": "ImprovingU.Catalog.AccessRequest.Response"
+        };
+        function catalog(access: any) {
+            (<any>access).has('write');
+            return j.match(access.write);
+        }
+        function semester(c: any) {
+            (<any>c).has('_in');
+            return j.match(c._in);
+        }
+        function company(s: any) {
+            (<any>s).has('company');
+            return j.match(s.company);
+        }
+        function creator(c: any) {
+            (<any>c).has('from');
+            return j.match(c.from);
+        }
+
+        const result = await whenSave(authorization, dehydrateFact(access));
+        expect(result.length).to.be.greaterThan(0);
+    });
 });
+
+function givenAuthorizationRules(authorize: (a: AuthorizationRules) => AuthorizationRules) {
+    const storage = givenStorage();
+    const keystore = new MemoryKeystore();
+    const feed = new FeedImpl(storage);
+    const authorizationRules = authorize(new AuthorizationRules());
+    return new AuthorizationKeystore(feed, keystore, authorizationRules);
+}
 
 function givenAuthorization() {
     const storage = givenStorage();
