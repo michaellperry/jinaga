@@ -156,6 +156,7 @@ describe('Authorization', () => {
             .any('ImprovingU.Semester')
             .any('ImprovingU.Catalog')
             .type('ImprovingU.Catalog.Access', j.for(catalog).then(semester).then(company).then(creator))
+            .any('ImprovingU.Catalog.AccessRequest')
             .any('ImprovingU.Catalog.AccessRequest.Response')
             );
         const user = await givenLoggedInUser(authorization);
