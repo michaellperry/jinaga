@@ -375,6 +375,9 @@ export class Jinaga {
                     this.validateFact(value);
                 }
             }
+            else if (typeof(value) === 'function') {
+                throw new Error(`A fact may not have any methods: ${field} in ${prototype.type} is a function.`);
+            }
         }
     }
 
