@@ -71,6 +71,7 @@ class AuthorizationRuleAny implements AuthorizationRule {
 
 class AuthorizationRuleNone implements AuthorizationRule {
     isAuthorized(userFact: FactReference, fact: FactRecord, evidence: Evidence, store: Storage): Promise<boolean> {
+        Trace.warn(`No fact of type ${fact.type} is authorized.`);
         return Promise.resolve(false);
     }
 }
@@ -85,12 +86,23 @@ class AuthorizationRuleBy implements AuthorizationRule {
 
     async isAuthorized(userFact: FactReference, fact: FactRecord, evidence: Evidence, store: Storage) {
         if (!userFact) {
+            Trace.warn(`No user is logged in while attempting to authorize ${fact.type}.`);
             return false;
         }
         const predecessors = evidence.query(fact, this.head);
         const results = await flattenAsync(predecessors, async p =>
             await this.executeQuery(store, p));
-        return results.some(factReferenceEquals(userFact));
+        const authorized = results.some(factReferenceEquals(userFact));
+        if (!authorized) {
+            if (results.length === 0) {
+                Trace.warn(`The authorization rule for ${fact.type} returned no authorized users.`);
+            }
+            else {
+                const count = results.length === 1 ? '1 user' : `${results.length} users`;
+                Trace.warn(`The authorization rule for ${fact.type} returned ${count}, but not the logged in user.`);
+            }
+        }
+        return authorized;
     }
 
     private async executeQuery(store: Storage, predecessors: FactReference) {

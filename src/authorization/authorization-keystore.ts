@@ -1,10 +1,11 @@
-import { verifyHash } from '../fact/hash';
+import { computeHash, verifyHash } from '../fact/hash';
 import { TopologicalSorter } from '../fact/sorter';
 import { Feed } from '../feed/feed';
 import { Keystore, UserIdentity } from '../keystore';
 import { Query } from '../query/query';
 import { FactEnvelope, FactRecord, FactReference } from '../storage';
 import { distinct, mapAsync } from '../util/fn';
+import { Trace } from '../util/trace';
 import { Authorization } from "./authorization";
 import { AuthorizationRules } from './authorizationRules';
 
@@ -91,15 +92,25 @@ export class AuthorizationKeystore implements Authorization {
 
     private async authorize(predecessors: AuthorizationResult[], userFact: FactRecord, fact: FactRecord, factRecords: FactRecord[]) : Promise<AuthorizationVerdict> {
         if (predecessors.some(p => p.verdict === "Forbidden")) {
+            const predecessor = predecessors
+                .filter(p => p.verdict === 'Forbidden')
+                .map(p => p.fact.type)
+                .join(', ');
+            Trace.warn(`The fact ${fact.type} cannot be authorized because its predecessor ${predecessor} is not authorized.`);
             return "Forbidden";
         }
 
         if (!verifyHash(fact)) {
+            const computedHash = computeHash(fact.fields, fact.predecessors);
+            Trace.warn(`The hash of ${fact.type} does not match: computed ${computedHash}, provided ${fact.hash}.`);
             return "Forbidden";
         }
 
         const isAuthorized = await this.authorizationRules.isAuthorized(userFact, fact, factRecords, this.feed);
         if (predecessors.some(p => p.verdict === "New") || !(await this.feed.exists(fact))) {
+            if (!isAuthorized) {
+                Trace.warn(`The fact of type ${fact.type} is not authorized.`);
+            }
             return isAuthorized ? "New" : "Forbidden";
         }
 
