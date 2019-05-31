@@ -58,6 +58,13 @@ describe("Watch", function () {
     }).suchThat(j.not(isCompleted));
   }
 
+  function taskCompletions(task: Task) {
+    return j.match(<Completed> {
+      type: Completed.Type,
+      task
+    });
+  }
+
   function isCompleted(t: Task) {
     return j.exists(<Completed>{
       type: Completed.Type,
@@ -82,7 +89,7 @@ describe("Watch", function () {
   it("should tolerate null start", async function () {
     const watch = j.watch(null, j.for(tasksInList), taskAdded);
     await watch.load();
-    watch.watch(j.for(tasksInList), (parent, result) => {});
+    watch.watch(j.for(taskCompletions), (parent, result) => {});
     watch.stop();
   });
 
