@@ -1,4 +1,7 @@
 # Jinaga
+
+[![Greenkeeper badge](https://badges.greenkeeper.io/michaellperry/jinaga.svg)](https://greenkeeper.io/)
+
 JavaScript data synchronization, front-end and back-end, persistent and real-time.
 
 Make a change in the browser and it is automatically sent to the server, saved to the database, and shared with other users. Jinaga is journaled isolated nodes approaching global agreement. 
