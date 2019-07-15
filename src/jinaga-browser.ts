@@ -1,7 +1,7 @@
 import { Authentication } from './authentication/authentication';
 import { AuthenticationImpl } from './authentication/authentication-impl';
 import { AuthenticationNoOp } from './authentication/authentication-noop';
-import { AuthenticationOffline } from './authorization/authentication-offline';
+import { AuthenticationOffline } from './authentication/authentication-offline';
 import { Feed } from './feed/feed';
 import { FeedImpl } from './feed/feed-impl';
 import { PersistentFork } from './fork/persistent-fork';

@@ -1,4 +1,4 @@
-import { Authentication } from '../authentication/authentication';
+import { Authentication } from './authentication';
 import { Feed, Observable } from '../feed/feed';
 import { LoginResponse } from '../http/messages';
 import { WebClient } from '../http/web-client';
