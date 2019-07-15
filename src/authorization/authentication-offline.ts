@@ -6,7 +6,7 @@ import { IndexedDBStore } from '../indexeddb/indexeddb-store';
 import { Query } from '../query/query';
 import { FactEnvelope, FactRecord, FactReference } from '../storage';
 
-export class AuthenticationServiceWorker implements Authentication {
+export class AuthenticationOffline implements Authentication {
   constructor(private inner: Feed, private store: IndexedDBStore, private client: WebClient) {
   }
 
@@ -18,7 +18,7 @@ export class AuthenticationServiceWorker implements Authentication {
       if (err === 'Unauthorized') {
         throw err;
       }
-      
+
       try {
         return await this.loginLocal();
       }
