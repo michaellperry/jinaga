@@ -5,7 +5,6 @@ import { WebClient } from '../http/web-client';
 import { IndexedDBStore } from '../indexeddb/indexeddb-store';
 import { Query } from '../query/query';
 import { FactEnvelope, FactRecord, FactReference } from '../storage';
-import { Trace } from '../util/trace';
 
 export class AuthenticationServiceWorker implements Authentication {
   constructor(private inner: Feed, private store: IndexedDBStore, private client: WebClient) {
@@ -16,12 +15,14 @@ export class AuthenticationServiceWorker implements Authentication {
       return await this.loginRemote();
     }
     catch (err) {
-      Trace.warn(err.message ? err.message : err);
+      if (err === 'Unauthorized') {
+        throw err;
+      }
+      
       try {
         return await this.loginLocal();
       }
       catch (err2) {
-        Trace.warn(err2.message ? err2.message : err2);
         throw err;
       }
     }
