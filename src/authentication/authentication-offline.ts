@@ -45,10 +45,8 @@ export class AuthenticationOffline implements Authentication {
     throw new Error("Exists method not implemented on AuthenticationImpl.");
   }
 
-  async load(references: FactReference[]): Promise<FactRecord[]> {
-    const facts = await this.inner.load(references);
-    await this.store.save(facts.map(fact => ({ signatures: [], fact })));
-    return facts;
+  load(references: FactReference[]): Promise<FactRecord[]> {
+    return this.inner.load(references);
   }
 
   from(fact: FactReference, query: Query): Observable {

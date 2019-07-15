@@ -9,12 +9,13 @@ import { serializeLoad, serializeQuery, serializeSave } from './serialize';
 class PersistentForkSubscription implements Subscription {
     constructor(
         private inner: Subscription,
-        private loaded: Promise<void>
+        private loadedLocal: Promise<void>,
+        private loadedRemote: Promise<void>
     ) {}
 
     async load(): Promise<void> {
         await this.inner.load();
-        await this.loaded;
+        await this.loadedLocal;
     }
 
     dispose(): void {
@@ -25,11 +26,12 @@ class PersistentForkSubscription implements Subscription {
 class PersistentForkObservable implements Observable {
     constructor(
         private inner: Observable,
-        private loaded: Promise<void>
+        private loadedLocal: Promise<void>,
+        private loadedRemote: Promise<void>
     ) {}
 
     subscribe(added: Handler, removed: Handler): Subscription {
-        return new PersistentForkSubscription(this.inner.subscribe(added, removed), this.loaded);
+        return new PersistentForkSubscription(this.inner.subscribe(added, removed), this.loadedLocal, this.loadedRemote);
     }
 }
 
@@ -87,11 +89,20 @@ export class PersistentFork implements Feed {
 
     from(fact: FactReference, query: Query): Observable {
         const observable = this.feed.from(fact, query);
-        const loaded = this.initiateQuery(fact, query);
-        return new PersistentForkObservable(observable, loaded);
+        const loadedLocal = this.initiateQueryLocal(fact, query);
+        const loadedRemote = this.initiateQueryRemote(fact, query);
+        return new PersistentForkObservable(observable, loadedLocal, loadedRemote);
     }
 
-    private async initiateQuery(start: FactReference, query: Query) {
+    private async initiateQueryLocal(start: FactReference, query: Query) {
+      const paths = await this.feed.query(start, query);
+      if (paths.length > 0) {
+        const references = distinct(flatten(paths, p => p));
+        await this.load(references);
+      }
+    }
+
+    private async initiateQueryRemote(start: FactReference, query: Query) {
         const queryResponse = await this.client.query(serializeQuery(start, query));
         const paths = queryResponse.results;
         if (paths.length > 0) {
