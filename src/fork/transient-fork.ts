@@ -6,7 +6,7 @@ import { FactEnvelope, FactRecord, FactReference, factReferenceEquals } from '..
 import { flatten } from '../util/fn';
 import { serializeLoad, serializeQuery, serializeSave } from './serialize';
 
-class ForkSubscription implements Subscription {
+class TransientForkSubscription implements Subscription {
     constructor(
         private inner: Subscription,
         private loaded: Promise<void>
@@ -22,18 +22,18 @@ class ForkSubscription implements Subscription {
     }
 }
 
-class ForkObservable implements Observable {
+class TransientForkObservable implements Observable {
     constructor(
         private inner: Observable,
         private loaded: Promise<void>
     ) {}
 
     subscribe(added: Handler, removed: Handler): Subscription {
-        return new ForkSubscription(this.inner.subscribe(added, removed), this.loaded);
+        return new TransientForkSubscription(this.inner.subscribe(added, removed), this.loaded);
     }
 }
 
-export class Fork implements Feed {
+export class TransientFork implements Feed {
     constructor(
         private feed: Feed,
         private client: WebClient
@@ -53,19 +53,8 @@ export class Fork implements Feed {
             return results;
         }
         else {
-            try {
-                const response = await this.client.query(serializeQuery(start, query));
-                return response.results;
-            }
-            catch (errRemote) {
-                try {
-                    const results = await this.feed.query(start, query);
-                    return results;
-                }
-                catch (errLocal) {
-                    throw errRemote;
-                }
-            }
+            const response = await this.client.query(serializeQuery(start, query));
+            return response.results;
         }
     }
 
@@ -88,7 +77,7 @@ export class Fork implements Feed {
     from(fact: FactReference, query: Query): Observable {
         const observable = this.feed.from(fact, query);
         const loaded = this.initiateQuery(fact, query);
-        return new ForkObservable(observable, loaded);
+        return new TransientForkObservable(observable, loaded);
     }
 
     private async initiateQuery(start: FactReference, query: Query) {
