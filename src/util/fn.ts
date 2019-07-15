@@ -1,10 +1,18 @@
+function safeFlatten<U>(results: U[][]) {
+  const flat = results.reduce((a, b) =>
+    (!a || a.length === 0) ? b :
+    (!b || b.length === 0) ? a :
+      a.concat(b));
+  return flat ? flat : [];
+}
+
 export async function flattenAsync<T, U>(collection: T[], selector: (element: T) => Promise<U[]>) {
     if (collection.length === 0) {
         return [];
     }
     else {
         const results = await Promise.all(collection.map(selector));
-        return results.reduce((a,b) => a.concat(b));
+        return safeFlatten(results);
     }
 }
 
@@ -13,7 +21,7 @@ export function flatten<T, U>(collection: T[], selector: (element: T) => U[]) {
         return [];
     }
     else {
-        return collection.map(selector).reduce((a,b) => a.concat(b));
+        return safeFlatten(collection.map(selector));
     }
 }
 

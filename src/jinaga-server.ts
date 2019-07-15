@@ -8,7 +8,7 @@ import { AuthorizationRules } from './authorization/authorizationRules';
 import { Cache } from './cache';
 import { Feed } from './feed/feed';
 import { FeedImpl } from './feed/feed-impl';
-import { Fork } from './fork/fork';
+import { TransientFork } from './fork/transient-fork';
 import { NodeHttpConnection } from './http/node-http';
 import { HttpRouter, RequestUser } from './http/router';
 import { SyncStatusNotifier, WebClient } from './http/web-client';
@@ -75,7 +75,7 @@ function createFork(config: JinagaServerConfig, feed: Feed, syncStatusNotifier: 
     if (config.httpEndpoint) {
         const httpConnection = new NodeHttpConnection(config.httpEndpoint);
         const webClient = new WebClient(httpConnection, syncStatusNotifier);
-        const fork = new Fork(feed, webClient);
+        const fork = new TransientFork(feed, webClient);
         return fork;
     }
     else {

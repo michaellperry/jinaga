@@ -64,7 +64,7 @@ export class WebClient {
     }
 
     async save(save: SaveMessage) {
-        return <SaveResponse> await this.post('/save', save);
+        return <SaveResponse> await this.postWithRetry('/save', save);
     }
 
     async load(load: LoadMessage) {
@@ -72,6 +72,16 @@ export class WebClient {
     }
 
     private async post(path: string, body: {}) {
+        const response = await this.httpConnection.post(path, body, 1);
+        if (response.result === 'success') {
+            return response.response;
+        }
+        else {
+            throw new Error(response.error);
+        }
+    }
+
+    private async postWithRetry(path: string, body: {}) {
         let timeoutSeconds = 5;
         let retrySeconds = 1;
 

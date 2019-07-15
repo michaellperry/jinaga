@@ -2,19 +2,21 @@ import { TopologicalSorter } from '../fact/sorter';
 import { Feed, Handler, Observable, Subscription } from '../feed/feed';
 import { WebClient } from '../http/web-client';
 import { Query } from '../query/query';
-import { FactEnvelope, FactRecord, FactReference, factReferenceEquals } from '../storage';
+import { FactEnvelope, FactRecord, FactReference, factReferenceEquals, Queue } from '../storage';
 import { flatten } from '../util/fn';
+import { Trace } from '../util/trace';
 import { serializeLoad, serializeQuery, serializeSave } from './serialize';
 
-class ForkSubscription implements Subscription {
+class PersistentForkSubscription implements Subscription {
     constructor(
         private inner: Subscription,
-        private loaded: Promise<void>
+        private loadedLocal: Promise<void>,
+        private loadedRemote: Promise<void>
     ) {}
 
     async load(): Promise<void> {
         await this.inner.load();
-        await this.loaded;
+        await this.loadedLocal;
     }
 
     dispose(): void {
@@ -22,27 +24,37 @@ class ForkSubscription implements Subscription {
     }
 }
 
-class ForkObservable implements Observable {
+class PersistentForkObservable implements Observable {
     constructor(
         private inner: Observable,
-        private loaded: Promise<void>
+        private loadedLocal: Promise<void>,
+        private loadedRemote: Promise<void>
     ) {}
 
     subscribe(added: Handler, removed: Handler): Subscription {
-        return new ForkSubscription(this.inner.subscribe(added, removed), this.loaded);
+        return new PersistentForkSubscription(this.inner.subscribe(added, removed), this.loadedLocal, this.loadedRemote);
     }
 }
 
-export class Fork implements Feed {
+export class PersistentFork implements Feed {
     constructor(
         private feed: Feed,
+        private queue: Queue,
         private client: WebClient
     ) {
         
     }
 
+    initialize() {
+        (async () => {
+            const envelopes = await this.queue.peek();
+            this.sendAndDequeue(envelopes);
+        })().catch(err => Trace.error(err));
+    }
+
     async save(envelopes: FactEnvelope[]): Promise<FactEnvelope[]> {
-        const response = await this.client.save(serializeSave(envelopes));
+        await this.queue.enqueue(envelopes);
+        this.sendAndDequeue(envelopes);
         const saved = await this.feed.save(envelopes);
         return saved;
     }
@@ -53,8 +65,19 @@ export class Fork implements Feed {
             return results;
         }
         else {
-            const response = await this.client.query(serializeQuery(start, query));
-            return response.results;
+            try {
+                const response = await this.client.query(serializeQuery(start, query));
+                return response.results;
+            }
+            catch (errRemote) {
+                try {
+                    const results = await this.feed.query(start, query);
+                    return results;
+                }
+                catch (errLocal) {
+                    throw errRemote;
+                }
+            }
         }
     }
 
@@ -76,11 +99,20 @@ export class Fork implements Feed {
 
     from(fact: FactReference, query: Query): Observable {
         const observable = this.feed.from(fact, query);
-        const loaded = this.initiateQuery(fact, query);
-        return new ForkObservable(observable, loaded);
+        const loadedLocal = this.initiateQueryLocal(fact, query);
+        const loadedRemote = this.initiateQueryRemote(fact, query);
+        return new PersistentForkObservable(observable, loadedLocal, loadedRemote);
     }
 
-    private async initiateQuery(start: FactReference, query: Query) {
+    private async initiateQueryLocal(start: FactReference, query: Query) {
+      const paths = await this.feed.query(start, query);
+      if (paths.length > 0) {
+        const references = distinct(flatten(paths, p => p));
+        await this.load(references);
+      }
+    }
+
+    private async initiateQueryRemote(start: FactReference, query: Query) {
         const queryResponse = await this.client.query(serializeQuery(start, query));
         const paths = queryResponse.results;
         if (paths.length > 0) {
@@ -106,6 +138,13 @@ export class Fork implements Feed {
             records = records.concat(facts);
         }
         return records;
+    }
+
+    private sendAndDequeue(envelopes: FactEnvelope[]) {
+        (async () => {
+            await this.client.save(serializeSave(envelopes));
+            await this.queue.dequeue(envelopes);
+        })().catch(err => Trace.error(err));
     }
 }
 
