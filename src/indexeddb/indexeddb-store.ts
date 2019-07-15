@@ -3,6 +3,7 @@ import { Query } from '../query/query';
 import { Direction, ExistentialCondition, Join, PropertyCondition, Quantifier, Step } from '../query/steps';
 import { FactEnvelope, FactPath, FactRecord, FactReference, Storage } from '../storage';
 import { distinct, filterAsync, flatten, flattenAsync } from '../util/fn';
+import { execRequest, factKey, keyToReference, withDatabase, withTransaction } from './driver';
 
 export function getPredecessors(fact: FactRecord, role: string) {
   if (!fact) {
@@ -23,69 +24,9 @@ export function getPredecessors(fact: FactRecord, role: string) {
   }
 }
 
-function upgradingToVersion({ newVersion, oldVersion }: IDBVersionChangeEvent, ver: number) {
-  return newVersion >= ver && oldVersion < ver;
-}
-
-function openDatabase(indexName: string): Promise<IDBDatabase> {
-  return new Promise((resolve, reject) => {
-    const request = self.indexedDB.open(indexName, 1);
-    request.onsuccess = _ => resolve(request.result);
-    request.onerror = _ => reject(`Error opening database ${indexName}: ${JSON.stringify(request.error, null, 2)}.`);
-    request.onupgradeneeded = ev => {
-      const db = request.result;
-      if (upgradingToVersion(ev, 1)) {
-        db.createObjectStore('login');
-        db.createObjectStore('fact');
-        db.createObjectStore('ancestor');
-        const edgeObjectStore = db.createObjectStore('edge', {
-          keyPath: ['successor', 'predecessor', 'role']
-        });
-        edgeObjectStore.createIndex('predecessor', ['predecessor', 'role'], { unique: false });
-        edgeObjectStore.createIndex('successor', ['successor', 'role'], { unique: false });
-        edgeObjectStore.createIndex('all', 'successor', { unique: false });
-      }
-    }
-  });
-}
-
-async function withDatabase<T>(indexName: string, action: (db: IDBDatabase) => Promise<T>) {
-  const db = await openDatabase(indexName);
-  const result = await action(db);
-  db.close();
-  return result;
-}
-
-async function withTransaction<T>(db: IDBDatabase, storeNames: string[], mode: IDBTransactionMode, action: (transaction: IDBTransaction) => Promise<T>) {
-  const transaction = db.transaction(storeNames, mode);
-  const transactionComplete = new Promise<void>((resolve, reject) => {
-    transaction.oncomplete = _ => resolve();
-    transaction.onerror = _ => reject(`Error executing transaction ${JSON.stringify(transaction.error.message, null, 2)}`);
-  });
-  const [result, v] = await Promise.all([action(transaction), transactionComplete]);
-  return result;
-}
-
-function execRequest<T>(request: IDBRequest) {
-  return new Promise<T>((resolve, reject) => {
-    request.onsuccess = (_: Event) => resolve(request.result);
-    request.onerror = (_: Event) => reject(`Error executing request ${JSON.stringify(request.error.message, null, 2)}`);
-  });
-}
-
 interface LoginRecord {
   userFact: FactRecord;
   displayName: string;
-}
-
-function factKey(fact: FactReference) {
-  return `${fact.type}:${fact.hash}`;
-}
-
-function keyToReference(key: string): FactReference {
-  const regex = /([^:]*):(.*)/;
-  const [ _, type, hash ] = regex.exec(key);
-  return { type, hash };
 }
 
 interface AncestorSet {
@@ -234,8 +175,8 @@ export class IndexedDBStore implements Storage {
         const paths = await executeQuery(factKey(start), query.steps, predecessorIndex, successorIndex);
         const results = paths.map(path => path.slice(1).map(keyToReference));
         return results;
-      })
-    })
+      });
+    });
   }
 
   exists(fact: FactReference): Promise<boolean> {

@@ -2,8 +2,9 @@ import { TopologicalSorter } from '../fact/sorter';
 import { Feed, Handler, Observable, Subscription } from '../feed/feed';
 import { WebClient } from '../http/web-client';
 import { Query } from '../query/query';
-import { FactEnvelope, FactRecord, FactReference, factReferenceEquals } from '../storage';
+import { FactEnvelope, FactRecord, FactReference, factReferenceEquals, Queue } from '../storage';
 import { flatten } from '../util/fn';
+import { Trace } from '../util/trace';
 import { serializeLoad, serializeQuery, serializeSave } from './serialize';
 
 class PersistentForkSubscription implements Subscription {
@@ -38,13 +39,22 @@ class PersistentForkObservable implements Observable {
 export class PersistentFork implements Feed {
     constructor(
         private feed: Feed,
+        private queue: Queue,
         private client: WebClient
     ) {
         
     }
 
+    initialize() {
+        (async () => {
+            const envelopes = await this.queue.peek();
+            this.sendAndDequeue(envelopes);
+        })().catch(err => Trace.error(err));
+    }
+
     async save(envelopes: FactEnvelope[]): Promise<FactEnvelope[]> {
-        const response = await this.client.save(serializeSave(envelopes));
+        await this.queue.enqueue(envelopes);
+        this.sendAndDequeue(envelopes);
         const saved = await this.feed.save(envelopes);
         return saved;
     }
@@ -128,6 +138,13 @@ export class PersistentFork implements Feed {
             records = records.concat(facts);
         }
         return records;
+    }
+
+    private sendAndDequeue(envelopes: FactEnvelope[]) {
+        (async () => {
+            await this.client.save(serializeSave(envelopes));
+            await this.queue.dequeue(envelopes);
+        })().catch(err => Trace.error(err));
     }
 }
 

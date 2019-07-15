@@ -36,6 +36,12 @@ export interface Storage {
     load(references: FactReference[]): Promise<FactRecord[]>;
 }
 
+export interface Queue {
+    peek(): Promise<FactEnvelope[]>;
+    enqueue(envelopes: FactEnvelope[]): Promise<void>;
+    dequeue(envelopes: FactEnvelope[]): Promise<void>;
+}
+
 export function factReferenceEquals(a: FactReference) {
     return (r: FactReference) => r.hash === a.hash && r.type === a.type;
 }
