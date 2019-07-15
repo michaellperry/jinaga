@@ -66,10 +66,10 @@ async function withTransaction<T>(db: IDBDatabase, storeNames: string[], mode: I
   return result;
 }
 
-function execRequest<T>(request: IDBRequest<T>) {
+function execRequest<T>(request: IDBRequest) {
   return new Promise<T>((resolve, reject) => {
-    request.onsuccess = _ => resolve(request.result);
-    request.onerror = _ => reject(`Error executing request ${JSON.stringify(request.error.message, null, 2)}`);
+    request.onsuccess = (_: Event) => resolve(request.result);
+    request.onerror = (_: Event) => reject(`Error executing request ${JSON.stringify(request.error.message, null, 2)}`);
   });
 }
 
@@ -164,7 +164,7 @@ async function executeStep(paths: string[][], step: Step, predecessorIndex: IDBI
     return await flattenAsync(paths, async path => {
       const fact = path[path.length - 1];
       const index = step.direction === Direction.Predecessor ? successorIndex : predecessorIndex;
-      const edges: Edge[] = await execRequest(index.getAll([fact, role]));
+      const edges = await execRequest<Edge[]>(index.getAll([fact, role]));
       return edges
         .map(edge =>
           path.concat([
@@ -204,7 +204,7 @@ export class IndexedDBStore implements Storage {
     return withDatabase(this.indexName, async db => {
       return withTransaction(db, ['login'], 'readonly', tx => {
         const loginObjectStore = tx.objectStore('login');
-        return execRequest(loginObjectStore.get(sessionToken));
+        return execRequest<LoginRecord>(loginObjectStore.get(sessionToken));
       });
     });
   }
