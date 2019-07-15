@@ -6,7 +6,7 @@ function upgradingToVersion({ newVersion, oldVersion }: IDBVersionChangeEvent, v
 
 function openDatabase(indexName: string): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
-    const request = self.indexedDB.open(indexName, 2);
+    const request = self.indexedDB.open(indexName, 1);
     request.onsuccess = _ => resolve(request.result);
     request.onerror = _ => reject(`Error opening database ${indexName}: ${JSON.stringify(request.error, null, 2)}.`);
     request.onupgradeneeded = ev => {
@@ -21,8 +21,6 @@ function openDatabase(indexName: string): Promise<IDBDatabase> {
         edgeObjectStore.createIndex('predecessor', ['predecessor', 'role'], { unique: false });
         edgeObjectStore.createIndex('successor', ['successor', 'role'], { unique: false });
         edgeObjectStore.createIndex('all', 'successor', { unique: false });
-      }
-      if (upgradingToVersion(ev, 2)) {
         db.createObjectStore('queue');
       }
     }

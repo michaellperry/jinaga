@@ -1,13 +1,13 @@
-import { Authentication } from './authentication';
 import { Feed, Observable } from '../feed/feed';
 import { LoginResponse } from '../http/messages';
 import { WebClient } from '../http/web-client';
-import { IndexedDBStore } from '../indexeddb/indexeddb-store';
+import { IndexedDBLoginStore } from '../indexeddb/indexeddb-login-store';
 import { Query } from '../query/query';
 import { FactEnvelope, FactRecord, FactReference } from '../storage';
+import { Authentication } from './authentication';
 
 export class AuthenticationOffline implements Authentication {
-  constructor(private inner: Feed, private store: IndexedDBStore, private client: WebClient) {
+  constructor(private inner: Feed, private store: IndexedDBLoginStore, private client: WebClient) {
   }
 
   async login() {    
@@ -57,7 +57,6 @@ export class AuthenticationOffline implements Authentication {
     const result = await this.client.login();
     if (result && result.userFact && result.profile) {
       await this.store.saveLogin('token', result.userFact, result.profile.displayName);
-      await this.store.save([ { signatures: [], fact: result.userFact } ]);
     }
     return result;
   }

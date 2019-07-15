@@ -8,6 +8,7 @@ import { PersistentFork } from './fork/persistent-fork';
 import { TransientFork } from './fork/transient-fork';
 import { SyncStatus, SyncStatusNotifier, WebClient } from './http/web-client';
 import { XhrConnection } from './http/xhr';
+import { IndexedDBLoginStore } from './indexeddb/indexeddb-login-store';
 import { IndexedDBQueue } from './indexeddb/indexeddb-queue';
 import { IndexedDBStore } from './indexeddb/indexeddb-store';
 import { ensure, FactDescription, Jinaga, Preposition, Trace, Tracer } from './jinaga';
@@ -53,7 +54,7 @@ function createAuthentication(
         if (config.indexedDb) {
             const queue = new IndexedDBQueue(config.indexedDb);
             const fork = new PersistentFork(feed, queue, webClient);
-            const loginStore = new IndexedDBStore(config.indexedDb);
+            const loginStore = new IndexedDBLoginStore(config.indexedDb);
             const authentication = new AuthenticationOffline(fork, loginStore, webClient);
             fork.initialize();
             return authentication;
