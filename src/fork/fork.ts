@@ -53,8 +53,19 @@ export class Fork implements Feed {
             return results;
         }
         else {
-            const response = await this.client.query(serializeQuery(start, query));
-            return response.results;
+            try {
+                const response = await this.client.query(serializeQuery(start, query));
+                return response.results;
+            }
+            catch (errRemote) {
+                try {
+                    const results = await this.feed.query(start, query);
+                    return results;
+                }
+                catch (errLocal) {
+                    throw errRemote;
+                }
+            }
         }
     }
 
