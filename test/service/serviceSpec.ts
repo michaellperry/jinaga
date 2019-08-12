@@ -19,10 +19,15 @@ class TestContext {
     }
 
     async run(fact: {}, queryString: string, handler: (message: {}) => Promise<void>) {
-        const start = dehydrateReference(fact);
-        const query = fromDescriptiveString(queryString);
-        const subscription = runService(this.feed, start, query, this.serviceRunner, handler);
-        await subscription.load();
+        try {
+            const start = dehydrateReference(fact);
+            const query = fromDescriptiveString(queryString);
+            const subscription = runService(this.feed, start, query, this.serviceRunner, handler);
+            await subscription.load();
+        }
+        catch (exception) {
+            this.exceptions.push(exception.message);
+        }
     }
 
     async stop() {
@@ -66,11 +71,11 @@ describe('Service', () => {
         });
         let runs = 0;
         await context.run(start, 'S.parent F.type="Child" N(S.child F.type="Handled")', async child => {
+            ++runs;
             await context.fact({
                 type: 'Handled',
                 child: child
             });
-            ++runs;
         });
         await context.stop();
         context.expectNoExceptions();
@@ -86,11 +91,11 @@ describe('Service', () => {
         };
         let runs = 0;
         await context.run(start, 'S.parent F.type="Child" N(S.child F.type="Handled")', async child => {
+            ++runs;
             await context.fact({
                 type: 'Handled',
                 child: child
             });
-            ++runs;
         });
         await context.fact({
             type: 'Child',
