@@ -52,7 +52,7 @@ class SubscriptionImpl implements Subscription {
         const paths = await this.results;
 
         if (paths.length > 0) {
-            this.added(paths);
+            await this.added(paths);
         }
     }
 }

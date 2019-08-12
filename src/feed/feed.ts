@@ -6,7 +6,7 @@ export interface Subscription {
     dispose(): void;
 }
 
-export type Handler = (paths: FactPath[]) => void;
+export type Handler = (paths: FactPath[]) => Promise<void>;
 
 export interface Observable {
     subscribe(added: Handler, removed: Handler): Subscription;

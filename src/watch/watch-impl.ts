@@ -28,12 +28,14 @@ export class WatchImpl<Fact, Model> implements Watch<Fact, Model>, WatchChild {
 
     begin() {
         this.subscription = this.inner.from(this.start, this.query)
-            .subscribe(paths => {
-                this.onAdded(paths)
-                    .catch(reason => {
-                        this.onError(reason);
-                    });
-            }, reference => {
+            .subscribe(async paths => {
+                try {
+                    await this.onAdded(paths);
+                }
+                catch (reason) {
+                    this.onError(reason);
+                }
+            }, async reference => {
                 this.onRemoved(reference);
             });
     }
