@@ -49,10 +49,15 @@ function delay(timeSeconds: number): Promise<void> {
     });
 }
 
+export interface WebClientConfig {
+    timeoutSeconds: number;
+}
+
 export class WebClient {
     constructor(
         private httpConnection: HttpConnection,
-        private syncStatusNotifier: SyncStatusNotifier) {
+        private syncStatusNotifier: SyncStatusNotifier,
+        private config: WebClientConfig) {
     }
 
     async login() {
@@ -72,7 +77,7 @@ export class WebClient {
     }
 
     private async post(path: string, body: {}) {
-        const response = await this.httpConnection.post(path, body, 1);
+        const response = await this.httpConnection.post(path, body, this.config.timeoutSeconds);
         if (response.result === 'success') {
             return response.response;
         }
@@ -82,7 +87,7 @@ export class WebClient {
     }
 
     private async postWithRetry(path: string, body: {}) {
-        let timeoutSeconds = 5;
+        let timeoutSeconds = this.config.timeoutSeconds;
         let retrySeconds = 1;
 
         while (true) {

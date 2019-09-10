@@ -21,7 +21,8 @@ export { Jinaga, Watch, SyncStatus, Preposition, Trace, Tracer, ensure, FactDesc
 export type JinagaBrowserConfig = {
     httpEndpoint?: string,
     wsEndpoint?: string,
-    indexedDb?: string
+    indexedDb?: string,
+    httpTimeoutSeconds?: number
 }
 
 export class JinagaBrowser {
@@ -50,7 +51,10 @@ function createAuthentication(
 ): Authentication {
     if (config.httpEndpoint) {
         const httpConnection = new XhrConnection(config.httpEndpoint);
-        const webClient = new WebClient(httpConnection, syncStatusNotifier);
+        const httpTimeoutSeconds = config.httpTimeoutSeconds || 5;
+        const webClient = new WebClient(httpConnection, syncStatusNotifier, {
+            timeoutSeconds: httpTimeoutSeconds
+        });
         if (config.indexedDb) {
             const queue = new IndexedDBQueue(config.indexedDb);
             const fork = new PersistentFork(feed, queue, webClient);

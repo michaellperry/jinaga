@@ -24,7 +24,8 @@ export type JinagaServerConfig = {
     pgStore?: string,
     pgKeystore?: string,
     httpEndpoint?: string,
-    authorization?: (a: AuthorizationRules) => AuthorizationRules
+    authorization?: (a: AuthorizationRules) => AuthorizationRules,
+    httpTimeoutSeconds?: number
 };
 
 export type JinagaServerInstance = {
@@ -74,7 +75,10 @@ function createStore(config: JinagaServerConfig): Storage {
 function createFork(config: JinagaServerConfig, feed: Feed, syncStatusNotifier: SyncStatusNotifier): Feed {
     if (config.httpEndpoint) {
         const httpConnection = new NodeHttpConnection(config.httpEndpoint);
-        const webClient = new WebClient(httpConnection, syncStatusNotifier);
+        const httpTimeoutSeconds = config.httpTimeoutSeconds || 5;
+        const webClient = new WebClient(httpConnection, syncStatusNotifier, {
+            timeoutSeconds: httpTimeoutSeconds
+        });
         const fork = new TransientFork(feed, webClient);
         return fork;
     }
