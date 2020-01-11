@@ -2,7 +2,7 @@ import { expect } from 'chai';
 
 import { AuthorizationRules, ensure, Jinaga } from '../../src';
 import { Authentication } from '../../src/authentication/authentication';
-import { AuthenticationNoOp } from '../../src/authentication/authentication-noop';
+import { AuthorizationEngine } from '../../src/authorization/authorization-engine';
 import { dehydrateFact } from '../../src/fact/hydrate';
 import { Feed, Observable } from '../../src/feed/feed';
 import { FeedImpl } from '../../src/feed/feed-impl';
@@ -13,13 +13,17 @@ import { Query } from '../../src/query/query';
 import { FactEnvelope, FactPath, FactRecord, FactReference } from '../../src/storage';
 
 class AuthenticationTest implements Authentication {
+  private authorizationEngine: AuthorizationEngine | null;
 
   constructor (
     private inner: Feed,
-    private authorization: ((a: AuthorizationRules) => AuthorizationRules) | null,
+    authorizationRules: AuthorizationRules | null,
     private userFact: FactRecord | null,
     private deviceFact: FactRecord | null
-  ) { }
+  ) {
+    this.authorizationEngine = authorization &&
+      new AuthorizationEngine(authorizationRules, inner);
+  }
   
   async login(): Promise<LoginResponse> {
     if (!this.userFact) {
@@ -64,7 +68,9 @@ class AuthenticationTest implements Authentication {
   }
   
   private async authorize(envelopes: FactEnvelope[]): Promise<void> {
-    
+    if (this.authorizationEngine) {
+      await this.authorizationEngine.authorizeFacts(envelopes.map(e => e.fact), this.userFact);
+    }
   }
 }
 
@@ -84,10 +90,12 @@ class JinagaTest {
   }
 
   static createAuthentication(config: JinagaTestConfig, inner: Feed): Authentication {
-    const userFact = config.user ? dehydrateFact(config.user)[0] : null;
-    const deviceFact = config.device ? dehydrateFact(config.device)[0] : null;
+    const authorizationRules = config.authorization &&
+      config.authorization(new AuthorizationRules());
+    const userFact = config.user && dehydrateFact(config.user)[0];
+    const deviceFact = config.device && dehydrateFact(config.device)[0];
     
-    return new AuthenticationTest(inner, config.authorization, userFact, deviceFact);
+    return new AuthenticationTest(inner, authorizationRules, userFact, deviceFact);
   }
 }
 
