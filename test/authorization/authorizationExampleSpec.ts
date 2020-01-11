@@ -2,77 +2,12 @@ import { expect } from 'chai';
 
 import { AuthorizationRules, ensure, Jinaga } from '../../src';
 import { Authentication } from '../../src/authentication/authentication';
-import { AuthorizationEngine } from '../../src/authorization/authorization-engine';
+import { AuthenticationTest } from '../../src/authentication/authentication-test';
 import { dehydrateFact } from '../../src/fact/hydrate';
-import { Feed, Observable } from '../../src/feed/feed';
+import { Feed } from '../../src/feed/feed';
 import { FeedImpl } from '../../src/feed/feed-impl';
-import { LoginResponse } from '../../src/http/messages';
 import { SyncStatusNotifier } from '../../src/http/web-client';
 import { MemoryStore } from '../../src/memory/memory-store';
-import { Query } from '../../src/query/query';
-import { FactEnvelope, FactPath, FactRecord, FactReference } from '../../src/storage';
-
-class AuthenticationTest implements Authentication {
-  private authorizationEngine: AuthorizationEngine | null;
-
-  constructor (
-    private inner: Feed,
-    authorizationRules: AuthorizationRules | null,
-    private userFact: FactRecord | null,
-    private deviceFact: FactRecord | null
-  ) {
-    this.authorizationEngine = authorization &&
-      new AuthorizationEngine(authorizationRules, inner);
-  }
-  
-  async login(): Promise<LoginResponse> {
-    if (!this.userFact) {
-      throw new Error("No logged in user.");
-    }
-
-    return {
-      userFact: this.userFact,
-      profile: {
-        displayName: "Test user"
-      }
-    };
-  }
-  
-  async local(): Promise<FactRecord> {
-    if (!this.deviceFact) {
-      throw new Error("No persistent device.");
-    }
-
-    return this.deviceFact;
-  }
-
-  from(fact: FactReference, query: Query): Observable {
-    return this.inner.from(fact, query);
-  }
-
-  async save(envelopes: FactEnvelope[]): Promise<FactEnvelope[]> {
-    await this.authorize(envelopes);
-    return await this.inner.save(envelopes);
-  }
-
-  query(start: FactReference, query: Query): Promise<FactPath[]> {
-    return this.inner.query(start, query);
-  }
-
-  exists(fact: FactReference): Promise<boolean> {
-    return this.inner.exists(fact);
-  }
-
-  load(references: FactReference[]): Promise<FactRecord[]> {
-    return this.inner.load(references);
-  }
-  
-  private async authorize(envelopes: FactEnvelope[]): Promise<void> {
-    if (this.authorizationEngine) {
-      await this.authorizationEngine.authorizeFacts(envelopes.map(e => e.fact), this.userFact);
-    }
-  }
-}
 
 type JinagaTestConfig = {
   authorization?: (a: AuthorizationRules) => AuthorizationRules,
