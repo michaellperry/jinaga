@@ -1,26 +1,40 @@
 import { Authentication } from './authentication/authentication';
 import { AuthenticationTest } from './authentication/authentication-test';
-import { AuthorizationRules } from '.';
-import { dehydrateFact } from './fact/hydrate';
+import { AuthorizationRules } from './authorization/authorizationRules';
+import { dehydrateFact, Dehydration } from './fact/hydrate';
 import { Feed } from './feed/feed';
 import { FeedImpl } from './feed/feed-impl';
 import { SyncStatusNotifier } from './http/web-client';
 import { Jinaga } from './jinaga-browser';
 import { MemoryStore } from './memory/memory-store';
+import { FactEnvelope } from './storage';
 
 export type JinagaTestConfig = {
   authorization?: (a: AuthorizationRules) => AuthorizationRules,
   user?: {},
-  device?: {}
+  device?: {},
+  initialState?: {}[]
 }
 
 export class JinagaTest {
   static create(config: JinagaTestConfig) {
     const store = new MemoryStore();
+    this.saveInitialState(config, store);
     const feed = new FeedImpl(store);
     const syncStatusNotifier = new SyncStatusNotifier();
     const authentication = this.createAuthentication(config, feed);
     return new Jinaga(authentication, null, syncStatusNotifier);
+  }
+
+  static saveInitialState(config: JinagaTestConfig, store: MemoryStore) {
+    if (config.initialState) {
+      const dehydrate = new Dehydration();
+      config.initialState.forEach(obj => dehydrate.dehydrate(obj));
+      store.save(dehydrate.factRecords().map(f => <FactEnvelope>{
+        fact: f,
+        signatures: []
+      }));
+    }
   }
 
   static createAuthentication(config: JinagaTestConfig, inner: Feed): Authentication {
