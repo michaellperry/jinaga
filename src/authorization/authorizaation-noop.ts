@@ -1,9 +1,9 @@
-import { Feed } from "../feed/feed";
+import { Feed } from '../feed/feed';
 import { UserIdentity } from '../keystore';
 import { Query } from '../query/query';
 import { FactRecord, FactReference } from '../storage';
-import { Authorization } from "./authorization";
-import { Forbidden } from "./authorization-keystore";
+import { Authorization } from './authorization';
+import { Forbidden } from './authorization-engine';
 
 export class AuthorizationNoOp implements Authorization {
     constructor(
