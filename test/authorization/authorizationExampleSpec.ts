@@ -31,6 +31,14 @@ describe("Feedback authorization", () => {
 
     await expect(promise).to.be.rejected;
   });
+
+  it("should allow a site created by the logged in user", async () => {
+    const creator = await j.fact(new User("Logged in user"));
+
+    const site = await j.fact(new Site(creator, "site identifier"));
+
+    expect(site.creator.publicKey).to.equal("Logged in user");
+  });
 });
 
 const j = Jinaga;
