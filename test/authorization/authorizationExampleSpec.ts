@@ -1,38 +1,6 @@
 import { expect } from 'chai';
 
-import { AuthorizationRules, ensure, Jinaga } from '../../src';
-import { Authentication } from '../../src/authentication/authentication';
-import { AuthenticationTest } from '../../src/authentication/authentication-test';
-import { dehydrateFact } from '../../src/fact/hydrate';
-import { Feed } from '../../src/feed/feed';
-import { FeedImpl } from '../../src/feed/feed-impl';
-import { SyncStatusNotifier } from '../../src/http/web-client';
-import { MemoryStore } from '../../src/memory/memory-store';
-
-type JinagaTestConfig = {
-  authorization?: (a: AuthorizationRules) => AuthorizationRules,
-  user?: {},
-  device?: {}
-}
-
-class JinagaTest {
-  static create(config: JinagaTestConfig) {
-    const store = new MemoryStore();
-    const feed = new FeedImpl(store);
-    const syncStatusNotifier = new SyncStatusNotifier();
-    const authentication = this.createAuthentication(config, feed);
-    return new Jinaga(authentication, null, syncStatusNotifier);
-  }
-
-  static createAuthentication(config: JinagaTestConfig, inner: Feed): Authentication {
-    const authorizationRules = config.authorization &&
-      config.authorization(new AuthorizationRules());
-    const userFact = config.user && dehydrateFact(config.user)[0];
-    const deviceFact = config.device && dehydrateFact(config.device)[0];
-    
-    return new AuthenticationTest(inner, authorizationRules, userFact, deviceFact);
-  }
-}
+import { AuthorizationRules, ensure, Jinaga, JinagaTest } from '../../src';
 
 describe("Feedback authorization", () => {
   let j: Jinaga;
