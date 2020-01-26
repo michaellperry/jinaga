@@ -37,7 +37,7 @@
     "chai": "^4.2.0",
     "chai-as-promised": "^7.1.1",
     "del": "^5.1.0",
-    "mocha": "^6.2.2",
+    "mocha": "^7.0.1",
     "nodemon": "^2.0.1",
     "source-map-support": "^0.5.16",
     "ts-loader": "^6.2.1",
