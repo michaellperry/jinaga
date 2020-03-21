@@ -1,6 +1,6 @@
 # Jinaga
 
-[![Greenkeeper badge](https://badges.greenkeeper.io/michaellperry/jinaga.svg)](https://greenkeeper.io/)
+
 
 JavaScript data synchronization, front-end and back-end, persistent and real-time.
 
