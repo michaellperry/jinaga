@@ -53,6 +53,6 @@
     "passport": "^0.4.0",
     "pg": "^7.11.0",
     "tweetnacl": "^1.0.0",
-    "tweetnacl-util": "^0.15.0"
+    "tweetnacl-util": "^0.15.1"
   }
 }
