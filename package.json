@@ -49,7 +49,7 @@
   },
   "dependencies": {
     "express": "^4.17.1",
-    "node-forge": "^0.9.0",
+    "node-forge": "^0.10.0",
     "passport": "^0.4.1",
     "pg": "^7.18.2",
     "tweetnacl": "^1.0.3",
